@@ -1,0 +1,14 @@
+# credentials -- never commit these
+.env
+
+# engine output
+/tennis_cards_verified.xlsx
+/new_matches.json
+/seen_items.json
+/engine_run.log
+cron.log
+
+__pycache__/
+*.pyc
+/portrait_cache.json
+/vision_cache.json

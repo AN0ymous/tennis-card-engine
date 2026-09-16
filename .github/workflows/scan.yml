@@ -1,0 +1,74 @@
+# Runs the engine on GitHub's machines every six hours and keeps the results
+# in the repo, so nothing of yours has to be switched on. See IPAD_SETUP.md.
+name: Scan eBay for bookend cards
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"      # 00:00, 06:00, 12:00, 18:00 UTC
+  workflow_dispatch:           # and the "Run workflow" button
+
+permissions:
+  contents: write              # to commit the results back
+
+concurrency:
+  group: scan
+  cancel-in-progress: false    # never cut a scan short to start another
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Bring back last run's results
+        # The engine dedups against seen_items.json and appends to the
+        # spreadsheet, so both come back from the results folder first.
+        run: |
+          mkdir -p results
+          for f in tennis_cards_verified.xlsx seen_items.json vision_cache.json; do
+            [ -f "results/$f" ] && cp "results/$f" . || true
+          done
+
+      - name: Run the engine
+        env:
+          EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
+          EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
+          DIGEST_FROM_EMAIL: ${{ secrets.DIGEST_FROM_EMAIL }}
+          DIGEST_FROM_APP_PASSWORD: ${{ secrets.DIGEST_FROM_APP_PASSWORD }}
+          DIGEST_TO_EMAIL: ${{ secrets.DIGEST_TO_EMAIL }}
+          EBAY_ENV: ${{ vars.EBAY_ENV }}      # leave unset; "sandbox" only to test keys
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional: outfit colours from photos
+          VISION_MODEL: ${{ vars.VISION_MODEL }}               # optional; default claude-opus-5
+        run: python tennis_card_engine.py
+
+      - name: Export what the hosted site reads
+        run: python export_static.py results
+
+      - name: Keep the results in the repo
+        run: |
+          git config user.name  "tennis-card-engine"
+          git config user.email "tennis-card-engine@users.noreply.github.com"
+          git add results
+          if git diff --cached --quiet; then
+            echo "Nothing new this run."
+          else
+            git commit -m "Scan results, $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
+
+      - name: Offer the spreadsheet as a download too
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tennis_cards_verified
+          path: results/tennis_cards_verified.xlsx
+          if-no-files-found: ignore
+          retention-days: 30

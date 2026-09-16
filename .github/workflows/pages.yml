@@ -1,0 +1,46 @@
+# Publishes the website to GitHub Pages: the page files plus the results the
+# scheduled scan commits, so the site runs with no server. See IPAD_SETUP.md.
+name: Publish the website
+
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", "results/**", ".github/workflows/pages.yml"]
+  workflow_run:
+    workflows: ["Scan eBay for bookend cards"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main                   # the scan commits results to main
+
+      - name: Assemble the site
+        run: |
+          mkdir -p site/results
+          cp -r web/. site/
+          [ -d results ] && cp results/*.json results/*.xlsx site/results/ 2>/dev/null || true
+          ls -R site | head -40
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

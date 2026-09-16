@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tennis Card Engine</title>
+<meta name="description" content="Scan eBay for bookend-serial tennis cards from licensed manufacturers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <span class="brand-name">Tennis Card Engine</span>
+    </div>
+    <button type="button" class="ball" id="contents-btn" aria-label="Contents"
+            title="Contents" aria-expanded="false" aria-controls="contents">
+      <svg class="ball-svg" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <defs>
+          <radialGradient id="felt" cx="34%" cy="28%" r="78%">
+            <stop offset="0" stop-color="#EAF56B"/>
+            <stop offset="55%" stop-color="#CBDD3A"/>
+            <stop offset="100%" stop-color="#8FA018"/>
+          </radialGradient>
+        </defs>
+        <circle cx="32" cy="32" r="30" fill="url(#felt)"/>
+        <path d="M12 10 C 24 22, 24 42, 12 54" fill="none"
+              stroke="#FDFBF4" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M52 10 C 40 22, 40 42, 52 54" fill="none"
+              stroke="#FDFBF4" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="32" cy="32" r="30" fill="none"
+                stroke="rgba(90,100,20,.45)" stroke-width="1.2"/>
+      </svg>
+    </button>
+    <a class="saved-link" id="saved-link" href="#saved" aria-label="Saved cards">
+      <span class="star-glyph" aria-hidden="true">&#9733;</span><span id="saved-count">0</span>
+    </a>
+    <span class="pill" id="status-pill">Checking engine…</span>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero" id="hero">
+    <div class="hero-media">
+      <video id="hero-video" class="hero-video" autoplay muted loop playsinline
+             preload="auto" poster="assets/hero-poster.jpg" disablepictureinpicture>
+        <source src="assets/hero.mp4" type="video/mp4">
+        <source src="assets/hero.webm" type="video/webm">
+      </video>
+      <div class="hero-scrim" aria-hidden="true"></div>
+    </div>
+    <div class="wrap hero-inner">
+      <h1 class="hero-title">Find the <em>first</em> and <em>last</em> card of every short print run.</h1>
+      <p class="hero-deck">
+        Every player. Four licensed brands. Only the cards numbered
+        <strong>#1</strong> or <strong>last of the run</strong>, in a run under 500.
+      </p>
+      <a class="hero-cue" href="#scan">
+        <span>Begin a scan</span>
+        <span class="cue-rule" aria-hidden="true"></span>
+      </a>
+    </div>
+    <p class="hero-credit">
+      Animation by <a href="https://www.reddit.com/user/pawan1995/" target="_blank" rel="noopener">u/pawan1995</a>,
+      first posted to r/tennis &middot; Federer, US Open 2009
+    </p>
+  </section>
+
+  <section class="board" id="board" aria-labelledby="board-title">
+    <div class="wrap board-head">
+      <div>
+        <p class="eyebrow">The board</p>
+        <h2 class="board-title" id="board-title">Just listed</h2>
+      </div>
+      <div class="board-tools">
+        <span class="pill" id="board-count">&mdash;</span>
+        <a class="linkbtn" href="#matches">All matches</a>
+        <button type="button" class="rail-btn" id="rail-prev" aria-label="Scroll back">&larr;</button>
+        <button type="button" class="rail-btn" id="rail-next" aria-label="Scroll forward">&rarr;</button>
+      </div>
+    </div>
+    <div class="rail-clip">
+      <div class="rail" id="rail" tabindex="0" aria-label="Newest listings, scroll sideways"></div>
+    </div>
+  </section>
+
+  <section class="wrap masthead">
+    <p class="eyebrow">eBay listing monitor &middot; sports trading cards</p>
+    <h1 class="masthead-title">Every listing, judged on its serial.</h1>
+    <p class="deck">
+      This app searches active eBay listings across every player, throws out everything
+      that isn't from a licensed manufacturer on the allow-list, and keeps only cards
+      serial-numbered <strong>#1</strong> or <strong>last-of-run</strong> in a print run
+      under 500. Matches land in your spreadsheet and, if you've set it up, your inbox.
+    </p>
+
+    <dl class="statstrip" id="statstrip">
+      <div class="stat"><dt>Players tracked</dt><dd id="stat-players">—</dd></div>
+      <div class="stat"><dt>Sets searched</dt><dd id="stat-brands">—</dd></div>
+      <div class="stat"><dt>Listings per run</dt><dd id="stat-queries">—</dd></div>
+      <div class="stat"><dt>Print-run ceiling</dt><dd id="stat-ceiling">—</dd></div>
+    </dl>
+
+    <div class="notice" id="setup-notice" hidden>
+      <h3 id="setup-title">Add your eBay credentials to start scanning</h3>
+      <p id="setup-lede">
+        The engine talks to eBay with your own free developer keys. They stay on this
+        machine — the browser never sees them.
+      </p>
+      <ol id="setup-steps">
+        <li>Get free API credentials at
+          <a href="https://developer.ebay.com/my/keys" target="_blank" rel="noopener">developer.ebay.com/my/keys</a>.</li>
+        <li>Create a file called <code>.env</code> next to <code>server.py</code> containing
+          <code>EBAY_CLIENT_ID=…</code> and <code>EBAY_CLIENT_SECRET=…</code></li>
+        <li>Restart the server: <code>python server.py</code></li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="wrap workbench" id="scan">
+
+    <aside class="panel controls">
+      <div class="panel-head"><h2>Scan setup</h2></div>
+      <div class="panel-body">
+
+        <div class="field">
+          <div class="field-head">
+            <span class="label" id="players-label">Players</span>
+            <button type="button" class="linkbtn" data-toggle-all="players">All / none</button>
+          </div>
+          <label class="check" for="all-players" style="margin-bottom:10px">
+            <input type="checkbox" id="all-players" checked>
+            <span>Every player &mdash; the player is read off each listing</span>
+          </label>
+          <div class="row addrow">
+            <input type="search" id="player-search" autocomplete="off" spellcheck="false"
+                   placeholder="Search a specific player, e.g. Novak Djokovic"
+                   aria-label="Search a specific player">
+            <button type="button" class="btn btn-ghost btn-small" id="player-add">Add</button>
+          </div>
+          <p class="hint search-note" id="player-note" hidden></p>
+          <div class="chips" id="players-chips" role="group" aria-labelledby="players-label"></div>
+          <p class="hint">A name you add joins the roster and narrows the run to the players
+             ticked. Enter adds it and starts the scan.</p>
+        </div>
+
+        <div class="field">
+          <div class="field-head">
+            <span class="label" id="brands-label">Sets</span>
+            <button type="button" class="linkbtn" data-toggle-all="brands">All / none</button>
+          </div>
+          <div class="row addrow">
+            <input type="search" id="set-search" autocomplete="off" spellcheck="false"
+                   placeholder="Search a specific set, e.g. Topps Chrome Sapphire"
+                   aria-label="Search a specific set">
+            <button type="button" class="btn btn-ghost btn-small" id="set-add">Add</button>
+          </div>
+          <p class="hint search-note" id="set-note" hidden></p>
+          <div class="chips" id="brands-chips" role="group" aria-labelledby="brands-label"></div>
+          <p class="hint">A set you add is searched on its own. Results still have to pass the
+             manufacturer allow-list further down the page.</p>
+        </div>
+
+        <div class="field">
+          <div class="field-head"><label for="max-print-run">Print-run ceiling</label></div>
+          <div class="row">
+            <input type="number" id="max-print-run" min="2" max="10000" step="1" value="500">
+          </div>
+          <label class="check" for="inclusive" style="margin-top:10px">
+            <input type="checkbox" id="inclusive">
+            <span>Allow a print run of exactly this number</span>
+          </label>
+          <p class="hint">A card qualifies when its serial is #1 or the final card of the run.</p>
+        </div>
+
+        <div class="field" id="sort-field">
+          <div class="field-head"><span class="label" id="sort-label">Order</span></div>
+          <div class="seg" role="radiogroup" aria-labelledby="sort-label" id="sort-seg">
+            <button type="button" class="seg-btn is-on" role="radio" aria-checked="true" data-value="newest">Newest listed</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="price_desc">Highest price</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="price_asc">Lowest price</button>
+          </div>
+          <p class="hint" id="sort-note">The board and the matches run newest listing first.</p>
+        </div>
+
+        <div class="field" id="bookend-field">
+          <div class="field-head"><span class="label" id="bookend-label">Bookend</span></div>
+          <div class="seg" role="radiogroup" aria-labelledby="bookend-label" id="bookend-seg">
+            <button type="button" class="seg-btn is-on" role="radio" aria-checked="true" data-value="all">All</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="first">First print</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="last">Last of run</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="one">1/1</button>
+          </div>
+          <p class="hint" id="bookend-note">Cards numbered #1, the final card of the run, and true 1/1s.</p>
+        </div>
+
+        <div class="field" id="window-field">
+          <div class="field-head"><span class="label" id="window-label">Listed within</span></div>
+          <div class="seg" role="radiogroup" aria-labelledby="window-label" id="window-seg">
+            <button type="button" class="seg-btn is-on" role="radio" aria-checked="true" data-value="any">Any time</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="1">24 hours</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="7">7 days</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="30">30 days</button>
+          </div>
+          <p class="hint" id="window-note">Every listing, however long it has been up.</p>
+        </div>
+
+        <div class="field" id="cardtype-field">
+          <div class="field-head"><span class="label" id="cardtype-label">Card type</span></div>
+          <div class="seg seg-5" role="radiogroup" aria-labelledby="cardtype-label" id="cardtype-seg">
+            <button type="button" class="seg-btn is-on" role="radio" aria-checked="true" data-value="all">All</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="base">Base</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="patch">Patch</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="auto">Auto</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="patch_auto">Patch auto</button>
+          </div>
+          <p class="hint" id="cardtype-note">Base cards, relic and patch cards, autographs, and patch autographs alike.</p>
+        </div>
+
+        <div class="field" id="colourmatch-field">
+          <div class="field-head"><span class="label" id="colourmatch-label">Colour match</span></div>
+          <div class="seg" role="radiogroup" aria-labelledby="colourmatch-label" id="colourmatch-seg">
+            <button type="button" class="seg-btn is-on" role="radio" aria-checked="true" data-value="all">All cards</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="only">Colour match only</button>
+          </div>
+          <p class="hint" id="colourmatch-note">Every card, whether or not the outfit matches the parallel.</p>
+          <p class="hint" id="colourmatch-setup" hidden></p>
+        </div>
+
+        <div class="field" id="condition-field">
+          <div class="field-head"><span class="label" id="condition-label">Graded or raw</span></div>
+          <div class="seg" role="radiogroup" aria-labelledby="condition-label" id="condition-seg">
+            <button type="button" class="seg-btn is-on" role="radio" aria-checked="true" data-value="all">All</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="graded">Graded</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="raw">Raw</button>
+          </div>
+          <p class="hint" id="condition-note">Slabbed and ungraded cards alike.</p>
+        </div>
+
+        <div class="field" id="listing-field">
+          <div class="field-head"><span class="label" id="listing-label">Listing type</span></div>
+          <div class="seg" role="radiogroup" aria-labelledby="listing-label" id="listing-seg">
+            <button type="button" class="seg-btn is-on" role="radio" aria-checked="true" data-listing="all">All listings</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-listing="buy_now">Buy It Now</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-listing="auction">Auction</button>
+          </div>
+          <p class="hint" id="listing-note">Fixed-price and auction listings alike.</p>
+        </div>
+
+        <div class="field" id="price-field">
+          <div class="field-head">
+            <span class="label" id="price-label">Asking price</span>
+            <button type="button" class="linkbtn" id="price-reset">Any price</button>
+          </div>
+          <div class="pricerow">
+            <label class="pricebox">
+              <span class="pricebox-l">Min</span>
+              <span class="pricebox-c" data-currency>$</span>
+              <input type="number" id="price-min" min="0" step="1" placeholder="0" inputmode="decimal" aria-label="Minimum price">
+            </label>
+            <span class="price-dash" aria-hidden="true">to</span>
+            <label class="pricebox">
+              <span class="pricebox-l">Max</span>
+              <span class="pricebox-c" data-currency>$</span>
+              <input type="number" id="price-max" min="0" step="1" placeholder="50,000+" inputmode="decimal" aria-label="Maximum price">
+            </label>
+          </div>
+          <div class="range" id="price-range">
+            <div class="range-track"><div class="range-fill" id="price-fill"></div></div>
+            <input type="range" id="price-lo" min="0" max="1000" step="1" value="0" aria-label="Minimum price slider">
+            <input type="range" id="price-hi" min="0" max="1000" step="1" value="1000" aria-label="Maximum price slider">
+            <div class="range-ticks" id="price-ticks" aria-hidden="true"></div>
+          </div>
+          <p class="hint" id="price-note">Any price.</p>
+        </div>
+
+        <div class="field">
+          <label class="check" for="portraits">
+            <input type="checkbox" id="portraits">
+            <span>Show player portraits on the card</span>
+          </label>
+          <p class="hint">
+            Uses freely-licensed photos from Wikimedia and prints the photographer's
+            credit on the card, as those licences require. Off by default.
+          </p>
+        </div>
+
+        <div class="field">
+          <label class="check" for="write-outputs">
+            <input type="checkbox" id="write-outputs" checked>
+            <span>Save results to the spreadsheet and remember what I've seen</span>
+          </label>
+          <p class="hint">Turn this off to try out filter settings without recording anything.</p>
+        </div>
+
+        <p class="hint hosted-note" id="hosted-note" hidden></p>
+        <div class="btn-row">
+          <button type="button" class="btn" id="run-btn">Run scan</button>
+          <button type="button" class="btn btn-ghost" id="stop-btn" disabled>Stop</button>
+        </div>
+
+        <div class="progress">
+          <div class="progress-track">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+          <div class="progress-meta">
+            <span id="progress-count">0 / 0 queries</span>
+            <span id="progress-checked">0 listings</span>
+          </div>
+          <p class="progress-now mono" id="progress-now">Idle.</p>
+        </div>
+
+      </div>
+    </aside>
+
+    <section class="panel" id="matches">
+      <div class="panel-head">
+        <h2>Matches</h2>
+        <span class="pill" id="match-count">0 found</span>
+        <button type="button" class="linkbtn" id="download-btn" hidden>Download spreadsheet</button>
+      </div>
+      <div id="results-area">
+        <div class="empty" id="empty-state">
+          <p>No matches yet. Run a scan — or read the rules below to see exactly what
+             the engine keeps and what it throws away.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="wrap" id="activity">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Activity</h2>
+        <span class="pill" id="log-pill">Idle</span>
+      </div>
+      <div class="logbox" id="logbox">
+        <div class="logline"><span class="t">--:--:--</span><span>Waiting for a scan to start.</span></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="wrap reference" id="method" aria-labelledby="method-title">
+    <div class="ref-head">
+      <p class="eyebrow">Method and process</p>
+      <h2 class="ref-title" id="method-title">How the engine decides</h2>
+      <p class="ref-lede">
+        From the serial rule to where the results land, in six parts: what counts as a
+        match, how each listing is filtered, who is licensed, how it runs on a schedule,
+        where results go, and what it deliberately leaves out.
+      </p>
+    </div>
+
+    <div class="ref-block" id="rules">
+      <span class="ref-part">Part 1 of 6</span>
+      <h3>What counts as a match</h3>
+      <p>
+        Four things have to be true at once. Miss any one and the listing is dropped,
+        with the reason written to the activity log.
+      </p>
+      <div class="serials">
+        <div class="serial-demo pass"><div class="n">001/250</div><div class="v">First of the run &mdash; keep</div></div>
+        <div class="serial-demo pass"><div class="n">250/250</div><div class="v">Last of the run &mdash; keep</div></div>
+        <div class="serial-demo pass"><div class="n">1/1</div><div class="v">True 1/1, both bookends &mdash; keep</div></div>
+        <div class="serial-demo fail"><div class="n">042/250</div><div class="v">Middle of the run &mdash; drop</div></div>
+        <div class="serial-demo fail"><div class="n">001/750</div><div class="v">Run is 500 or more &mdash; drop</div></div>
+      </div>
+    </div>
+
+    <div class="ref-block" id="stages">
+      <span class="ref-part">Part 2 of 6</span>
+      <h3>How a listing is filtered</h3>
+      <p>Each of the queries runs through the same six stages, in order.</p>
+      <ol class="stages">
+        <li class="stage">
+          <div><h4>Search eBay</h4>
+          <p>One search per set, newest listings first, against category <span class="inline-code" id="ref-category">212</span>
+             (Sports Trading Cards) on <span class="inline-code" id="ref-marketplace">EBAY_US</span>,
+             fixed-price and auction, up to <span id="ref-per-query">1000</span> listings each.</p></div>
+        </li>
+        <li class="stage">
+          <div><h4>Identify the player</h4>
+          <p>Scanning every player, the name is read from the listing's own
+             Player/Athlete field. Narrowed to a roster, every word of the name has
+             to appear in the title, so a Federer search can't hand back a Nadal card.</p></div>
+        </li>
+        <li class="stage">
+          <div><h4>Pull the full listing</h4>
+          <p>Titles lie. The engine fetches the item's own specifics — manufacturer, set,
+             print run, card number — and judges those.</p></div>
+        </li>
+        <li class="stage">
+          <div><h4>Check the manufacturer allow-list</h4>
+          <p>Anything outside the table below is rejected. Panini and Topps also have to
+             name the right set, since those two print far more than tennis.</p></div>
+        </li>
+        <li class="stage">
+          <div><h4>Drop known novelty sellers</h4>
+          <p>Manufacturer strings and sellers confirmed during manual review to be
+             unlicensed custom cards are rejected outright.</p></div>
+        </li>
+        <li class="stage">
+          <div><h4>Test the serial</h4>
+          <p>Print run under the ceiling, and the card number is either 1 or the print run
+             itself. Everything else is somebody else's card.</p></div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="ref-block" id="allowlist">
+      <span class="ref-part">Part 3 of 6</span>
+      <h3>Manufacturer allow-list</h3>
+      <p>Matched against the listing's own manufacturer field, not the title. Some sets
+         are skipped even when the maker is allowed.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Manufacturer</th><th>Also has to say</th></tr></thead>
+          <tbody id="allowlist-body"></tbody>
+        </table>
+      </div>
+      <p class="hint" id="blocklist-note" style="margin-top:10px"></p>
+    </div>
+
+    <div class="ref-block" id="schedule">
+      <span class="ref-part">Part 4 of 6</span>
+      <h3>Running it on a schedule</h3>
+      <p>
+        The web app is for scanning on demand. To have it run unattended, schedule the
+        engine itself — the command-line script writes the same spreadsheet and sends
+        the same digest email.
+      </p>
+      <div class="cards-2">
+        <div class="minicard">
+          <h4>macOS or Linux</h4>
+          <p>Every six hours, via <span class="inline-code">crontab -e</span>:</p>
+          <pre>0 */6 * * * cd /path/to/folder &amp;&amp; \
+  /usr/bin/python3 tennis_card_engine.py \
+  &gt;&gt; cron.log 2&gt;&amp;1</pre>
+        </div>
+        <div class="minicard">
+          <h4>Windows</h4>
+          <p>Task Scheduler &rarr; new task:</p>
+          <pre>Action:    python.exe
+Arguments: tennis_card_engine.py</pre>
+        </div>
+        <div class="minicard">
+          <h4>iPad</h4>
+          <p>
+            An iPad can't run cron. Use GitHub Actions instead — it's free, cloud-hosted,
+            and needs no device left switched on. See <span class="inline-code">IPAD_SETUP.md</span>.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="ref-block" id="outputs">
+      <span class="ref-part">Part 5 of 6</span>
+      <h3>Where the results go</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th class="mono">File</th><th>Holds</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">tennis_cards_verified.xlsx</td><td>Every qualifying card found, one row each, with a live link to the listing.</td></tr>
+            <tr><td class="mono">new_matches.json</td><td>Just the most recent run's finds — what this page shows and what the digest email sends.</td></tr>
+            <tr><td class="mono">seen_items.json</td><td>Item IDs already recorded, so the same card is never added twice.</td></tr>
+            <tr><td class="mono">engine_run.log</td><td>Every accepted and rejected listing, with the reason for each rejection.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="ref-block" id="limits">
+      <span class="ref-part">Part 6 of 6</span>
+      <h3>What this doesn't cover</h3>
+      <p>
+        Fanatics Collect and Alt.xyz have no public search API and render their listings
+        in the browser, so monitoring them would mean fragile scraping against their terms
+        of service. This engine deliberately covers eBay only — check those two by hand.
+      </p>
+    </div>
+
+  </section>
+
+  <footer class="site">
+    <div class="wrap">
+      <p>
+        Runs on your own machine. Your eBay credentials are read from the environment or
+        the <span class="inline-code">.env</span> file beside the server and are never sent
+        to the browser.
+      </p>
+      <p>Listing data and prices come from eBay and are shown as returned. Always confirm the card on the listing page before buying.</p>
+    </div>
+  </footer>
+
+  <section class="wrap saved-page" id="saved-page" hidden aria-labelledby="saved-title">
+    <div class="saved-head">
+      <div>
+        <a class="linkbtn saved-back" href="#board">&larr; Back to the board</a>
+        <p class="eyebrow">Your list</p>
+        <h1 class="masthead-title" id="saved-title">Saved cards</h1>
+      </div>
+      <div class="board-tools">
+        <span class="pill" id="saved-page-count">0 saved</span>
+        <button type="button" class="linkbtn" id="saved-refresh">Check eBay now</button>
+      </div>
+    </div>
+    <div class="seg saved-seg" role="radiogroup" aria-label="Listing status" id="savedstatus-seg">
+      <button type="button" class="seg-btn is-on" role="radio" aria-checked="true" data-value="all">All</button>
+      <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="active">Active</button>
+      <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="sold">Sold</button>
+      <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="ended">Ended</button>
+    </div>
+    <p class="hint" id="savedstatus-note">Every card you have starred.</p>
+    <p class="hint" id="saved-checked"></p>
+    <div id="saved-area"></div>
+  </section>
+</main>
+
+
+<div class="contents-veil" id="contents-veil" hidden></div>
+<nav class="contents" id="contents" aria-label="Contents" hidden>
+  <div class="contents-inner">
+    <div class="contents-head">
+      <p class="eyebrow">Contents</p>
+      <button type="button" class="contents-close" id="contents-close"
+              aria-label="Close contents">&#10005;</button>
+    </div>
+    <ol class="contents-list">
+      <li><a href="#board"><span class="c-n">01</span><span class="c-t">The board</span>
+        <span class="c-d">The newest listings, every find</span></a></li>
+      <li><a href="#scan"><span class="c-n">02</span><span class="c-t">Scan setup</span>
+        <span class="c-d">Players, brands, print-run ceiling</span></a></li>
+      <li><a href="#matches"><span class="c-n">03</span><span class="c-t">Matches</span>
+        <span class="c-d">Every card the scan kept</span></a></li>
+      <li><a href="#saved"><span class="c-n">04</span><span class="c-t">Saved cards</span>
+        <span class="c-d">Your starred cards, active or sold</span></a></li>
+      <li><a href="#activity"><span class="c-n">05</span><span class="c-t">Activity</span>
+        <span class="c-d">Live log, with each rejection</span></a></li>
+      <li><a href="#method"><span class="c-n">06</span><span class="c-t">Method and process</span>
+        <span class="c-d">The rules, the six filter stages, the allow-list, scheduling, outputs and limits</span></a></li>
+    </ol>
+    <p class="contents-foot">Runs on your machine. Your eBay keys never reach the browser.</p>
+  </div>
+</nav>
+
+<!-- hologram -->
+<div class="holo-overlay" id="holo" hidden role="dialog" aria-modal="true" aria-labelledby="holo-name">
+  <button type="button" class="holo-close" id="holo-close" aria-label="Close card">&#10005;</button>
+  <div class="holo-shell">
+
+    <div>
+      <div class="holo-stage">
+        <div class="holo-rotor" id="holo-rotor" tabindex="0"
+             role="img" aria-describedby="holo-hint">
+
+          <article class="holo-face holo-front">
+            <div class="holo-photo" id="holo-photo" hidden><img id="holo-img" alt=""></div>
+            <div class="holo-scrim" id="holo-scrim" hidden></div>
+            <div class="holo-monogram" id="holo-monogram" aria-hidden="true"></div>
+            <div class="holo-rail">
+              <span class="holo-badge" id="holo-badge">Bookend</span>
+              <span class="holo-sport">Tennis</span>
+            </div>
+            <h2 class="holo-name" id="holo-name">Player</h2>
+            <div class="holo-brand" id="holo-brand">Manufacturer</div>
+            <p class="holo-credit" id="holo-credit" hidden></p>
+            <div class="holo-serial-block">
+              <span class="holo-serial" id="holo-serial">1/1</span>
+              <span class="holo-serial-label">Serial</span>
+            </div>
+            <div class="holo-price"><span id="holo-price">&mdash;</span><span>Asking</span></div>
+          </article>
+
+          <div class="holo-face holo-back" id="holo-back">
+            <div class="holo-photo holo-back-photo" id="holo-back-photo" hidden><img id="holo-back-img" alt=""></div>
+            <div class="holo-guilloche" aria-hidden="true"></div>
+            <span class="holo-back-mark">Tennis Card Engine</span>
+            <div class="holo-back-crest" id="holo-back-crest">&#9679;</div>
+            <div class="holo-back-name" id="holo-back-name">Player</div>
+            <hr class="holo-back-rule">
+            <div class="holo-back-meta" id="holo-back-meta">Manufacturer</div>
+            <span class="holo-back-serial" id="holo-back-serial">1/1</span>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="holo-controls">
+        <span class="holo-hint" id="holo-hint">Drag to turn</span>
+        <button type="button" class="holo-ctl" id="holo-flip">Flip</button>
+        <button type="button" class="holo-ctl" id="holo-reset">Reset</button>
+      </div>
+      <div class="holo-thumbs" id="holo-thumbs" hidden aria-label="Listing photos"></div>
+    </div>
+
+    <div class="holo-detail">
+      <p class="eyebrow">Full listing</p>
+      <h2 id="holo-detail-title">Card</h2>
+      <p class="full-title" id="holo-full-title"></p>
+      <dl class="holo-dl">
+        <dt>Player</dt><dd id="holo-d-player"></dd>
+        <dt>Manufacturer</dt><dd id="holo-d-manufacturer"></dd>
+        <dt>Set</dt><dd id="holo-d-set"></dd>
+        <dt>Serial</dt><dd class="mono" id="holo-d-serial"></dd>
+        <dt>Bookend</dt><dd id="holo-d-bookend"></dd>
+        <dt>Price</dt><dd class="mono" id="holo-d-price"></dd>
+        <dt>Card type</dt><dd id="holo-d-cardtype"></dd>
+        <dt>Grading</dt><dd id="holo-d-grading"></dd>
+        <dt>Parallel</dt><dd id="holo-d-parallel"></dd>
+        <dt>Colour match</dt><dd id="holo-d-colourmatch"></dd>
+        <dt id="holo-dt-caution" hidden>Caution</dt><dd id="holo-d-caution" class="is-caution" hidden></dd>
+        <dt>Listing</dt><dd id="holo-d-listing"></dd>
+      </dl>
+      <div class="holo-actions">
+        <button type="button" class="holo-star" id="holo-star" aria-pressed="false">
+          <span class="star-glyph" aria-hidden="true">&#9734;</span><span id="holo-star-label">Save this card</span>
+        </button>
+        <a class="holo-link" id="holo-link" href="#" target="_blank" rel="noopener">
+          <span id="holo-link-label">View listing on eBay</span><span class="arrow">&rarr;</span>
+        </a>
+        <p class="holo-url" id="holo-url"></p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

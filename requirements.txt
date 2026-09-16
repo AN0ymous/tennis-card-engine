@@ -1,0 +1,8 @@
+# The engine's only third-party imports. The web server (server.py) uses the
+# standard library alone. python-dotenv isn't needed -- the engine reads .env
+# itself via its own _load_dotenv().
+requests>=2.28
+openpyxl>=3.1
+# Optional: reads the player's outfit colour from listing photos for the
+# colour-match filter. Only used when ANTHROPIC_API_KEY is set.
+anthropic>=1.0
