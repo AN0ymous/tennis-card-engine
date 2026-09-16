@@ -45,6 +45,7 @@ import json
 import base64
 import logging
 import smtplib
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -64,6 +65,14 @@ from openpyxl.utils import get_column_letter
 # to the PLAYERS roster below (the web app can also narrow a single run).
 SCAN_ALL_PLAYERS = True
 MAX_RESULTS_PER_BRAND = 1200   # when scanning all players: listings fetched per set, newest first
+
+# Item details are the scan's bulk cost: one per listing not judged before.
+# eBay's getItems takes up to 20 ids in a single call, and the calls run
+# concurrently, so a window of listings costs a few round trips instead of
+# one each. Lower DETAIL_WORKERS if eBay starts refusing calls.
+DETAIL_BATCH_SIZE = 20         # eBay's getItems ceiling; do not raise
+DETAIL_WORKERS = 8             # batches in flight at once
+DETAIL_WINDOW = DETAIL_BATCH_SIZE * DETAIL_WORKERS   # listings judged per round
 
 PLAYERS = [
     "Roger Federer",
@@ -589,18 +598,127 @@ def iter_listings(token, player, brand_kw, on_page=None, should_stop=None,
 
 
 def get_item_detail(token, item_id):
-    resp = requests.get(
-        f"{EBAY_API_BASE}/buy/browse/v1/item/{item_id}",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "X-EBAY-C-MARKETPLACE-ID": MARKETPLACE_ID,
-        },
-        timeout=20,
-    )
+    """One listing's full details. None when eBay will not return it."""
+    try:
+        resp = requests.get(
+            f"{EBAY_API_BASE}/buy/browse/v1/item/{item_id}",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "X-EBAY-C-MARKETPLACE-ID": MARKETPLACE_ID,
+            },
+            timeout=20,
+        )
+    except requests.RequestException as exc:
+        # raising here would take down every other listing sharing the pool
+        log.warning("Item detail failed for %s: %s", item_id, exc)
+        return None
     if resp.status_code != 200:
         log.warning("Item detail failed for %s: %s %s", item_id, resp.status_code, resp.text[:200])
         return None
-    return resp.json()
+    try:
+        return resp.json()
+    except ValueError:                       # a 200 that is not JSON
+        log.warning("Item detail for %s was not JSON", item_id)
+        return None
+
+
+# Set False for the rest of the process the first time eBay says it has no
+# bulk item endpoint, so a scan stops paying for a call that cannot work.
+_bulk_details_supported = True
+
+
+def _bulk_item_details(token, item_ids):
+    """One getItems call: up to DETAIL_BATCH_SIZE listings, keyed by item id.
+
+    Returns what the call gave back, or {} when it gave back nothing usable.
+    The caller falls back to the single-item call for whatever is missing, so
+    this is always safe to try."""
+    global _bulk_details_supported
+    if not _bulk_details_supported or not item_ids:
+        return {}
+    try:
+        resp = requests.get(
+            f"{EBAY_API_BASE}/buy/browse/v1/item",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "X-EBAY-C-MARKETPLACE-ID": MARKETPLACE_ID,
+            },
+            params={"item_ids": ",".join(item_ids)},
+            timeout=30,
+        )
+    except requests.RequestException as exc:
+        log.warning("Bulk item details failed for %d id(s): %s", len(item_ids), exc)
+        return {}
+    if resp.status_code in (400, 404, 405):
+        # not there, or not there in this form: stop asking for this process
+        _bulk_details_supported = False
+        log.warning("Bulk item details unavailable (HTTP %s); falling back to one call per "
+                    "listing for the rest of this run: %s", resp.status_code, resp.text[:200])
+        return {}
+    if resp.status_code != 200:
+        log.warning("Bulk item details failed: %s %s", resp.status_code, resp.text[:200])
+        return {}
+    try:
+        items = resp.json().get("items") or []
+    except ValueError:
+        return {}
+    return {entry["itemId"]: entry for entry in items if entry.get("itemId")}
+
+
+def _in_parallel(fn, jobs, workers=None):
+    """fn over jobs, results in the order of jobs. fn must not raise."""
+    jobs = list(jobs)
+    if len(jobs) <= 1:
+        return [fn(job) for job in jobs]
+    workers = max(1, min(workers or DETAIL_WORKERS, len(jobs)))
+    if workers == 1:
+        return [fn(job) for job in jobs]
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        return list(pool.map(fn, jobs))
+
+
+def get_item_details(token, item_ids, workers=None, require="localizedAspects"):
+    """Details for many listings at once, keyed by item id.
+
+    The ids go to eBay in batches of DETAIL_BATCH_SIZE, several batches at a
+    time, so a window of listings costs a handful of round trips instead of
+    one each. Anything a batch leaves out -- or hands back without the item
+    specifics the judge reads -- is fetched singly afterwards, so a change at
+    eBay's end costs speed and never costs results. An id absent from the
+    result is one eBay would not return at all."""
+    ids = [i for i in dict.fromkeys(item_ids) if i]
+    if not ids:
+        return {}
+
+    details = {}
+    batches = [ids[i:i + DETAIL_BATCH_SIZE] for i in range(0, len(ids), DETAIL_BATCH_SIZE)]
+    for got in _in_parallel(lambda batch: _bulk_item_details(token, batch), batches, workers):
+        details.update(got)
+
+    # localizedAspects carries the manufacturer, set, print run and card
+    # number: without it a listing cannot be judged, only wrongly rejected.
+    missing = [i for i in ids
+               if not (details.get(i) if not require else (details.get(i) or {}).get(require))]
+    if missing:
+        for item_id, detail in zip(missing, _in_parallel(
+                lambda i: get_item_detail(token, i), missing, workers)):
+            if detail:
+                details[item_id] = detail
+            else:
+                details.pop(item_id, None)
+    return details
+
+
+def _windows(items, size):
+    """Consecutive slices of an iterable, the last one short."""
+    window = []
+    for item in items:
+        window.append(item)
+        if len(window) >= size:
+            yield window
+            window = []
+    if window:
+        yield window
 
 
 # ============================================================================
@@ -616,11 +734,10 @@ def item_id_from_link(link):
     return f"v1|{m.group(1)}|0" if m else ""
 
 
-def check_listing_status(token, item_id):
-    """One listing's state from the Browse API item call."""
+def status_from_detail(detail):
+    """One listing's state, read off details already fetched."""
     now = datetime.now(timezone.utc)
     result = {"status": "unknown", "checkedAt": now.strftime("%Y-%m-%dT%H:%M:%SZ")}
-    detail = get_item_detail(token, item_id)
     if detail is None:
         result["status"] = "ended"           # eBay no longer serves it
         return result
@@ -650,19 +767,26 @@ def check_listing_status(token, item_id):
     return result
 
 
+def check_listing_status(token, item_id):
+    """One listing's state from the Browse API item call."""
+    return status_from_detail(get_item_detail(token, item_id))
+
+
 def refresh_statuses(token, item_ids, previous=None):
-    """Check the listings named; sold and ended ones keep their last reading."""
+    """Check the listings named; sold and ended ones keep their last reading.
+
+    A settled listing never changes again, so only the unsettled ones cost a
+    call -- and those go to eBay in batches rather than one at a time."""
     statuses = dict(previous or {})
-    for item_id in item_ids:
-        if not item_id:
-            continue
-        old = statuses.get(item_id) or {}
-        if old.get("status") in ("sold", "ended"):
-            continue
-        try:
-            statuses[item_id] = check_listing_status(token, item_id)
-        except requests.RequestException as exc:
-            log.warning("Status check failed for %s: %s", item_id, exc)
+    stale = [i for i in dict.fromkeys(item_ids)
+             if i and (statuses.get(i) or {}).get("status") not in ("sold", "ended")]
+    if not stale:
+        return statuses
+    # no field is required: a status reads off whatever eBay returns, and a
+    # listing eBay will not return at all is exactly what "ended" means
+    details = get_item_details(token, stale, require=None)
+    for item_id in stale:
+        statuses[item_id] = status_from_detail(details.get(item_id))
     return statuses
 
 
@@ -1452,68 +1576,79 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                     "results", player=label, brand=brand_kw, query=query,
                     count=count, offset=offset, total=total))
 
-            for item in listings:
-                checked += 1
-                item_id = item.get("itemId")
-                title = item.get("title", "")
-                if not item_id:
-                    continue
-                earlier = seen.get(item_id)
-                if earlier == "match":
-                    # recorded on an earlier run: say so instead of vanishing
-                    known += 1
-                    emit("known", title=title, link=item.get("itemWebUrl", ""))
-                    continue
-                if earlier == "reject":
-                    judged += 1                 # turned down before for good; no call to eBay
-                    continue
+            # Listings are judged a windowful at a time so their details can be
+            # fetched in batches, several batches at once, rather than one round
+            # trip per listing. The window is still walked in the order eBay
+            # returned it, so the live log reads exactly as it did before.
+            for window in _windows(listings, DETAIL_WINDOW):
+                if should_stop and should_stop():
+                    cancelled = True
+                    break
 
-                detail = get_item_detail(token, item_id)
-                if not detail:
-                    failed += 1
-                    emit("reject", title=title, reason="eBay would not return the item details")
-                    continue
+                triage = [(item, seen.get(item.get("itemId")))
+                          for item in window if item.get("itemId")]
+                checked += len(triage)
+                details = get_item_details(
+                    token, [item["itemId"] for item, earlier in triage if earlier is None])
 
-                verdict, reason, f = judge_listing(item, detail, player, rules)
-                if verdict != "match":
-                    log.info("REJECT (%s): %s", reason, title)
-                    emit("reject", title=title, reason=reason)
-                    if verdict == "reject":
-                        seen[item_id] = "reject"
-                    continue
+                for item, earlier in triage:
+                    item_id = item["itemId"]
+                    title = item.get("title", "")
+                    if earlier == "match":
+                        # recorded on an earlier run: say so instead of vanishing
+                        known += 1
+                        emit("known", title=title, link=item.get("itemWebUrl", ""))
+                        continue
+                    if earlier == "reject":
+                        judged += 1             # turned down before for good; no call to eBay
+                        continue
 
-                bookend_label = append_row(ws, f["player"], f["manufacturer"], f["set_name"], title,
-                                           f["card_number"], f["print_run"], f["price"], f["link"],
-                                           f["image"], f["listed"], f["listing"],
-                                           CARD_TYPES[f["cardType"]], f["grading"], f["images"],
-                                           f["parallel"], f["outfit"], f["colourMatch"], f["caution"])
-                seen[item_id] = "match"
-                record = {
-                    "player": f["player"],
-                    "manufacturer": f["manufacturer"],
-                    "set_name": f["set_name"],
-                    "title": title,
-                    "serial": f"{f['card_number']}/{f['print_run']}",
-                    "bookend": bookend_label,
-                    "price": f["price"],
-                    "link": f["link"],
-                    "image": f["image"],
-                    "images": f["images"],
-                    "listed": f["listed"],
-                    "listing": f["listing"],
-                    "bids": f["bids"],
-                    "itemId": item_id,
-                    "cardType": f["cardType"],
-                    "grading": f["grading"],
-                    "parallel": f["parallel"],
-                    "outfit": f["outfit"],
-                    "colourMatch": f["colourMatch"],
-                    "caution": f["caution"],
-                    "found": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
-                }
-                new_match_records.append(record)
-                log.info("MATCH: %s | %s | %s/%s | %s", f["player"], title, f["card_number"], f["print_run"], f["link"])
-                emit("match", **record)
+                    detail = details.get(item_id)
+                    if not detail:
+                        failed += 1
+                        emit("reject", title=title, reason="eBay would not return the item details")
+                        continue
+
+                    verdict, reason, f = judge_listing(item, detail, player, rules)
+                    if verdict != "match":
+                        log.info("REJECT (%s): %s", reason, title)
+                        emit("reject", title=title, reason=reason)
+                        if verdict == "reject":
+                            seen[item_id] = "reject"
+                        continue
+
+                    bookend_label = append_row(ws, f["player"], f["manufacturer"], f["set_name"], title,
+                                               f["card_number"], f["print_run"], f["price"], f["link"],
+                                               f["image"], f["listed"], f["listing"],
+                                               CARD_TYPES[f["cardType"]], f["grading"], f["images"],
+                                               f["parallel"], f["outfit"], f["colourMatch"], f["caution"])
+                    seen[item_id] = "match"
+                    record = {
+                        "player": f["player"],
+                        "manufacturer": f["manufacturer"],
+                        "set_name": f["set_name"],
+                        "title": title,
+                        "serial": f"{f['card_number']}/{f['print_run']}",
+                        "bookend": bookend_label,
+                        "price": f["price"],
+                        "link": f["link"],
+                        "image": f["image"],
+                        "images": f["images"],
+                        "listed": f["listed"],
+                        "listing": f["listing"],
+                        "bids": f["bids"],
+                        "itemId": item_id,
+                        "cardType": f["cardType"],
+                        "grading": f["grading"],
+                        "parallel": f["parallel"],
+                        "outfit": f["outfit"],
+                        "colourMatch": f["colourMatch"],
+                        "caution": f["caution"],
+                        "found": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+                    }
+                    new_match_records.append(record)
+                    log.info("MATCH: %s | %s | %s/%s | %s", f["player"], title, f["card_number"], f["print_run"], f["link"])
+                    emit("match", **record)
 
         if cancelled:
             break

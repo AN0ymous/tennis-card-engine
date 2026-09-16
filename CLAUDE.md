@@ -60,8 +60,16 @@ on a website.
 ## Things to keep in mind
 
 - eBay Browse API default limit is about 5,000 calls a day, shared by GitHub
-  scans, phone-triggered scans and PC scans. A full fresh scan can need up to
-  about 7,200 detail calls, so never delete `seen_items.json`.
+  scans, phone-triggered scans and PC scans. Item details now go out in
+  batches of 20 (eBay's `getItems` ceiling), so a full fresh scan of ~7,200
+  listings costs about 360 detail calls instead of 7,200. Still never delete
+  `seen_items.json`: a listing judged on an earlier run costs no call at all.
+- Detail fetching is batched and concurrent, tuned by `DETAIL_BATCH_SIZE`
+  (20, eBay's ceiling, do not raise) and `DETAIL_WORKERS` (8) at the top of
+  `tennis_card_engine.py`. Lower `DETAIL_WORKERS` if eBay starts refusing
+  calls. If eBay ever drops `getItems`, the engine falls back to one call per
+  listing on its own -- slower, same results. `tests/test_scan_batching.py`
+  covers both paths and needs no keys.
 - Never commit `.env` or put any key or token in the code.
 - The scan commits to `main`, so always `git pull --rebase` before `git push`,
   and avoid pushing while a scan is running.
