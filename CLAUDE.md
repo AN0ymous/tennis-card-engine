@@ -30,7 +30,7 @@ on a website.
 - **1/0 serials are deliberate.** Cards listed as "-1/0" are real; the minus
   sign can't be shown, so they are kept as 1/0 and treated as bookends. Do not
   add validation that rejects print run 0 or card number > print run.
-- The scan covers all players, all 6 sets, all card types, graded and raw,
+- The scan covers all players, all 7 sets, all card types, graded and raw,
   both listing types, any price. Website filters only narrow what is shown.
 - eBay's account deletion notifications: opted out ("not persisting eBay data").
 

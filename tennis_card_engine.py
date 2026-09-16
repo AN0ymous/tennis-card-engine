@@ -92,7 +92,7 @@ ALLOWED_MANUFACTURERS = {
     "netpro": None,
     "the netpro trading card company": None,
     "panini": ["panini instant"],
-    "topps": ["topps chrome", "graphite royalty", "topps now"],
+    "topps": ["topps chrome", "graphite", "royalty", "topps now"],
     "ace authentic": None,
     "ace authentic, inc": None,
 }
@@ -1222,7 +1222,8 @@ def public_config():
 # ============================================================================
 
 DEFAULT_BRAND_KEYWORDS = ["NetPro", "Panini Instant", "Topps Chrome",
-                          "Topps Graphite Royalty", "Topps Now", "Ace Authentic"]
+                          "Topps Graphite", "Topps Royalty", "Topps Now",
+                          "Ace Authentic"]
 
 
 def aspects_of(detail):
