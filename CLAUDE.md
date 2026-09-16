@@ -33,6 +33,16 @@ on a website.
 - The scan covers all players, all 7 sets, all card types, graded and raw,
   both listing types, any price. Website filters only narrow what is shown.
 - eBay's account deletion notifications: opted out ("not persisting eBay data").
+- **Custom cards are rejected before the serial is read.** A card somebody
+  made themselves carries a real maker in the Manufacturer field and is nearly
+  always called a 1/1, because only one exists, so neither the allow-list nor
+  the bookend rule stops it. `CUSTOM_CARD_WORDS` does, matched as whole words
+  against the title and the Set field only -- never the other item specifics,
+  since eBay puts "Custom Bundle: No" on a great many ordinary listings.
+  "sketch" is deliberately not in the list: licensed artist sketch cards are
+  real and are often genuine 1/1s. `build_board` applies the same rule, so a
+  custom recorded before the rule existed drops off the page while its row
+  stays in the spreadsheet.
 
 ## Changes made to web/assets/app.js
 

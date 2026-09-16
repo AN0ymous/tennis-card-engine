@@ -721,6 +721,11 @@ async function loadConfig() {
     (c.blockedSellers || []).length
       ? `Sellers rejected on sight: ${c.blockedSellers.join(", ")}.`
       : "",
+    (c.customWords || []).length
+      ? "Cards somebody made themselves are rejected before the serial is even read, "
+        + "so a custom card called a 1/1 never counts. A listing is taken as custom when "
+        + `its title or set says any of: ${c.customWords.join(", ")}.`
+      : "",
   ].filter(Boolean).join(" ");
   $("blocklist-note").textContent = blocked;
   const setup = $("colourmatch-setup");

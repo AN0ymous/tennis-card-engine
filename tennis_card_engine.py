@@ -162,6 +162,28 @@ BLOCKED_SELLERS = {
     "athletes4christ",  # private seller producing unlicensed custom/novelty cards
 }
 
+# Cards somebody made themselves. These turn up with a licensed maker in the
+# Manufacturer field -- a custom drawn over a Topps Now design still says
+# "Topps" -- and sellers give them a 1/1 because only one exists, so neither
+# the allow-list nor the serial rule stops them. The words below do, matched
+# as whole words against the title and the Set field, before any of that.
+#
+# Deliberately NOT here: "sketch". Licensed artist sketch cards are real and
+# are often genuine 1/1s. Add it if you would rather not see those either.
+#
+# Matched against the title and Set only, never the other item specifics:
+# eBay puts a "Custom Bundle: No" specific on a great many ordinary listings,
+# and reading that as a custom card would throw away nearly everything.
+CUSTOM_CARD_WORDS = (
+    "custom", "customs", "custom made", "customized", "customised",
+    "aceo",                     # the custom-card format: Art Card Editions and Originals
+    "art card", "art cards",
+    "fan art", "fanart",
+    "hand drawn", "hand-drawn", "handdrawn", "hand painted", "hand-painted",
+    "novelty",
+    "unlicensed", "unofficial",
+)
+
 MAX_PRINT_RUN = 500          # "sub-500": print run must be strictly less than this
 PRINT_RUN_INCLUSIVE = False  # set True to allow print run == 500
 
@@ -954,6 +976,16 @@ def ace_photo_reading(image_urls):
     return reading
 
 
+def looks_custom(title, set_name=""):
+    """The word that marks this as somebody's own card, or "" if there is none.
+
+    Read off the title and the Set field only -- see CUSTOM_CARD_WORDS for why
+    the other item specifics are left out of it."""
+    text = f"{title} {set_name}".lower()
+    return next((w for w in CUSTOM_CARD_WORDS
+                 if re.search(rf"\b{re.escape(w)}\b", text)), "")
+
+
 def is_licensed_and_allowed_brand(title, manufacturer, set_name, aspects=None):
     manu_lower = manufacturer.lower()
     title_lower = title.lower()
@@ -962,6 +994,12 @@ def is_licensed_and_allowed_brand(title, manufacturer, set_name, aspects=None):
 
     if manu_lower in BLOCKED_MANUFACTURER_STRINGS:
         return False, f"blocked manufacturer string: {manufacturer!r}"
+
+    # Before the allow-list and long before the serial: a custom card carries a
+    # real maker's name and a 1/1, and neither of those tells you anything.
+    custom = looks_custom(title, set_name)
+    if custom:
+        return False, f"custom or novelty card: says {custom!r}"
 
     if manu_lower not in ALLOWED_MANUFACTURERS:
         return False, f"manufacturer not in allow-list: {manufacturer!r}"
@@ -1288,6 +1326,11 @@ def build_board(xlsx_path, matches_path=None, limit=24):
         if not link and not cell(row, "Card Description"):
             continue
         manufacturer, _, set_name = cell(row, "Manufacturer / Set").partition(" / ")
+        # A rule added after a row was recorded still applies to it: the board
+        # is what the page shows, and a custom card should not be on it. The
+        # spreadsheet keeps the row, so nothing found is ever lost.
+        if looks_custom(cell(row, "Card Description"), set_name):
+            continue
         price = cell(row, "Price")
         number = re.search(r"\d[\d,]*(?:\.\d+)?", price)
         cards.append({
@@ -1342,6 +1385,7 @@ def public_config():
         "checkedAutographs": list(CHECKED_AUTOGRAPH_MAKERS),
         "blockedManufacturers": sorted(BLOCKED_MANUFACTURER_STRINGS),
         "blockedSellers": sorted(BLOCKED_SELLERS),
+        "customWords": list(CUSTOM_CARD_WORDS),
         "resultsPerQuery": RESULTS_PER_QUERY,
         "categoryId": EBAY_CATEGORY_ID,
         "marketplace": MARKETPLACE_ID,

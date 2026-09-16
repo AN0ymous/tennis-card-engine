@@ -379,5 +379,78 @@ class StatusRefresh(unittest.TestCase):
         self.assertTrue(all(s["status"] == "sold" for s in statuses.values()))
 
 
+
+class CustomCards(unittest.TestCase):
+    """Cards somebody made themselves, however they are numbered."""
+
+    REAL_TOPPS = ("topps", "2025 Topps Now")
+
+    def assertRejected(self, title, manufacturer="Topps", set_name="2025 Topps Now"):
+        ok, reason = engine.is_licensed_and_allowed_brand(title, manufacturer, set_name)
+        self.assertFalse(ok, f"{title!r} was let through")
+        self.assertIn("custom", reason)
+
+    def assertKept(self, title, manufacturer="Topps", set_name="2025 Topps Now"):
+        ok, reason = engine.is_licensed_and_allowed_brand(title, manufacturer, set_name)
+        self.assertTrue(ok, f"{title!r} was turned down: {reason}")
+
+    def test_a_custom_art_card_is_rejected_despite_the_1_of_1(self):
+        """The card from the board: a real maker's name, a real set, a 1/1,
+        and someone's own artwork. The 1/1 is what makes it tempting."""
+        self.assertRejected("1/1 CUSTOM ART CARD Coco Gauff Topps Now 2nd Career Major French Open")
+
+    def test_every_custom_word_is_caught(self):
+        for word in engine.CUSTOM_CARD_WORDS:
+            with self.subTest(word=word):
+                self.assertRejected(f"Coco Gauff Topps Now {word} 1/1")
+
+    def test_custom_in_the_set_field_counts_too(self):
+        ok, _ = engine.is_licensed_and_allowed_brand(
+            "Coco Gauff Topps Now 1/1", "Topps", "Topps Now Custom")
+        self.assertFalse(ok)
+
+    def test_the_rule_runs_before_the_serial_is_read(self):
+        """A custom is turned down as a reject, not a filtered card, so it is
+        never fetched from eBay again."""
+        verdict, reason, _ = engine.judge_listing(
+            {"title": "1/1 CUSTOM ART CARD Coco Gauff Topps Now", "itemId": "v1|1|0"},
+            {"localizedAspects": [{"name": "Manufacturer", "value": "Topps"},
+                                  {"name": "Set", "value": "2025 Topps Now"}]})
+        self.assertEqual(verdict, "reject")
+        self.assertIn("custom", reason)
+
+    def test_ordinary_cards_are_left_alone(self):
+        self.assertKept("Coco Gauff 2021 Topps Chrome Refractor Auto 50/50 PSA 8",
+                        "Topps", "2021 Topps Chrome")
+        self.assertKept("2013 ACE Tennis National Autograph Card BA-CW1 Caroline Wozniacki 15/15",
+                        "Ace Authentic", "2013 Ace Authentic Grand Slam")
+        self.assertKept("2013 Ace Personal Best Career Ranking Arvane Rezai 1/15 #1 Card signed auto",
+                        "Ace Authentic", "")
+
+    def test_a_longer_word_is_not_a_match(self):
+        """Whole words only, so "customer" and "artwork" are not custom cards."""
+        self.assertEqual(engine.looks_custom("Sold by a happy customer, Topps Now 1/1"), "")
+        self.assertEqual(engine.looks_custom("Great artwork on this Topps Now 1/1"), "")
+
+    def test_a_licensed_sketch_card_still_gets_through(self):
+        """Deliberate: artist sketch cards are a real licensed product and are
+        often genuine 1/1s. See CUSTOM_CARD_WORDS."""
+        self.assertKept("2025 Topps Now Coco Gauff Artist Sketch Card 1/1")
+
+
+class BoardDropsCustoms(unittest.TestCase):
+    """A rule added later still applies to rows already recorded."""
+
+    def test_a_recorded_custom_never_reaches_the_page(self):
+        xlsx = os.path.join(HERE, "results", engine.OUTPUT_XLSX)
+        if not os.path.exists(xlsx):
+            self.skipTest("no results/tennis_cards_verified.xlsx yet -- run a scan first")
+        board = engine.build_board(xlsx, os.path.join(HERE, "results", engine.NEW_MATCHES_FILE))
+        for card in board:
+            with self.subTest(card=card.get("title", "?")):
+                self.assertEqual(engine.looks_custom(card["title"], card.get("set_name", "")), "",
+                                 "a custom card is on the board")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
