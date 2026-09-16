@@ -54,7 +54,16 @@ on a website.
    `results/config.json` shows a new `lastRun`. Without one, the button opens
    the GitHub Actions page. Hosted note text says "on a schedule", not a fixed
    interval.
-2. **Matches section fallback:** when the latest scan's `new_matches.json` is
+2. **Scans survive leaving the tab.** No scan runs in the page: the local one
+   runs in `server.py`'s thread, the hosted one on GitHub. What used to stop
+   was the page noticing, since a hidden tab has its timers throttled and a
+   phone may drop the tab entirely. The hosted watch is now kept in
+   localStorage (`tce.watching`, with a deadline) and picked up on load, and
+   coming back to the tab re-checks straight away instead of waiting for the
+   next tick. On a local page, `resumeLocalScan()` replays the server's whole
+   event log, so a scan started before a reload comes back with its log
+   intact.
+3. **Matches section fallback:** when the latest scan's `new_matches.json` is
    empty, show the board's recent cards with "The latest scan found no new
    cards"; show example cards only when nothing has ever been found.
 

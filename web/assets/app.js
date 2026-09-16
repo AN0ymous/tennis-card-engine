@@ -1205,7 +1205,7 @@ function enterHostedMode(c) {
 
   const run = $("run-btn");
   run.onclick = (e) => { e.stopImmediatePropagation(); onHostedRun(c); };
-  renderHostedNote(c);
+  if (!resumeHostedWatch(c)) renderHostedNote(c);
 }
 
 function actionsUrl(c) {
@@ -1284,7 +1284,8 @@ async function onHostedRun(c) {
   }
 
   if (r.status === 204) {
-    renderHostedNote(c, "Scan started. This page reloads by itself when the new results are published, "
+    renderHostedNote(c, "Scan started. You can leave this page or switch tabs -- the scan runs on "
+      + "GitHub, not here. This page reloads by itself when the new results are published, "
       + "usually within 2 to 4 minutes. ");
     run.textContent = "Scan started";
     run.disabled = true;
@@ -1306,23 +1307,82 @@ async function onHostedRun(c) {
 /* Reload once the published results change, for up to 45 minutes. Checking
    every 10 seconds rather than every minute: the check is one small file, and
    a minute's wait used to be most of what stood between a finished scan and
-   seeing it. */
+   seeing it.
+
+   Nothing about the scan itself lives in this page -- it runs on GitHub -- so
+   leaving the tab never stops it. What stops is this page noticing: a hidden
+   tab has its timers throttled or suspended, and a phone may drop the tab
+   from memory altogether. So the watch is written down rather than left to an
+   interval that may never fire again: coming back to the tab checks straight
+   away, and a tab that was thrown out picks the watch up when it reloads. */
 const RESULT_POLL_MS = 10000;
 const RESULT_POLL_LIMIT_MS = 45 * 60000;
+const WATCH_KEY = "tce.watching";
+let resultTimer = null;
 
-function watchForNewResults(before) {
-  const until = Date.now() + RESULT_POLL_LIMIT_MS;
-  const timer = setInterval(async () => {
-    if (Date.now() > until) { clearInterval(timer); renderHostedNote(state.config); return; }
-    try {
-      const r = await fetch(`results/config.json?t=${Date.now()}`, { cache: "no-store" });
-      const fresh = await r.json();
-      if (fresh.lastRun && fresh.lastRun !== before) {
-        clearInterval(timer);
-        window.location.reload();
-      }
-    } catch { /* try again on the next tick */ }
+function rememberWatch(before, until) {
+  try {
+    localStorage.setItem(WATCH_KEY, JSON.stringify({ before: before || "", until }));
+  } catch { /* private mode: this run has only the interval to go on */ }
+}
+
+function forgetWatch() {
+  try { localStorage.removeItem(WATCH_KEY); } catch { /* ignore */ }
+}
+
+/* the watch this device is part-way through, or null */
+function savedWatch() {
+  try {
+    const w = JSON.parse(localStorage.getItem(WATCH_KEY) || "null");
+    return w && w.until > Date.now() ? w : null;
+  } catch { return null; }
+}
+
+async function checkForNewResults(before) {
+  try {
+    const r = await fetch(`results/config.json?t=${Date.now()}`, { cache: "no-store" });
+    const fresh = await r.json();
+    if (fresh.lastRun && fresh.lastRun !== before) {
+      forgetWatch();                       // before reloading, so it cannot loop
+      window.location.reload();
+    }
+  } catch { /* try again on the next tick */ }
+}
+
+function watchForNewResults(before, until) {
+  clearInterval(resultTimer);
+  const deadline = until || Date.now() + RESULT_POLL_LIMIT_MS;
+  rememberWatch(before, deadline);
+  resultTimer = setInterval(() => {
+    if (Date.now() > deadline) {
+      clearInterval(resultTimer);
+      resultTimer = null;
+      forgetWatch();
+      renderHostedNote(state.config);
+      return;
+    }
+    checkForNewResults(before);
   }, RESULT_POLL_MS);
+  checkForNewResults(before);              // and look now, not in ten seconds
+}
+
+/* Picks up a scan this device was already waiting on, after a tab switch or
+   after the tab was dropped and reloaded. */
+function resumeHostedWatch(c) {
+  const watching = savedWatch();
+  if (!watching) return false;
+  if (watching.before !== (c.lastRun || "")) {
+    forgetWatch();                         // its results are already on this page
+    return false;
+  }
+  renderHostedNote(c, "A scan is running on GitHub. You can leave this page or switch tabs "
+    + "-- it carries on, and this page reloads by itself once the results are published. ");
+  // after the note, which re-enables the button as part of drawing itself
+  const run = $("run-btn");
+  run.disabled = true;
+  run.textContent = "Scan running";
+  watchForNewResults(watching.before, watching.until);
+  return true;
 }
 
 /* ------------------------------------------------------------- contents */
@@ -1829,6 +1889,49 @@ async function poll() {
   }
 }
 
+/* The local scan runs in the server, in its own thread, and keeps its whole
+   event log -- so it carries on through a tab switch, a reload, or the page
+   being closed entirely. This picks the live view back up: the log replays
+   from the start, so nothing that happened while away is missed. */
+async function resumeLocalScan() {
+  if (HOSTED || state.running) return;
+  let snap;
+  try {
+    snap = await (await fetch(API.events(0))).json();
+  } catch {
+    return;                                    // no server: nothing to resume
+  }
+  if (!snap.running) return;
+  $("logbox").innerHTML = "";
+  state.since = 0;
+  setRunning(true);
+  (snap.events || []).forEach((e) => {
+    state.since = Math.max(state.since, e.seq);
+    applyEvent(e);
+  });
+  if (!state.polling) state.polling = setInterval(poll, 900);
+}
+
+/* Coming back to the tab looks straight away rather than waiting for the next
+   tick, which in a hidden tab may have been throttled to minutes apart or
+   stopped altogether. pageshow covers Safari restoring a page from its
+   back/forward cache, where no timer of ours is running at all. */
+function initWakeChecks() {
+  const wake = () => {
+    if (document.visibilityState === "hidden") return;
+    if (HOSTED) {
+      const watching = savedWatch();
+      if (watching) checkForNewResults(watching.before);
+      return;
+    }
+    if (state.running) poll();
+    else resumeLocalScan();
+  };
+  document.addEventListener("visibilitychange", wake);
+  window.addEventListener("pageshow", wake);
+  window.addEventListener("focus", wake);
+}
+
 async function runScan() {
   if (HOSTED) return;
   const everyone = $("all-players").checked;
@@ -1887,8 +1990,9 @@ async function stopScan() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initSaved();
-  loadConfig().then(loadSavedMatches).then(loadBoard);
+  loadConfig().then(loadSavedMatches).then(loadBoard).then(resumeLocalScan);
   initRail();
+  initWakeChecks();
 
   $("stop-btn").addEventListener("click", stopScan);
   $("download-btn").addEventListener("click", () => { window.location = API.spreadsheet; });
