@@ -30,7 +30,7 @@ on a website.
 - **1/0 serials are deliberate.** Cards listed as "-1/0" are real; the minus
   sign can't be shown, so they are kept as 1/0 and treated as bookends. Do not
   add validation that rejects print run 0 or card number > print run.
-- The scan covers all players, all 6 sets, all card types, graded and raw,
+- The scan covers all players, all 7 sets, all card types, graded and raw,
   both listing types, any price. Website filters only narrow what is shown.
 - eBay's account deletion notifications: opted out ("not persisting eBay data").
 
@@ -61,7 +61,7 @@ on a website.
 
 - eBay Browse API default limit is about 5,000 calls a day, shared by GitHub
   scans, phone-triggered scans and PC scans. A full fresh scan can need up to
-  about 7,200 detail calls, so never delete `seen_items.json`.
+  about 8,400 detail calls (7 sets x 1,200), so never delete `seen_items.json`.
 - Never commit `.env` or put any key or token in the code.
 - The scan commits to `main`, so always `git pull --rebase` before `git push`,
   and avoid pushing while a scan is running.

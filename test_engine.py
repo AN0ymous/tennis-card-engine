@@ -97,6 +97,49 @@ class SerialReading(unittest.TestCase):
         self.assertFalse(engine.is_bookend_serial(5, 2))
 
 
+class ToppsSetGate(unittest.TestCase):
+    """Topps prints every sport, so a Topps card has to name one of its sets.
+    Graphite and Royalty are searched separately, which means the gate has to
+    accept either name on its own without letting a seller's prose in."""
+
+    def gate(self, title, set_name, manufacturer="Topps"):
+        ok, _ = engine.is_licensed_and_allowed_brand(title, manufacturer, set_name)
+        return ok
+
+    def test_each_set_is_accepted_on_its_own(self):
+        for set_name in ("Topps Chrome", "Topps Graphite", "Topps Royalty", "Topps Now"):
+            with self.subTest(set=set_name):
+                self.assertTrue(self.gate(f"2025 {set_name} Tennis Alcaraz 1/25", set_name))
+
+    def test_the_old_combined_name_still_passes(self):
+        self.assertTrue(self.gate("2025 Topps Graphite Royalty Tennis 1/25",
+                                  "Topps Graphite Royalty"))
+
+    def test_a_bare_set_field_is_enough(self):
+        """eBay's own Set field is specific, so the maker's name is not needed."""
+        self.assertTrue(self.gate("2025 Sinner Refractor Tennis 1/25", "Graphite"))
+        self.assertTrue(self.gate("2025 Sinner Refractor Tennis 1/25", "Royalty"))
+
+    def test_a_title_needs_the_maker_name_attached(self):
+        self.assertTrue(self.gate("2025 Topps Graphite Sinner Tennis 1/25", ""))
+        self.assertTrue(self.gate("2025 Topps Royalty Sinner Tennis 1/25", ""))
+
+    def test_seller_prose_does_not_confirm_a_set(self):
+        """Sellers call players "tennis royalty"; that is not the Royalty set."""
+        self.assertFalse(self.gate("2024 Topps Serena Williams TENNIS ROYALTY Insert 1/50",
+                                   "Topps Series One"))
+        self.assertFalse(self.gate("Topps 2023 Tennis Royalty Federer Base Card 1/99", ""))
+        self.assertFalse(self.gate("2024 Topps Update Graphite Pencil Sketch Tennis 1/1",
+                                   "Topps Update"))
+
+    def test_an_unlisted_topps_set_is_still_turned_down(self):
+        self.assertFalse(self.gate("2024 Topps Series One Tennis 1/50", "Topps Series One"))
+
+    def test_makers_that_need_no_set_keyword(self):
+        self.assertTrue(self.gate("2003 NetPro Elite Nadal 1/100", "NetPro Elite", "NetPro"))
+        self.assertFalse(self.gate("2024 Upper Deck Tennis 1/25", "Some Set", "Upper Deck"))
+
+
 class ItemIdFromLink(unittest.TestCase):
     """web/assets/app.js builds the same 'v1|<digits>|0' key, so saved cards
     line up with the statuses the scan writes."""
