@@ -92,10 +92,16 @@ ALLOWED_MANUFACTURERS = {
     "netpro": None,
     "the netpro trading card company": None,
     "panini": ["panini instant"],
-    "topps": ["topps chrome", "graphite royalty", "topps now"],
+    "topps": ["topps chrome", "graphite", "royalty", "topps now"],
     "ace authentic": None,
     "ace authentic, inc": None,
 }
+
+# "Graphite" and "Royalty" name the sets on their own in eBay's Set field, but
+# as bare words in a title they mean nothing -- every sport has a graphite
+# parallel, and sellers call players "tennis royalty" in their prose. In a
+# title these two only count with the maker's name attached.
+QUALIFIED_IN_TITLE = {"graphite": "topps graphite", "royalty": "topps royalty"}
 
 # Sets to skip even when the manufacturer is allowed, matched as whole words
 # against the item's "Set" specific and the title. NetPro's base and Glossy
@@ -838,7 +844,9 @@ def is_licensed_and_allowed_brand(title, manufacturer, set_name, aspects=None):
 
     required_set_keywords = ALLOWED_MANUFACTURERS[manu_lower]
     if required_set_keywords:
-        if not any(kw in set_lower or kw in title_lower for kw in required_set_keywords):
+        def confirms(kw):
+            return kw in set_lower or QUALIFIED_IN_TITLE.get(kw, kw) in title_lower
+        if not any(confirms(kw) for kw in required_set_keywords):
             return False, f"set/title doesn't confirm {required_set_keywords}"
 
     haystack = f"{set_lower} {title_lower} " + " ".join(
@@ -1222,7 +1230,8 @@ def public_config():
 # ============================================================================
 
 DEFAULT_BRAND_KEYWORDS = ["NetPro", "Panini Instant", "Topps Chrome",
-                          "Topps Graphite Royalty", "Topps Now", "Ace Authentic"]
+                          "Topps Graphite", "Topps Royalty", "Topps Now",
+                          "Ace Authentic"]
 
 
 def aspects_of(detail):
