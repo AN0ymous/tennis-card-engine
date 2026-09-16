@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
 """
-Checks the rules that decide which cards the engine keeps.
+Checks the rules that decide which cards the engine keeps, and that a scan
+asks eBay for the fewest calls it can.
 
     py test_engine.py            # all of them
     py test_engine.py -v         # naming each one
 
-Standard library only, so it needs nothing beyond what the engine already
-uses. The cases in samples/cases.json are real cards the owner supplied, so
-the serial tests below run against those too.
+Needs nothing beyond what the engine already uses, no eBay keys and no
+network: the batching tests stand a fake eBay in front of requests.get. The
+cases in samples/cases.json are real cards the owner supplied, so the serial
+tests below run against those too.
 """
 
 import os
 import json
 import unittest
+import urllib.parse
+
+import requests
 
 import tennis_card_engine as engine
 
@@ -220,6 +225,158 @@ class BoardForTheWebsite(unittest.TestCase):
                     self.assertTrue(card.get(field), f"{field} is empty")
                 self.assertTrue(engine.item_id_from_link(card["link"]),
                                 "link gives no item id, so its status can never be looked up")
+
+
+
+# ===========================================================================
+# Batched detail fetching
+# ===========================================================================
+
+class FakeEbay:
+    """Stands in for the Browse API so the batching can be tested with no
+    keys and no network. Counts round trips, and can pretend getItems does
+    not exist so the single-call fallback is exercised too."""
+
+    BASE_ID = 100000000000
+
+    def __init__(self, listings=500, bulk=True):
+        self.listings, self.bulk = listings, bulk
+        self.calls = {"search": 0, "getItem": 0, "getItems": 0}
+
+    # -- what eBay would return ------------------------------------------
+    def summary(self, n):
+        return {
+            "itemId": f"v1|{self.BASE_ID + n}|0",
+            # every tenth listing is a bookend, the rest are mid-run
+            "title": f"2024 Topps Chrome Player{n} Refractor "
+                     f"{1 if n % 10 == 0 else 7}/50 tennis card",
+            "itemWebUrl": f"https://www.ebay.com/itm/{self.BASE_ID + n}",
+            "image": {"imageUrl": f"https://img.test/{n}.jpg"},
+            "itemCreationDate": "2026-09-10T00:00:00.000Z",
+            "buyingOptions": ["FIXED_PRICE"],
+        }
+
+    def detail(self, item_id):
+        n = int(item_id.split("|")[1]) - self.BASE_ID
+        return dict(self.summary(n), **{
+            "additionalImages": [],
+            "price": {"value": "25.00", "currency": "USD"},
+            "seller": {"username": "someseller"},
+            "estimatedAvailabilities": [{"estimatedAvailabilityStatus": "IN_STOCK"}],
+            "localizedAspects": [
+                {"name": "Manufacturer", "value": "Topps"},
+                {"name": "Set", "value": "2024 Topps Chrome"},
+                {"name": "Sport", "value": "Tennis"},
+                {"name": "Player/Athlete", "value": f"Player{n}"},
+            ],
+        })
+
+    # -- the stand-in for requests.get ------------------------------------
+    class Response:
+        def __init__(self, payload, status=200):
+            self.status_code, self._payload = status, payload
+            self.text = json.dumps(payload)
+
+        def json(self):
+            return self._payload
+
+    def get(self, url, headers=None, params=None, timeout=None, **kw):
+        if "item_summary/search" in url:
+            self.calls["search"] += 1
+            offset, limit = int(params.get("offset", 0)), int(params.get("limit", 50))
+            page = [self.summary(i) for i in range(offset, min(offset + limit, self.listings))]
+            return self.Response({"itemSummaries": page, "total": self.listings})
+        if url.rstrip("/").endswith("/buy/browse/v1/item"):
+            if not self.bulk:
+                return self.Response({"errors": [{"message": "not found"}]}, status=404)
+            self.calls["getItems"] += 1
+            ids = params["item_ids"].split(",")
+            assert len(ids) <= 20, f"batch of {len(ids)} is over eBay's ceiling"
+            return self.Response({"items": [self.detail(i) for i in ids]})
+        if "/buy/browse/v1/item/" in url:
+            self.calls["getItem"] += 1
+            return self.Response(self.detail(urllib.parse.unquote(url.rsplit("/", 1)[-1])))
+        raise AssertionError(f"unexpected URL {url}")
+
+    @property
+    def detail_calls(self):
+        return self.calls["getItem"] + self.calls["getItems"]
+
+
+class BatchedDetails(unittest.TestCase):
+    """Details go to eBay 20 at a time, and the fallback finds the same cards."""
+
+    LISTINGS = 500
+
+    def setUp(self):
+        self._get, self._token = requests.get, engine.get_ebay_token
+        self._per_brand = engine.MAX_RESULTS_PER_BRAND
+        engine.get_ebay_token = lambda: "fake-token"
+        engine.MAX_RESULTS_PER_BRAND = self.LISTINGS
+
+    def tearDown(self):
+        requests.get, engine.get_ebay_token = self._get, self._token
+        engine.MAX_RESULTS_PER_BRAND = self._per_brand
+        engine._bulk_details_supported = True
+
+    def scan(self, bulk):
+        fake = FakeEbay(self.LISTINGS, bulk=bulk)
+        requests.get = fake.get
+        engine._bulk_details_supported = True
+        events = []
+        matches, checked = engine.run_scan(
+            players=None, brand_keywords=["Topps Chrome"], write_outputs=False,
+            on_event=lambda kind, payload: events.append(kind))
+        return fake, matches, checked, events
+
+    def test_batching_and_the_fallback_agree(self):
+        fast, fast_matches, fast_checked, fast_events = self.scan(bulk=True)
+        slow, slow_matches, slow_checked, slow_events = self.scan(bulk=False)
+
+        self.assertEqual(fast_checked, slow_checked, "different listings checked")
+        self.assertEqual([m["link"] for m in fast_matches],
+                         [m["link"] for m in slow_matches], "different cards found")
+        self.assertEqual(fast_events, slow_events, "different events, or a different order")
+        self.assertEqual(len(fast_matches), self.LISTINGS // 10)
+
+    def test_batching_costs_one_call_per_twenty_listings(self):
+        fast, _, _, _ = self.scan(bulk=True)
+        self.assertEqual(fast.detail_calls, self.LISTINGS / engine.DETAIL_BATCH_SIZE)
+        self.assertEqual(fast.calls["getItem"], 0, "fell back when it did not need to")
+
+    def test_without_getitems_every_listing_still_gets_judged(self):
+        slow, _, _, _ = self.scan(bulk=False)
+        self.assertEqual(slow.calls["getItem"], self.LISTINGS)
+
+
+class StatusRefresh(unittest.TestCase):
+    """Statuses batch the same way, and settled listings are never re-checked."""
+
+    IDS = [f"v1|{FakeEbay.BASE_ID + n}|0" for n in range(200)]
+
+    def setUp(self):
+        self._get = requests.get
+
+    def tearDown(self):
+        requests.get = self._get
+        engine._bulk_details_supported = True
+
+    def refresh(self, previous, bulk=True):
+        fake = FakeEbay(bulk=bulk)
+        requests.get = fake.get
+        engine._bulk_details_supported = True
+        return fake, engine.refresh_statuses("fake-token", self.IDS, previous)
+
+    def test_statuses_go_out_in_batches(self):
+        fake, statuses = self.refresh({})
+        self.assertEqual(len(statuses), len(self.IDS))
+        self.assertTrue(all(s["status"] == "active" for s in statuses.values()))
+        self.assertEqual(fake.detail_calls, len(self.IDS) / engine.DETAIL_BATCH_SIZE)
+
+    def test_a_settled_listing_costs_no_call(self):
+        fake, statuses = self.refresh({i: {"status": "sold"} for i in self.IDS})
+        self.assertEqual(fake.detail_calls, 0)
+        self.assertTrue(all(s["status"] == "sold" for s in statuses.values()))
 
 
 if __name__ == "__main__":
