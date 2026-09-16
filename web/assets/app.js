@@ -1529,17 +1529,25 @@ function showFace(photoUrl, altText, credit) {
   const img = $("holo-img");
   const creditLine = $("holo-credit");
 
+  const noPhoto = () => {
+    wrap.hidden = true;
+    $("holo-scrim").hidden = true;
+    img.removeAttribute("src");
+    $("holo-monogram").style.display = "";
+  };
+
   if (photoUrl) {
+    // eBay drops a photo once its listing is gone; show the monogram rather
+    // than leaving the alt text spread across the face of the card
+    img.onerror = noPhoto;
     img.src = photoUrl;
     img.alt = altText;
     wrap.hidden = false;
     $("holo-scrim").hidden = false;
     $("holo-monogram").style.display = "none";
   } else {
-    wrap.hidden = true;
-    $("holo-scrim").hidden = true;
-    img.removeAttribute("src");
-    $("holo-monogram").style.display = "";
+    img.onerror = null;
+    noPhoto();
   }
 
   creditLine.innerHTML = "";
@@ -1641,15 +1649,20 @@ function showBack(url) {
   const face = $("holo-back");
   const wrap = $("holo-back-photo");
   const img = $("holo-back-img");
+  const noPhoto = () => {
+    img.removeAttribute("src");
+    wrap.hidden = true;
+    face.classList.remove("has-photo");
+  };
   if (url) {
+    img.onerror = noPhoto;
     img.src = url;
     img.alt = "Listing photo of the card back";
     wrap.hidden = false;
     face.classList.add("has-photo");
   } else {
-    img.removeAttribute("src");
-    wrap.hidden = true;
-    face.classList.remove("has-photo");
+    img.onerror = null;
+    noPhoto();
   }
   document.querySelectorAll(".holo-thumb").forEach((t) => t.classList.toggle("is-on", t.dataset.url === (url || "")));
 }
@@ -1670,6 +1683,10 @@ function setupBackPhotos(match) {
     b.setAttribute("aria-label", b.title);
     const img = el("img");
     img.src = url; img.alt = ""; img.loading = "lazy";
+    img.addEventListener("error", () => {
+      b.hidden = true;
+      if (!strip.querySelector(".holo-thumb:not([hidden])")) strip.hidden = true;
+    });
     b.append(img);
     b.addEventListener("click", () => {
       if (i === 0) {                                     // the front: turn to it
