@@ -33,6 +33,17 @@ on a website.
 - The scan covers all players, all 7 sets, all card types, graded and raw,
   both listing types, any price. Website filters only narrow what is shown.
 - eBay's account deletion notifications: opted out ("not persisting eBay data").
+- **Custom cards are rejected before the serial is read.** A card somebody
+  made themselves carries a real maker in the Manufacturer field and is nearly
+  always called a 1/1, because only one exists, so neither the allow-list nor
+  the bookend rule stops it. `CUSTOM_CARD_WORDS` does, matched as whole words
+  against the title and the Set field only -- never the other item specifics,
+  since eBay puts "Custom Bundle: No" on a great many ordinary listings.
+  "sketch" is in the list by the owner's decision, knowing it also turns away
+  licensed artist sketch cards: a hand-drawn custom and a real sketch card
+  read the same in a listing title. `build_board` applies the same rule, so a
+  custom recorded before the rule existed drops off the page while its row
+  stays in the spreadsheet.
 
 ## Changes made to web/assets/app.js
 
@@ -60,8 +71,17 @@ on a website.
 ## Things to keep in mind
 
 - eBay Browse API default limit is about 5,000 calls a day, shared by GitHub
-  scans, phone-triggered scans and PC scans. A full fresh scan can need up to
-  about 8,400 detail calls (7 sets x 1,200), so never delete `seen_items.json`.
+  scans, phone-triggered scans and PC scans. A full fresh scan covers about
+  8,400 listings (7 sets x 1,200), but item details go out in batches of 20
+  (eBay's `getItems` ceiling), so that costs roughly 420 detail calls rather
+  than 8,400. Still never delete `seen_items.json`: a listing judged on an
+  earlier run costs no call at all.
+- Detail fetching is batched and concurrent, tuned by `DETAIL_BATCH_SIZE`
+  (20, eBay's ceiling, do not raise) and `DETAIL_WORKERS` (8) at the top of
+  `tennis_card_engine.py`. Lower `DETAIL_WORKERS` if eBay starts refusing
+  calls. If eBay ever drops `getItems`, the engine falls back to one call per
+  listing on its own -- slower, same results. The batching tests in
+  `test_engine.py` cover both paths and need no keys.
 - Never commit `.env` or put any key or token in the code.
 - The scan commits to `main`, so always `git pull --rebase` before `git push`,
   and avoid pushing while a scan is running.

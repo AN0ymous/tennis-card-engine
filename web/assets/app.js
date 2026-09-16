@@ -721,6 +721,11 @@ async function loadConfig() {
     (c.blockedSellers || []).length
       ? `Sellers rejected on sight: ${c.blockedSellers.join(", ")}.`
       : "",
+    (c.customWords || []).length
+      ? "Cards somebody made themselves are rejected before the serial is even read, "
+        + "so a custom card called a 1/1 never counts. A listing is taken as custom when "
+        + `its title or set says any of: ${c.customWords.join(", ")}.`
+      : "",
   ].filter(Boolean).join(" ");
   $("blocklist-note").textContent = blocked;
   const setup = $("colourmatch-setup");
@@ -1280,7 +1285,7 @@ async function onHostedRun(c) {
 
   if (r.status === 204) {
     renderHostedNote(c, "Scan started. This page reloads by itself when the new results are published, "
-      + "usually within 5 to 10 minutes. ");
+      + "usually within 2 to 4 minutes. ");
     run.textContent = "Scan started";
     run.disabled = true;
     watchForNewResults(c.lastRun);
@@ -1298,12 +1303,17 @@ async function onHostedRun(c) {
   }
 }
 
-/* reload once the published results change, for up to 45 minutes */
+/* Reload once the published results change, for up to 45 minutes. Checking
+   every 10 seconds rather than every minute: the check is one small file, and
+   a minute's wait used to be most of what stood between a finished scan and
+   seeing it. */
+const RESULT_POLL_MS = 10000;
+const RESULT_POLL_LIMIT_MS = 45 * 60000;
+
 function watchForNewResults(before) {
-  let tries = 0;
+  const until = Date.now() + RESULT_POLL_LIMIT_MS;
   const timer = setInterval(async () => {
-    tries += 1;
-    if (tries > 45) { clearInterval(timer); renderHostedNote(state.config); return; }
+    if (Date.now() > until) { clearInterval(timer); renderHostedNote(state.config); return; }
     try {
       const r = await fetch(`results/config.json?t=${Date.now()}`, { cache: "no-store" });
       const fresh = await r.json();
@@ -1311,8 +1321,8 @@ function watchForNewResults(before) {
         clearInterval(timer);
         window.location.reload();
       }
-    } catch { /* try again next minute */ }
-  }, 60000);
+    } catch { /* try again on the next tick */ }
+  }, RESULT_POLL_MS);
 }
 
 /* ------------------------------------------------------------- contents */
