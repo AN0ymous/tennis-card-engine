@@ -432,10 +432,12 @@ class CustomCards(unittest.TestCase):
         self.assertEqual(engine.looks_custom("Sold by a happy customer, Topps Now 1/1"), "")
         self.assertEqual(engine.looks_custom("Great artwork on this Topps Now 1/1"), "")
 
-    def test_a_licensed_sketch_card_still_gets_through(self):
-        """Deliberate: artist sketch cards are a real licensed product and are
-        often genuine 1/1s. See CUSTOM_CARD_WORDS."""
-        self.assertKept("2025 Topps Now Coco Gauff Artist Sketch Card 1/1")
+    def test_sketch_cards_are_rejected_too(self):
+        """The owner's call: a hand-drawn custom and a licensed artist sketch
+        card read the same in a listing title, so both go. This does turn away
+        some real cards. See CUSTOM_CARD_WORDS."""
+        self.assertRejected("2025 Topps Now Coco Gauff Artist Sketch Card 1/1")
+        self.assertRejected("2024 Topps Chrome Federer Sketches 1/1")
 
 
 class BoardDropsCustoms(unittest.TestCase):

@@ -168,8 +168,11 @@ BLOCKED_SELLERS = {
 # the allow-list nor the serial rule stops them. The words below do, matched
 # as whole words against the title and the Set field, before any of that.
 #
-# Deliberately NOT here: "sketch". Licensed artist sketch cards are real and
-# are often genuine 1/1s. Add it if you would rather not see those either.
+# "sketch" is in the list by the owner's decision. Licensed artist sketch
+# cards do exist and are often genuine 1/1s, so this does turn away some real
+# cards -- that is the trade accepted to keep hand-drawn customs out, since
+# the two read identically in a listing title. Drop "sketch" and "sketches"
+# from the tuple to take it back.
 #
 # Matched against the title and Set only, never the other item specifics:
 # eBay puts a "Custom Bundle: No" specific on a great many ordinary listings,
@@ -181,6 +184,8 @@ CUSTOM_CARD_WORDS = (
     "fan art", "fanart",
     "hand drawn", "hand-drawn", "handdrawn", "hand painted", "hand-painted",
     "novelty",
+    "sketch", "sketches",       # see the note above: this turns away licensed
+                                # artist sketch cards along with the customs
     "unlicensed", "unofficial",
 )
 

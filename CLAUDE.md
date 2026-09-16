@@ -39,8 +39,9 @@ on a website.
   the bookend rule stops it. `CUSTOM_CARD_WORDS` does, matched as whole words
   against the title and the Set field only -- never the other item specifics,
   since eBay puts "Custom Bundle: No" on a great many ordinary listings.
-  "sketch" is deliberately not in the list: licensed artist sketch cards are
-  real and are often genuine 1/1s. `build_board` applies the same rule, so a
+  "sketch" is in the list by the owner's decision, knowing it also turns away
+  licensed artist sketch cards: a hand-drawn custom and a real sketch card
+  read the same in a listing title. `build_board` applies the same rule, so a
   custom recorded before the rule existed drops off the page while its row
   stays in the spreadsheet.
 
