@@ -62,9 +62,16 @@ on a website.
 - eBay Browse API default limit is about 5,000 calls a day, shared by GitHub
   scans, phone-triggered scans and PC scans. A full fresh scan covers about
   8,400 listings (7 sets x 1,200), but item details go out in batches of 20
-  (eBay's `getItems` ceiling), so that costs roughly 420 detail calls rather
-  than 8,400. Still never delete `seen_items.json`: a listing judged on an
-  earlier run costs no call at all.
+  (eBay's `getItems` ceiling), so that should cost roughly 420 detail calls
+  rather than 8,400. Still never delete `seen_items.json`: a listing judged
+  on an earlier run costs no call at all.
+- **The 420 figure is not yet confirmed against live eBay.** It holds only if
+  `getItems` returns `localizedAspects` (the manufacturer, set and serial the
+  judge reads). If it does not, every listing needs its own call anyway, and
+  the engine notices on the first window and stops batching those, so a scan
+  costs about 8,400 again rather than more. The first real run settles it:
+  look in the "Run the engine" log for "Bulk item details carry no
+  localizedAspects" or "Bulk item details unavailable".
 - Detail fetching is batched and concurrent, tuned by `DETAIL_BATCH_SIZE`
   (20, eBay's ceiling, do not raise) and `DETAIL_WORKERS` (8) at the top of
   `tennis_card_engine.py`. Lower `DETAIL_WORKERS` if eBay starts refusing
