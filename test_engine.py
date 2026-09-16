@@ -239,8 +239,11 @@ class FakeEbay:
 
     BASE_ID = 100000000000
 
-    def __init__(self, listings=500, bulk=True):
+    def __init__(self, listings=500, bulk=True, aspects_in_bulk=True):
         self.listings, self.bulk = listings, bulk
+        # eBay can answer getItems perfectly well and still leave the item
+        # specifics out of what it sends back
+        self.aspects_in_bulk = aspects_in_bulk
         self.calls = {"search": 0, "getItem": 0, "getItems": 0}
 
     # -- what eBay would return ------------------------------------------
@@ -292,7 +295,10 @@ class FakeEbay:
             self.calls["getItems"] += 1
             ids = params["item_ids"].split(",")
             assert len(ids) <= 20, f"batch of {len(ids)} is over eBay's ceiling"
-            return self.Response({"items": [self.detail(i) for i in ids]})
+            items = [self.detail(i) for i in ids]
+            if not self.aspects_in_bulk:
+                items = [{k: v for k, v in d.items() if k != "localizedAspects"} for d in items]
+            return self.Response({"items": items})
         if "/buy/browse/v1/item/" in url:
             self.calls["getItem"] += 1
             return self.Response(self.detail(urllib.parse.unquote(url.rsplit("/", 1)[-1])))
@@ -452,6 +458,63 @@ class BoardDropsCustoms(unittest.TestCase):
             with self.subTest(card=card.get("title", "?")):
                 self.assertEqual(engine.looks_custom(card["title"], card.get("set_name", "")), "",
                                  "a custom card is on the board")
+
+
+class BulkWithoutItemSpecifics(unittest.TestCase):
+    """getItems can answer fine and still leave out localizedAspects. Every
+    listing then needs its own call regardless, so carrying on batching would
+    cost more than never batching -- and nothing in the HTTP status says so."""
+
+    IDS = [f"v1|{FakeEbay.BASE_ID + n}|0" for n in range(200)]
+
+    def setUp(self):
+        self._get = requests.get
+
+    def tearDown(self):
+        requests.get = self._get
+        engine._bulk_details_supported = True
+        engine._bulk_details_carry_aspects = True
+
+    def fetch(self, ids, **kwargs):
+        fake = FakeEbay(aspects_in_bulk=False)
+        requests.get = fake.get
+        engine._bulk_details_supported = True
+        engine._bulk_details_carry_aspects = True
+        return fake, engine.get_item_details("fake-token", ids, **kwargs)
+
+    def test_every_listing_is_still_returned_in_full(self):
+        fake, details = self.fetch(self.IDS)
+        self.assertEqual(len(details), len(self.IDS))
+        for item_id, detail in details.items():
+            with self.subTest(item=item_id):
+                self.assertTrue(detail.get("localizedAspects"),
+                                "a listing came back with no item specifics to judge on")
+
+    def test_batching_stops_instead_of_costing_more_than_it_saves(self):
+        fake, _ = self.fetch(self.IDS)
+        self.assertFalse(engine._bulk_details_carry_aspects,
+                         "batching stayed on despite never carrying item specifics")
+        # one round of batches to find out, then one call each -- never a
+        # batch call per listing on top of the single call it still needs
+        self.assertLessEqual(fake.calls["getItems"], len(self.IDS) / engine.DETAIL_BATCH_SIZE)
+        self.assertLess(fake.detail_calls, len(self.IDS) * 1.2)
+
+    def test_later_fetches_skip_the_batch_entirely(self):
+        self.fetch(self.IDS)
+        fake = FakeEbay(aspects_in_bulk=False)
+        requests.get = fake.get
+        engine.get_item_details("fake-token", self.IDS)
+        self.assertEqual(fake.calls["getItems"], 0)
+        self.assertEqual(fake.calls["getItem"], len(self.IDS))
+
+    def test_statuses_keep_batching_because_they_need_no_specifics(self):
+        engine._bulk_details_carry_aspects = False
+        fake = FakeEbay(aspects_in_bulk=False)
+        requests.get = fake.get
+        statuses = engine.refresh_statuses("fake-token", self.IDS, {})
+        self.assertEqual(len(statuses), len(self.IDS))
+        self.assertEqual(fake.calls["getItem"], 0)
+        self.assertEqual(fake.calls["getItems"], len(self.IDS) / engine.DETAIL_BATCH_SIZE)
 
 
 if __name__ == "__main__":
