@@ -896,9 +896,12 @@ function selected(name) {
 
 function renderMatches() {
   const area = $("results-area");
-  const all = state.matches.length ? state.matches : EXAMPLES;
+  // The latest scan's finds; when it found nothing new, the most recent cards
+  // recorded so far; examples only when nothing has ever been found.
+  const fromBoard = !state.matches.length && state.board.length > 0;
+  const all = state.matches.length ? state.matches : fromBoard ? state.board : EXAMPLES;
   const list = sortCards(all.filter(passesFilters));
-  state.showingExamples = state.matches.length === 0;
+  state.showingExamples = !state.matches.length && !fromBoard;
 
   $("match-count").textContent = state.showingExamples
     ? "example cards"
@@ -906,12 +909,19 @@ function renderMatches() {
 
   area.innerHTML = "";
 
-  if (state.showingExamples) {
+  if (fromBoard) {
     const note = el("div", "empty");
     note.style.padding = "16px 16px 0";
     note.append(el("p", null,
-      "No scan results yet. These three are examples of what a match looks like — " +
-      "tap one to open the card. They are not real listings."));
+      "The latest scan found no new cards. These are the most recent cards found so far; " +
+      "the full list is in the spreadsheet."));
+    area.append(note);
+  } else if (state.showingExamples) {
+    const note = el("div", "empty");
+    note.style.padding = "16px 16px 0";
+    note.append(el("p", null,
+      "No cards found yet. These three are examples of what a match looks like, " +
+      "not real listings. Tap one to open the card."));
     area.append(note);
   }
 
@@ -1097,6 +1107,7 @@ async function loadBoard() {
     if (Array.isArray(data.cards)) state.board = data.cards;
   } catch { /* offline or preview: examples will show */ }
   renderBoard();
+  if (!state.matches.length) renderMatches();   // fall back to the board's cards
 }
 
 /* a newly found card takes its place on the board immediately, newest first */

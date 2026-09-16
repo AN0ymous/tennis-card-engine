@@ -861,6 +861,8 @@ def is_bookend_serial(card_number, print_run, max_print_run=None, inclusive=None
     inclusive = PRINT_RUN_INCLUSIVE if inclusive is None else inclusive
     if card_number is None or print_run is None:
         return False
+    if print_run < 1 or not 1 <= card_number <= print_run:
+        return False                       # "1/0" or "5/3" is a misread, not a serial
     if print_run >= max_print_run and not (inclusive and print_run == max_print_run):
         return False
     return card_number == 1 or card_number == print_run
@@ -1265,6 +1267,8 @@ def judge_listing(item, detail, player=None, rules=None):
     card_number, print_run = extract_serial(title, aspects)
     if card_number is None or print_run is None:
         return "reject", "no serial number (N/M) in the title or specifics", None
+    if print_run < 1 or not 1 <= card_number <= print_run:
+        return "reject", f"{card_number}/{print_run} is not a real serial number", None
     if card_number not in (1, print_run):
         return "reject", f"{card_number}/{print_run} is neither the first nor the last of its run", None
     if not is_bookend_serial(card_number, print_run, max_print_run, rules.get("print_run_inclusive")):
