@@ -1163,26 +1163,145 @@ function initRail() {
 
 /* ---- hosted on GitHub Pages: the scan runs on GitHub, not here ---- */
 
+/* One-tap scans. A GitHub token pasted on this device is kept only in this
+   browser's storage, never in the repo, so the public page stays safe: any
+   other browser still gets the plain "open GitHub" button. */
+const GH_TOKEN_KEY = "tce.githubToken";
+
+function githubToken() {
+  try { return localStorage.getItem(GH_TOKEN_KEY) || ""; } catch { return ""; }
+}
+
+function setGithubToken(token) {
+  try {
+    if (token) localStorage.setItem(GH_TOKEN_KEY, token);
+    else localStorage.removeItem(GH_TOKEN_KEY);
+  } catch { /* private mode: nothing is kept */ }
+}
+
 function enterHostedMode(c) {
   const pill = $("status-pill");
   pill.textContent = c.lastRun ? `Last scan ${c.lastRun}` : "Hosted";
   pill.className = "pill is-ok";
   document.body.classList.add("is-hosted");
-
-  const actions = c.repo
-    ? `https://github.com/${c.repo}/actions/workflows/${c.workflow || "scan.yml"}`
-    : "";
-  const run = $("run-btn");
-  run.textContent = "Run a scan on GitHub";
-  run.disabled = !actions;
-  run.onclick = (e) => { e.stopImmediatePropagation(); if (actions) window.open(actions, "_blank", "noopener"); };
   $("stop-btn").hidden = true;
-  $("hosted-note").hidden = false;
-  $("hosted-note").innerHTML = actions
-    ? `Scans run on GitHub every six hours and this page updates from them. ` +
-      `To start one now, press the button, then <strong>Run workflow</strong> on the page that opens.`
-    : `Scans run on GitHub every six hours and this page updates from them.`;
   $("download-btn").hidden = !c.spreadsheetExists;
+
+  const run = $("run-btn");
+  run.onclick = (e) => { e.stopImmediatePropagation(); onHostedRun(c); };
+  renderHostedNote(c);
+}
+
+function actionsUrl(c) {
+  return c.repo ? `https://github.com/${c.repo}/actions/workflows/${c.workflow || "scan.yml"}` : "";
+}
+
+function renderHostedNote(c, message) {
+  const note = $("hosted-note");
+  const run = $("run-btn");
+  const hasToken = !!githubToken();
+  note.hidden = false;
+  note.innerHTML = "";
+
+  if (!c.repo) {
+    run.textContent = "Run a scan on GitHub";
+    run.disabled = true;
+    note.append(el("span", null, "Scans run on GitHub on a schedule, and this page updates after each one."));
+    return;
+  }
+
+  run.disabled = false;
+  run.textContent = hasToken ? "Run a scan" : "Run a scan on GitHub";
+  note.append(el("span", null, message || (hasToken
+    ? "One-tap scans are on for this device. Run a scan starts one on GitHub straight away. "
+    : "Scans run on GitHub on a schedule, and this page updates after each one. "
+      + "Run a scan on GitHub opens GitHub, where you press Run workflow. ")));
+
+  const toggle = el("button", "linkbtn", hasToken ? "Remove key from this device" : "Set up one-tap scans on this device");
+  toggle.type = "button";
+  toggle.addEventListener("click", () => (hasToken ? forgetKey(c) : addKey(c)));
+  note.append(toggle);
+}
+
+function addKey(c) {
+  const entered = window.prompt(
+    "Paste your GitHub fine-grained token for this repo (Actions: Read and write). "
+    + "It is stored only in this browser.");
+  const token = (entered || "").trim();
+  if (!token) return;
+  if (!/^(github_pat_|ghp_)[A-Za-z0-9_]+$/.test(token)) {
+    renderHostedNote(c, "That doesn't look like a GitHub token. It should start with github_pat_. ");
+    return;
+  }
+  setGithubToken(token);
+  renderHostedNote(c, "Key saved on this device. Run a scan now starts one on GitHub straight away. ");
+}
+
+function forgetKey(c) {
+  setGithubToken("");
+  renderHostedNote(c, "Key removed from this device. Run a scan on GitHub opens GitHub again. ");
+}
+
+async function onHostedRun(c) {
+  const url = actionsUrl(c);
+  const token = githubToken();
+  if (!token) {
+    if (url) window.open(url, "_blank", "noopener");
+    return;
+  }
+
+  const run = $("run-btn");
+  run.disabled = true;
+  run.textContent = "Starting scan…";
+  let r;
+  try {
+    r = await fetch(
+      `https://api.github.com/repos/${c.repo}/actions/workflows/${c.workflow || "scan.yml"}/dispatches`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" },
+        body: JSON.stringify({ ref: "main" }),
+      });
+  } catch {
+    renderHostedNote(c, "Couldn't reach GitHub. Check your connection and try again. ");
+    return;
+  }
+
+  if (r.status === 204) {
+    renderHostedNote(c, "Scan started. This page reloads by itself when the new results are published, "
+      + "usually within 5 to 10 minutes. ");
+    run.textContent = "Scan started";
+    run.disabled = true;
+    watchForNewResults(c.lastRun);
+    return;
+  }
+  if (r.status === 401) {
+    setGithubToken("");
+    renderHostedNote(c, "GitHub turned down the key, so it was removed from this device. "
+      + "It may have expired or been deleted. Add a new one to try again. ");
+  } else if (r.status === 403 || r.status === 404) {
+    renderHostedNote(c, `This key can't start scans for ${c.repo}. `
+      + "Check it has access to this repo with Actions set to Read and write. ");
+  } else {
+    renderHostedNote(c, `GitHub didn't start the scan (HTTP ${r.status}). Try again in a minute. `);
+  }
+}
+
+/* reload once the published results change, for up to 45 minutes */
+function watchForNewResults(before) {
+  let tries = 0;
+  const timer = setInterval(async () => {
+    tries += 1;
+    if (tries > 45) { clearInterval(timer); renderHostedNote(state.config); return; }
+    try {
+      const r = await fetch(`results/config.json?t=${Date.now()}`, { cache: "no-store" });
+      const fresh = await r.json();
+      if (fresh.lastRun && fresh.lastRun !== before) {
+        clearInterval(timer);
+        window.location.reload();
+      }
+    } catch { /* try again next minute */ }
+  }, 60000);
 }
 
 /* ------------------------------------------------------------- contents */
