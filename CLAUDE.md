@@ -60,13 +60,25 @@ on a website.
 
 ## Open items
 
-- Confirm the updated `app.js` is pushed to GitHub (as of the last check, the
-  repo still had the older version, so Matches showed example cards even though
-  `results/board.json` had 12 real cards).
-- `results/status.json` came back with empty statuses. Check the "Export what
-  the hosted site reads" step log for "status refresh skipped: ..." and fix.
-- Stale comment on the first line of `scan.yml` still says "every six hours".
+- **Nothing checks the sport when scanning all players.** `judge_listing` only
+  applies the tennis test through `matches_player`, which is skipped when no
+  player is named -- and `SCAN_ALL_PLAYERS` is True. eBay category 212 is
+  Sports Trading Cards, every sport. So a Topps Chrome *baseball* card with a
+  bookend serial matches today. The obvious fix (require `is_tennis_listing`
+  when no player is named) would also turn away real tennis listings whose
+  title never says "tennis" and that carry no Sport specific, so measure that
+  against the board before changing it.
+- `results/status.json` was empty because `export_static.py` ran without the
+  eBay keys; the keys were added to that step, but no scan has run since, so
+  the fix is unverified. Check the next run's "Export what the hosted site
+  reads" step for "status refresh skipped: ...".
+- Whether batching actually saves calls is unconfirmed -- see the note on the
+  420 figure under "Things to keep in mind".
 - `README.md` is not a real readme (it contains pasted engine code).
+
+Done since these notes were written: `app.js` confirmed on `main` (the Matches
+fallback works), `scan.yml`'s six-hourly comment corrected, and `test_engine.py`
+added -- run `py test_engine.py` before pushing engine changes.
 
 ## Things to keep in mind
 
