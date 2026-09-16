@@ -50,6 +50,12 @@ jobs:
         run: python tennis_card_engine.py
 
       - name: Export what the hosted site reads
+        env:
+          EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
+          EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
+          EBAY_ENV: ${{ vars.EBAY_ENV }}      # leave unset; "sandbox" only to test keys
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional: outfit colours from photos
+          VISION_MODEL: ${{ vars.VISION_MODEL }}               # optional; default claude-opus-5
         run: python export_static.py results
 
       - name: Keep the results in the repo
