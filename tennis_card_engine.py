@@ -659,6 +659,13 @@ def get_item_detail(token, item_id):
 # bulk item endpoint, so a scan stops paying for a call that cannot work.
 _bulk_details_supported = True
 
+# Separately: the endpoint can answer perfectly well and still leave out the
+# item specifics the judge reads. Batching then costs a batch call on top of
+# the single call every listing needs anyway, which is dearer than not
+# batching at all -- so stop asking it for those, while statuses, which need
+# no specifics, keep batching.
+_bulk_details_carry_aspects = True
+
 
 def _bulk_item_details(token, item_ids):
     """One getItems call: up to DETAIL_BATCH_SIZE listings, keyed by item id.
@@ -719,14 +726,20 @@ def get_item_details(token, item_ids, workers=None, require="localizedAspects"):
     specifics the judge reads -- is fetched singly afterwards, so a change at
     eBay's end costs speed and never costs results. An id absent from the
     result is one eBay would not return at all."""
+    global _bulk_details_carry_aspects
     ids = [i for i in dict.fromkeys(item_ids) if i]
     if not ids:
         return {}
 
     details = {}
-    batches = [ids[i:i + DETAIL_BATCH_SIZE] for i in range(0, len(ids), DETAIL_BATCH_SIZE)]
-    for got in _in_parallel(lambda batch: _bulk_item_details(token, batch), batches, workers):
-        details.update(got)
+    if not require or _bulk_details_carry_aspects:
+        batches = [ids[i:i + DETAIL_BATCH_SIZE] for i in range(0, len(ids), DETAIL_BATCH_SIZE)]
+        for got in _in_parallel(lambda batch: _bulk_item_details(token, batch), batches, workers):
+            details.update(got)
+        if require and details and not any(d.get(require) for d in details.values()):
+            _bulk_details_carry_aspects = False
+            log.warning("Bulk item details carry no %s, so every listing would need its own "
+                        "call anyway; asking for them singly for the rest of this run", require)
 
     # localizedAspects carries the manufacturer, set, print run and card
     # number: without it a listing cannot be judged, only wrongly rejected.

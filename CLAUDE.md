@@ -60,22 +60,41 @@ on a website.
 
 ## Open items
 
-- Confirm the updated `app.js` is pushed to GitHub (as of the last check, the
-  repo still had the older version, so Matches showed example cards even though
-  `results/board.json` had 12 real cards).
-- `results/status.json` came back with empty statuses. Check the "Export what
-  the hosted site reads" step log for "status refresh skipped: ..." and fix.
-- Stale comment on the first line of `scan.yml` still says "every six hours".
+- **Nothing checks the sport when scanning all players.** `judge_listing` only
+  applies the tennis test through `matches_player`, which is skipped when no
+  player is named -- and `SCAN_ALL_PLAYERS` is True. eBay category 212 is
+  Sports Trading Cards, every sport. So a Topps Chrome *baseball* card with a
+  bookend serial matches today. The obvious fix (require `is_tennis_listing`
+  when no player is named) would also turn away real tennis listings whose
+  title never says "tennis" and that carry no Sport specific, so measure that
+  against the board before changing it.
+- `results/status.json` was empty because `export_static.py` ran without the
+  eBay keys; the keys were added to that step, but no scan has run since, so
+  the fix is unverified. Check the next run's "Export what the hosted site
+  reads" step for "status refresh skipped: ...".
+- Whether batching actually saves calls is unconfirmed -- see the note on the
+  420 figure under "Things to keep in mind".
 - `README.md` is not a real readme (it contains pasted engine code).
+
+Done since these notes were written: `app.js` confirmed on `main` (the Matches
+fallback works), `scan.yml`'s six-hourly comment corrected, and `test_engine.py`
+added -- run `py test_engine.py` before pushing engine changes.
 
 ## Things to keep in mind
 
 - eBay Browse API default limit is about 5,000 calls a day, shared by GitHub
   scans, phone-triggered scans and PC scans. A full fresh scan covers about
   8,400 listings (7 sets x 1,200), but item details go out in batches of 20
-  (eBay's `getItems` ceiling), so that costs roughly 420 detail calls rather
-  than 8,400. Still never delete `seen_items.json`: a listing judged on an
-  earlier run costs no call at all.
+  (eBay's `getItems` ceiling), so that should cost roughly 420 detail calls
+  rather than 8,400. Still never delete `seen_items.json`: a listing judged
+  on an earlier run costs no call at all.
+- **The 420 figure is not yet confirmed against live eBay.** It holds only if
+  `getItems` returns `localizedAspects` (the manufacturer, set and serial the
+  judge reads). If it does not, every listing needs its own call anyway, and
+  the engine notices on the first window and stops batching those, so a scan
+  costs about 8,400 again rather than more. The first real run settles it:
+  look in the "Run the engine" log for "Bulk item details carry no
+  localizedAspects" or "Bulk item details unavailable".
 - Detail fetching is batched and concurrent, tuned by `DETAIL_BATCH_SIZE`
   (20, eBay's ceiling, do not raise) and `DETAIL_WORKERS` (8) at the top of
   `tennis_card_engine.py`. Lower `DETAIL_WORKERS` if eBay starts refusing
