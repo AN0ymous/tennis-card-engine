@@ -58,9 +58,13 @@ on a website.
   query, so the wide scan covers the newest 1,200 listings of each set and
   everything listed after that; older listings surface only through a player
   scan, whose result set is small enough to reach the back of.
-- **A player is searched by full name and surname, never first name alone.**
-  "Denis Topps Chrome" brought every Denis in every sport: 1,083 of the 2,077
-  listings the 17 Sep Shapovalov scan paid for were not his. The judge no
+- **A player is searched by surname; by full name only past the cap; never
+  by first name alone.** eBay matches every word, so "Shapovalov Topps Chrome"
+  returns everything "Denis Shapovalov Topps Chrome" would and more -- the
+  full-name search is only worth a call when the surname search hit eBay's
+  1,200 cap and listings past it may still be reachable by the narrower
+  words. "Denis Topps Chrome" brought every Denis in every sport: 1,083 of
+  the 2,077 listings the 17 Sep Shapovalov scan paid for were not his. The judge no
   longer accepts a first name alone either -- that is how "2025 Topps Royalty
   UFC Benoit Saint Denis" was recorded as Denis Shapovalov. A card titled with
   a first name only is not attributed in a player scan; the wide scan still
@@ -230,8 +234,6 @@ by the lower section of the Matches panel, not by whether anything was new.
   column answers it after the next scan. If nearly every listing states it, the
   "check by eye" caution below can become a rejection; if many leave it blank,
   it has to stay a caution. Sort the spreadsheet by `Sport` after the next run.
-- Whether batching actually saves calls is unconfirmed -- see the note on the
-  420 figure under "Things to keep in mind".
 - `README.md` is not a real readme (it contains pasted engine code).
 
 Done since these notes were written: `app.js` confirmed on `main` (the Matches
@@ -270,6 +272,26 @@ and the one-time full re-walk after the cursor format changed happened at run
   keeps the bad copy as `.unreadable`; it used to raise, and since `main()`
   catches only `EngineError` that killed every later run until the file was
   deleted by hand.
+- **A refused call is not an answer.** `get_item_detail` returns `None` when
+  eBay no longer serves a listing (404, 410) and `REFUSED` when the call
+  itself failed (allowance gone, eBay down, network); `get_item_details`
+  reports the refused ids through its `failures` set, and a refused batch is
+  not followed by twenty single calls to learn the same thing. Before this
+  both were `None`, and "nothing came back" was read as "ended": on 17 Sep at
+  06:21, with the allowance used up, one refused batch of status calls
+  recorded 55 live listings as ended -- which counts as settled, so they were
+  never asked about again and the site showed them ended all day. Now a
+  refused status keeps its last reading, "ended" is settled only on eBay's
+  word (an `endDate` it gave, or `gone` because it no longer serves the
+  listing), and an ended reading with neither is asked about again -- so
+  those 55 repair themselves on the next export. In a scan, a listing gone
+  between search and fetch is a reject at once; a refused fetch is the
+  retried-then-gone case above.
+- **An active status younger than `STATUS_FRESH_SECONDS` (an hour) is not
+  asked about again.** Several scans in an hour used to re-check every unsold
+  row each time -- four batch calls a run, more than a repeat scan itself.
+  The daily run is always past the hour. The one visible cost: a SOLD flag
+  can lag by up to an hour; set the constant to 0 to re-check every run.
 - **A digest email that will not send is a warning, not a failed scan.** It is
   sent after the scan has already saved, so raising there exited non-zero and
   stopped the steps that publish and commit -- losing a good scan over an
@@ -281,11 +303,11 @@ and the one-time full re-walk after the cursor format changed happened at run
 ## Things to keep in mind
 
 - eBay Browse API default limit is about 5,000 calls a day, shared by GitHub
-  scans, phone-triggered scans and PC scans. A full fresh scan covers about
-  8,400 listings (7 sets x 1,200), but item details go out in batches of 20
-  (eBay's `getItems` ceiling), so that should cost roughly 420 detail calls
-  rather than 8,400. Still never delete `seen_items.json`: a listing judged
-  on an earlier run costs no call at all.
+  scans, phone-triggered scans and PC scans. A full fresh walk covers up to
+  8,400 listings (7 sets x 1,200) and a never-seen listing the title cannot
+  settle costs one call, so a first walk is a day or two of allowance; after
+  it, the marks make a repeat cost a page per set. Never delete
+  `seen_items.json`: a listing judged on an earlier run costs no call at all.
 - **Three files carry the quota guards between runs**, all restored from
   `results/` by `scan.yml` before the engine starts: `seen_items.json` (what
   each listing was judged, with filtered verdicts keyed to a fingerprint of
@@ -298,9 +320,14 @@ and the one-time full re-walk after the cursor format changed happened at run
   `EBAY_DAILY_CALL_BUDGET`). Deleting any of them makes the next scan pay for
   work already done. A card turned away for its sport is a permanent `reject`,
   so it costs one detail call ever, not one per run.
-- **A cursor is only trusted while the rules behind it are unchanged.** It
-  means "everything older than this is already judged", which is true only of
-  the settings that judged it. Before 17 Sep the key covered the search scope
+- **A cursor is only trusted while the rules -- and the judge -- behind it
+  are unchanged.** It means "everything older than this is already judged",
+  which is true only of the settings and the `JUDGE_VERSION` that judged it;
+  a judge bump stales every mark, so listings a newer rule could reverse are
+  walked past once without anyone editing a file. Player scans keep marks
+  too, one per search text, so a repeat scan for the same player costs a
+  page per set instead of a walk to the back (run 41 on 17 Sep: 25 calls for
+  605 cached listings; with marks, about 7). Before 17 Sep the key covered the search scope
   alone (player, set, price, listing type), so raising the print-run ceiling or
   picking a card type left the mark in place, the search stopped one page in,
   and every scan reported "no new cards" whatever the filter said. Measured
@@ -331,12 +358,13 @@ and the one-time full re-walk after the cursor format changed happened at run
   put `if: always()` on the export and commit steps, the run still publishes
   what it has; it just shows red instead of pretending it was a quiet day. A
   partly refused run stays green with a warning that it covered less.
-- **Measured 17 Sep: a never-seen listing costs about one call, whatever the
-  batching does.** The Shapovalov scan judged 2,077 listings for 1,873 single
-  detail calls plus 96 batch calls. eBay's `getItems` hands back item
-  specifics for only a few listings per batch, so nearly every one is fetched
-  again singly; the guard that would stop batching trips only when *none*
-  carry them, so it never trips. The 420 figure above was wrong. What does
+- **Measured 17 Sep: a never-seen listing costs one call, and batching did
+  not help.** The Shapovalov scan judged 2,077 listings for 1,873 single
+  detail calls plus 96 batch calls: eBay's `getItems` hands back the item
+  specifics the judge reads for about 4 listings in 100, so a batch of 20
+  cost one call and then 19 singles anyway -- a wash in calls, and 96 extra
+  round trips. Judging no longer batches; statuses, which need no specifics,
+  still go twenty at a time. The old 420-calls-a-scan figure was wrong. What does
   save calls: `seen_items.json` (a judged listing is never fetched again), the
   cursor (a repeat wide scan fetches only what was listed since), and
   `settled_by_title` (a custom, another sport, or a serial that is not a
@@ -369,12 +397,32 @@ and the one-time full re-walk after the cursor format changed happened at run
   was wrong. To settle whether batching saves calls, read the allowance before
   and after a scan (`py ebay_usage.py --raw`, or the "eBay calls today" panel
   on the page) and compare -- the difference is the real call count.
-- Detail fetching is batched and concurrent, tuned by `DETAIL_BATCH_SIZE`
-  (20, eBay's ceiling, do not raise) and `DETAIL_WORKERS` (8) at the top of
-  `tennis_card_engine.py`. Lower `DETAIL_WORKERS` if eBay starts refusing
-  calls. If eBay ever drops `getItems`, the engine falls back to one call per
-  listing on its own -- slower, same results. The batching tests in
-  `test_engine.py` cover both paths and need no keys.
+- Detail fetching for the judge is one call per listing, `DETAIL_WORKERS`
+  (8) in flight at once; lower it if eBay starts refusing calls. Statuses go
+  in batches of `DETAIL_BATCH_SIZE` (20, eBay's ceiling, do not raise), and
+  fall back to single calls if eBay ever drops `getItems`. `TwoWaysToFetch`
+  in `test_engine.py` pins both, with no keys.
+- **A search stops when eBay says there is no further page.** eBay's `total`
+  is an estimate that runs high, so the last page used to be followed by an
+  empty one, a call each. `search_ebay` now hands back whether the response
+  carried `next`, eBay's own word that more exists, and the walk stops
+  without it. A page shorter than asked for is deliberately *not* taken as
+  the last: eBay does not promise that, and a walk cut short would write
+  its mark and never come back for the rest.
+- **A listing eBay will not return is retried on the next run, up to
+  `UNAVAILABLE_TRIES` (3) times, then recorded as gone.** While it is being
+  retried it holds its set's mark back, so the next run walks past it again
+  (search pages only; everything judged is cached) -- a real listing behind a
+  hiccup is never lost. After the third miss it is a reject with that reason
+  and the mark moves on.
+- **A blocked seller is turned away from the search result**, which names the
+  seller, before any detail call.
+- **The run says where its calls went.** After "Checked N listings" the
+  Actions log prints detail calls made, listings settled from the search
+  result with no call, listings already judged, and the top reasons listings
+  were turned away. Any further saving -- for instance whether a title with
+  no serial at all is ever a match through its specifics -- is to be decided
+  from those numbers after a full walk, not guessed.
 - Never commit `.env` or put any key or token in the code.
 - The scan commits to `main`, so always `git pull --rebase` before `git push`
   from your PC. Merging a pull request while a scan runs is now safe: run 31
