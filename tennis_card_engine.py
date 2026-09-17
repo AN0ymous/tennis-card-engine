@@ -43,6 +43,7 @@ import re
 import sys
 import json
 import base64
+import collections
 import hashlib
 import logging
 import smtplib
@@ -621,7 +622,8 @@ def listing_label(item):
 
 def search_ebay(token, query, limit=None, offset=0, newest_first=False,
                 min_price=None, max_price=None, listing_types=None):
-    """One Browse API search. Returns (item summaries, total available)."""
+    """One Browse API search. Returns (item summaries, total available, and
+    whether eBay says a further page exists)."""
     filters = ["buyingOptions:{%s}" % "|".join(buying_options(listing_types))]
     clause = price_filter(min_price, max_price)
     if clause:
@@ -649,7 +651,11 @@ def search_ebay(token, query, limit=None, offset=0, newest_first=False,
         log.warning("Search failed for %r: %s %s", query, resp.status_code, resp.text[:300])
         raise SearchError(resp.status_code, query, offset, resp.text)
     data = resp.json()
-    return data.get("itemSummaries", []), int(data.get("total", 0) or 0)
+    # "next" is eBay's own word that a further page exists; "total" is an
+    # estimate that runs high, so it cannot say when the last page has been
+    # reached, and a page shorter than asked for is not promised to be last.
+    return (data.get("itemSummaries", []), int(data.get("total", 0) or 0),
+            bool(data.get("next")))
 
 
 class SearchError(EngineError):
@@ -676,24 +682,36 @@ def iter_listings(token, player, brand_kw, on_page=None, should_stop=None,
     """Yield listings for one brand search: a single page when a player is
     named, or up to MAX_RESULTS_PER_BRAND newest-first when scanning everyone."""
     price = {"min_price": min_price, "max_price": max_price, "listing_types": listing_types}
-    # A named player is searched by full name and by surname, so a listing
-    # titled just "Federer" is still fetched; the judge decides afterwards
-    # whether it really is that player. Everyone else goes through
-    # wide_query(). All page through everything, newest first.
-    queries = ([f"{v} {brand_kw}" for v in name_variants(player)]
-               if player else [wide_query(brand_kw)])
+    # A named player is searched by surname: eBay matches every word, so
+    # "Shapovalov Topps Chrome" returns everything "Denis Shapovalov Topps
+    # Chrome" would and more, and the judge decides afterwards whether a
+    # listing really is that player. The full name is searched as well only
+    # when the surname search hit the cap, since then listings past the cap
+    # may still be reachable by the narrower search. Everyone else goes
+    # through wide_query(). All page through everything, newest first.
+    # high_water is a mark, or a function of the query giving one.
+    if player:
+        variants = name_variants(player)
+        queries = [f"{variants[-1]} {brand_kw}"]
+        narrower = f"{variants[0]} {brand_kw}" if len(variants) > 1 else None
+    else:
+        queries, narrower = [wide_query(brand_kw)], None
     cap = limit or MAX_RESULTS_PER_BRAND
     seen_here = set()
-    for query in queries:
+    while queries:
+        query = queries.pop(0)
+        mark = high_water(query) if callable(high_water) else high_water
         fetched = 0
         newest_seen = ""
         completed = True
+        stopped_at_mark = False
         while fetched < cap:
             if should_stop and should_stop():
                 return
             page = min(200, cap - fetched)                      # 200 is the API ceiling
             try:
-                items, total = search_ebay(token, query, page, offset=fetched, newest_first=True, **price)
+                items, total, more = search_ebay(token, query, page, offset=fetched,
+                                                 newest_first=True, **price)
             except SearchError as exc:
                 # say so where the reader can see it, then move to the next query
                 if on_error:
@@ -711,23 +729,37 @@ def iter_listings(token, player, brand_kw, on_page=None, should_stop=None,
                     newest_seen = created
                 # Include equal timestamps so a listing created during the
                 # same timestamp tick after the last run cannot be missed.
-                if high_water and created and created < high_water:
-                    if completed and on_complete:
-                        on_complete(query, newest_seen)
-                    return
+                if mark and created and created < mark:
+                    stopped_at_mark = True
+                    break
                 item_id = item.get("itemId")
                 if item_id in seen_here:
                     continue                                    # already fetched under another name
                 seen_here.add(item_id)
                 yield item
-            if fetched >= total:
+            # eBay's total is an estimate that runs high, so the last page
+            # used to be followed by an empty one, a call each: stop when eBay
+            # itself says there is no further page.
+            if stopped_at_mark or fetched >= total or not more:
                 break
         if completed and on_complete:
             on_complete(query, newest_seen)
+        if narrower and fetched >= cap and not stopped_at_mark:
+            queries.append(narrower)
+            narrower = None
+
+
+# What a fetch says when it says nothing: None means eBay no longer serves
+# the listing (404 or 410 -- it ended, or was taken down), REFUSED means the
+# call itself failed (the allowance is used up, eBay is down, the network
+# dropped) and nothing is known. The two used to be the same None, and on 17
+# Sep a refused batch of status calls recorded 55 live listings as ended.
+REFUSED = False
 
 
 def get_item_detail(token, item_id):
-    """One listing's full details. None when eBay will not return it."""
+    """One listing's full details; None when eBay no longer serves it;
+    REFUSED when the call failed and nothing is known."""
     consume_api_call("browse")
     try:
         resp = requests.get(
@@ -741,35 +773,37 @@ def get_item_detail(token, item_id):
     except requests.RequestException as exc:
         # raising here would take down every other listing sharing the pool
         log.warning("Item detail failed for %s: %s", item_id, exc)
+        return REFUSED
+    if resp.status_code in (404, 410):
         return None
     if resp.status_code != 200:
         log.warning("Item detail failed for %s: %s %s", item_id, resp.status_code, resp.text[:200])
-        return None
+        return REFUSED
     try:
         return resp.json()
     except ValueError:                       # a 200 that is not JSON
         log.warning("Item detail for %s was not JSON", item_id)
-        return None
+        return REFUSED
 
 
 # Set False for the rest of the process the first time eBay says it has no
 # bulk item endpoint, so a scan stops paying for a call that cannot work.
 _bulk_details_supported = True
 
-# Separately: the endpoint can answer perfectly well and still leave out the
-# item specifics the judge reads. Batching then costs a batch call on top of
-# the single call every listing needs anyway, which is dearer than not
-# batching at all -- so stop asking it for those, while statuses, which need
-# no specifics, keep batching.
-_bulk_details_carry_aspects = True
+# Judging never batches. Measured 17 Sep: eBay's getItems hands back the item
+# specifics the judge reads for about 4 listings in 100, so a batch of 20
+# cost one call and then 19 single calls anyway -- 20.2 calls per 20
+# listings against 20 without it. Statuses need no specifics, so they still
+# go in batches of 20, where the batch really is the answer.
 
 
 def _bulk_item_details(token, item_ids):
     """One getItems call: up to DETAIL_BATCH_SIZE listings, keyed by item id.
 
-    Returns what the call gave back, or {} when it gave back nothing usable.
-    The caller falls back to the single-item call for whatever is missing, so
-    this is always safe to try."""
+    Returns what the call gave back; {} when the endpoint is not there in this
+    form, so the caller falls back to single calls; REFUSED when the call
+    itself failed, so the caller does not spend a single call per listing
+    finding out the same thing twenty times over."""
     global _bulk_details_supported
     if not _bulk_details_supported or not item_ids:
         return {}
@@ -786,7 +820,7 @@ def _bulk_item_details(token, item_ids):
         )
     except requests.RequestException as exc:
         log.warning("Bulk item details failed for %d id(s): %s", len(item_ids), exc)
-        return {}
+        return REFUSED
     if resp.status_code in (400, 404, 405):
         # not there, or not there in this form: stop asking for this process
         _bulk_details_supported = False
@@ -795,11 +829,11 @@ def _bulk_item_details(token, item_ids):
         return {}
     if resp.status_code != 200:
         log.warning("Bulk item details failed: %s %s", resp.status_code, resp.text[:200])
-        return {}
+        return REFUSED
     try:
         items = resp.json().get("items") or []
     except ValueError:
-        return {}
+        return REFUSED
     return {entry["itemId"]: entry for entry in items if entry.get("itemId")}
 
 
@@ -815,34 +849,37 @@ def _in_parallel(fn, jobs, workers=None):
         return list(pool.map(fn, jobs))
 
 
-def get_item_details(token, item_ids, workers=None, require="localizedAspects"):
-    """Details for many listings at once, keyed by item id.
+def get_item_details(token, item_ids, workers=None, require="localizedAspects", failures=None):
+    """Details for many listings, keyed by item id.
 
-    The ids go to eBay in batches of DETAIL_BATCH_SIZE, several batches at a
-    time, so a window of listings costs a handful of round trips instead of
-    one each. Anything a batch leaves out -- or hands back without the item
-    specifics the judge reads -- is fetched singly afterwards, so a change at
-    eBay's end costs speed and never costs results. An id absent from the
-    result is one eBay would not return at all."""
-    global _bulk_details_carry_aspects
+    With `require` set (the judge needs localizedAspects) every listing is
+    fetched singly, several at a time: the batch endpoint rarely carries the
+    specifics, so batching cost more than it saved. With no requirement
+    (statuses) the ids go in batches of DETAIL_BATCH_SIZE, and anything a
+    batch leaves out is fetched singly afterwards.
+
+    An id absent from the result is one eBay no longer serves. An id whose
+    call failed instead -- nothing is known about it -- goes into `failures`
+    when a set is given, so a caller can tell "gone" from "not answered"."""
     ids = [i for i in dict.fromkeys(item_ids) if i]
     if not ids:
         return {}
+    refused = set()
 
     details = {}
-    if not require or _bulk_details_carry_aspects:
+    if not require:
         batches = [ids[i:i + DETAIL_BATCH_SIZE] for i in range(0, len(ids), DETAIL_BATCH_SIZE)]
-        for got in _in_parallel(lambda batch: _bulk_item_details(token, batch), batches, workers):
-            details.update(got)
-        if require and details and not any(d.get(require) for d in details.values()):
-            _bulk_details_carry_aspects = False
-            log.warning("Bulk item details carry no %s, so every listing would need its own "
-                        "call anyway; asking for them singly for the rest of this run", require)
+        for batch, got in zip(batches, _in_parallel(
+                lambda batch: _bulk_item_details(token, batch), batches, workers)):
+            if got is REFUSED:
+                refused.update(batch)             # not worth twenty single calls to learn again
+            else:
+                details.update(got)
 
     # localizedAspects carries the manufacturer, set, print run and card
     # number: without it a listing cannot be judged, only wrongly rejected.
-    missing = [i for i in ids
-               if not (details.get(i) if not require else (details.get(i) or {}).get(require))]
+    missing = [i for i in ids if i not in refused
+               and not (details.get(i) if not require else (details.get(i) or {}).get(require))]
     if missing:
         for item_id, detail in zip(missing, _in_parallel(
                 lambda i: get_item_detail(token, i), missing, workers)):
@@ -850,6 +887,10 @@ def get_item_details(token, item_ids, workers=None, require="localizedAspects"):
                 details[item_id] = detail
             else:
                 details.pop(item_id, None)
+                if detail is REFUSED:
+                    refused.add(item_id)
+    if failures is not None:
+        failures.update(refused)
     return details
 
 
@@ -908,9 +949,25 @@ def reject_stands(entry, title):
                    if version > made for opening in openings)
 
 
+# A detail eBay would not return blocks the set's mark, so the next run walks
+# past it again and retries -- a real listing behind a hiccup is not lost.
+# After this many tries it is recorded as gone and the mark moves on.
+UNAVAILABLE_TRIES = 3
+
+
 def rejected(reason):
     """The state entry for a reject made by this judge."""
     return {"verdict": "reject", "reason": reason, "judge": JUDGE_VERSION}
+
+
+def settled_by_summary(item):
+    """What the search result alone settles, before any detail call: a
+    blocked seller (the summary names the seller), then everything the
+    title settles."""
+    seller = ((item.get("seller") or {}).get("username") or "").lower()
+    if seller and seller in BLOCKED_SELLERS:
+        return f"blocked seller: {seller}"
+    return settled_by_title(item.get("title", ""))
 
 
 def settled_by_title(title):
@@ -992,25 +1049,68 @@ def status_from_detail(detail):
 
 
 def check_listing_status(token, item_id):
-    """One listing's state from the Browse API item call."""
-    return status_from_detail(get_item_detail(token, item_id))
+    """One listing's state from the Browse API item call; a refused call
+    says nothing, so the reading is "unknown", never "ended"."""
+    detail = get_item_detail(token, item_id)
+    if detail is REFUSED:
+        return {"status": "unknown",
+                "checkedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    if detail is None:
+        return dict(status_from_detail(None), gone=True)
+    return status_from_detail(detail)
 
 
-def refresh_statuses(token, item_ids, previous=None):
-    """Check the listings named; sold and ended ones keep their last reading.
+# An active reading younger than this is not asked for again: several scans
+# in an hour used to re-check every unsold row each time, four batch calls a
+# run that cost more than the repeat scan itself. The daily run is always
+# past it. A SOLD flag can therefore lag by up to an hour; set 0 to re-check
+# every run.
+STATUS_FRESH_SECONDS = 3600
 
-    A settled listing never changes again, so only the unsettled ones cost a
-    call -- and those go to eBay in batches rather than one at a time."""
+
+def status_settled(entry):
+    """A reading that will never change: sold, or ended on eBay's word --
+    an end date it gave, or a listing it no longer serves. An "ended" with
+    neither is what a refused call used to be recorded as, and is asked
+    about again."""
+    status = (entry or {}).get("status")
+    if status == "sold":
+        return True
+    return status == "ended" and bool(entry.get("endDate") or entry.get("gone"))
+
+
+def status_fresh(entry, now, within=None):
+    within = STATUS_FRESH_SECONDS if within is None else within
+    try:
+        checked = datetime.strptime((entry or {}).get("checkedAt", ""), "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError:
+        return False
+    return (now - checked.replace(tzinfo=timezone.utc)).total_seconds() < within
+
+
+def refresh_statuses(token, item_ids, previous=None, fresh_within=None):
+    """Check the listings named; settled ones keep their reading, fresh ones
+    are not asked about again, and a listing eBay refused to answer for
+    keeps its last reading rather than being called ended."""
     statuses = dict(previous or {})
+    now = datetime.now(timezone.utc)
     stale = [i for i in dict.fromkeys(item_ids)
-             if i and (statuses.get(i) or {}).get("status") not in ("sold", "ended")]
+             if i and not status_settled(statuses.get(i))
+             and not ((statuses.get(i) or {}).get("status") == "active"
+                      and status_fresh(statuses.get(i), now, fresh_within))]
     if not stale:
         return statuses
-    # no field is required: a status reads off whatever eBay returns, and a
-    # listing eBay will not return at all is exactly what "ended" means
-    details = get_item_details(token, stale, require=None)
+    # no field is required: a status reads off whatever eBay returns
+    refused = set()
+    details = get_item_details(token, stale, require=None, failures=refused)
+    stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     for item_id in stale:
-        statuses[item_id] = status_from_detail(details.get(item_id))
+        if item_id in refused:
+            statuses[item_id] = statuses.get(item_id) or {"status": "unknown", "checkedAt": stamp}
+        elif item_id not in details:
+            statuses[item_id] = {"status": "ended", "gone": True, "checkedAt": stamp}
+        else:
+            statuses[item_id] = status_from_detail(details[item_id])
     return statuses
 
 
@@ -1552,11 +1652,13 @@ def cursor_high_water(entry, fingerprint):
     return ""                     # changed rules, or a cursor from an older format
 
 
-def scan_cursor_key(player, brand_kw, min_price, max_price, listing_types):
+def scan_cursor_key(player, brand_kw, min_price, max_price, listing_types, query=None):
+    """One mark per exact search: the wide query of a set, or one of a
+    player's searches. The search text is part of the key, so changing it
+    stales the mark and the set walks in full once."""
     scope = {
         "player": player or "*", "brand": brand_kw,
-        # the search text itself: change it and every mark is stale
-        "query": wide_query(brand_kw) if player is None else "",
+        "query": query if query is not None else (wide_query(brand_kw) if player is None else ""),
         "minPrice": min_price, "maxPrice": max_price,
         "listingTypes": sorted(listing_types or []),
         "marketplace": MARKETPLACE_ID, "category": EBAY_CATEGORY_ID,
@@ -2040,6 +2142,9 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
     known = 0
     judged = 0
     failed = 0
+    fetched = 0                  # detail calls asked for
+    settled = 0                  # turned away from the search result alone, no call
+    reasons = collections.Counter()   # why listings were turned away, for the summary
     new_match_records = []
     cancelled = False
 
@@ -2067,20 +2172,33 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                 emit("query", player=label, brand=brand_kw,
                      index=query_index, total=total_queries)
 
-                cursor_key = scan_cursor_key(player, brand_kw, min_price, max_price, listing_types)
-                high_water = (cursor_high_water(cursors.get(cursor_key), rule_key)
-                              if write_outputs and player is None else "")
-                next_high_water = {"value": ""}
+                # A mark says "everything older than this is already judged",
+                # which is true only of the settings AND the judge that did the
+                # judging: a judge version bump stales every mark, so listings
+                # its rules could reverse are walked past again. Player scans
+                # keep marks too, one per search, so a repeat costs a page per
+                # set rather than a walk to the back.
+                cursor_rules = rules_fingerprint(dict(rules, player=player, judge=JUDGE_VERSION))
+
+                def key_for(query):
+                    return scan_cursor_key(player, brand_kw, min_price, max_price,
+                                           listing_types, query)
+
+                def mark_for(query):
+                    return (cursor_high_water(cursors.get(key_for(query)), cursor_rules)
+                            if write_outputs else "")
+
+                reached = {}                                  # query -> newest listing seen
                 failed_before_query = failed
 
-                def remember_cursor(_query, newest):
+                def remember_cursor(query, newest):
                     if newest:
-                        next_high_water["value"] = max(next_high_water["value"], newest)
+                        reached[query] = newest
 
                 listings = iter_listings(
                     token, player, brand_kw, should_stop=should_stop,
                     min_price=min_price, max_price=max_price, listing_types=listing_types,
-                    high_water=high_water, on_complete=remember_cursor,
+                    high_water=mark_for, on_complete=remember_cursor,
                     on_error=lambda message: emit("error", message=message),
                     on_page=lambda count, offset, total, query="": emit(
                         "results", player=label, brand=brand_kw, query=query,
@@ -2105,18 +2223,24 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                             return False
                         if verdict == "reject":
                             return not reject_stands(entry, title)
+                        if verdict == "unavailable":
+                            return True                       # tried, never settled
                         return not filtered_for_rules(entry, rule_key)
 
                     for item, earlier in triage:
                         if needs_judging(earlier, item.get("title", "")):
-                            reason = settled_by_title(item.get("title", ""))
+                            reason = settled_by_summary(item)
                             if reason:
                                 seen[item["itemId"]] = rejected(reason)
+                                settled += 1
+                                reasons[reason.split(":")[0].split(",")[0]] += 1
                                 emit("reject", title=item.get("title", ""), reason=reason)
                     triage = [(item, seen.get(item["itemId"])) for item, _ in triage]
-                    details = get_item_details(
-                        token, [item["itemId"] for item, earlier in triage
-                                if needs_judging(earlier, item.get("title", ""))])
+                    to_fetch = [item["itemId"] for item, earlier in triage
+                                if needs_judging(earlier, item.get("title", ""))]
+                    fetched += len(to_fetch)
+                    refused = set()
+                    details = get_item_details(token, to_fetch, failures=refused)
 
                     for item, earlier in triage:
                         item_id = item["itemId"]
@@ -2132,14 +2256,30 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                             continue
 
                         detail = details.get(item_id)
+                        if not detail and item_id not in refused:
+                            # ended, or taken down, between the search and now
+                            reason = "eBay no longer serves this listing"
+                            seen[item_id] = rejected(reason)
+                            reasons[reason] += 1
+                            emit("reject", title=title, reason=reason)
+                            continue
                         if not detail:
-                            failed += 1
-                            emit("reject", title=title, reason="eBay would not return the item details")
+                            tries = (int(earlier.get("tries") or 0) if isinstance(earlier, dict) else 0) + 1
+                            if tries >= UNAVAILABLE_TRIES:
+                                reason = f"eBay would not return the item details, {tries} runs running"
+                                seen[item_id] = rejected(reason)
+                                reasons[reason] += 1
+                            else:
+                                seen[item_id] = {"verdict": "unavailable", "tries": tries}
+                                failed += 1                   # holds this set's mark back
+                                reason = "eBay would not return the item details; will try again"
+                            emit("reject", title=title, reason=reason)
                             continue
 
                         verdict, reason, f = judge_listing(item, detail, player, rules)
                         if verdict != "match":
                             log.info("REJECT (%s): %s", reason, title)
+                            reasons[reason.split(":")[0]] += 1
                             emit("reject", title=title, reason=reason)
                             if verdict == "reject":
                                 # the reason is kept, so "why was my card
@@ -2188,10 +2328,9 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
 
                 # Retry a query next run if even one listing detail was missing;
                 # otherwise persist its newest successfully processed timestamp.
-                if (write_outputs and player is None and not cancelled
-                        and next_high_water["value"] and failed == failed_before_query):
-                    cursors[cursor_key] = {"newest": next_high_water["value"],
-                                           "rules": rule_key}
+                if write_outputs and not cancelled and failed == failed_before_query:
+                    for query, newest in reached.items():
+                        cursors[key_for(query)] = {"newest": newest, "rules": cursor_rules}
 
             if cancelled:
                 break
@@ -2201,7 +2340,8 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                          new_match_records, new_matches_path)
 
     emit("done", checked=checked, matches=len(new_match_records), known=known,
-         judged=judged, failed=failed, cancelled=cancelled)
+         judged=judged, failed=failed, cancelled=cancelled, fetched=fetched,
+         settled=settled, reasons=reasons.most_common(8))
     return new_match_records, checked
 
 
@@ -2250,11 +2390,14 @@ def main():
     # green -- indistinguishable from a quiet day. Now each refusal is said out
     # loud, and a run that could check nothing at all fails, so it shows red.
     refusals = []
+    summary = {}
 
     def on_event(kind, payload):
         if kind == "error":
             refusals.append(payload.get("message", ""))
             say(payload.get("message", ""))
+        elif kind == "done":
+            summary.update(payload)
 
     try:
         new_match_records, checked = run_scan(**options, on_event=on_event)
@@ -2271,6 +2414,12 @@ def main():
 
     scope = "all players" if not players else f"{len(players)} players"
     print(f"Checked {checked} listings across {scope} x {len(brand_keywords)} sets.")
+    if summary:
+        # where the calls went, so the next saving can be decided on numbers
+        print(f"Detail calls: {summary.get('fetched', 0)}; settled from the search result "
+              f"with no call: {summary.get('settled', 0)}; already judged: {summary.get('judged', 0)}.")
+        for reason, n in summary.get("reasons") or []:
+            print(f"  turned away: {n:>5}  {reason}")
     print(f"Added {len(new_match_records)} new qualifying listing(s) to {OUTPUT_XLSX}.")
     if not new_match_records:
         print("No new matches this run -- that's normal, keep it scheduled and it'll catch new listings as they post.")

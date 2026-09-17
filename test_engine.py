@@ -294,7 +294,10 @@ class FakeEbay:
             self.calls["search"] += 1
             offset, limit = int(params.get("offset", 0)), int(params.get("limit", 50))
             page = [self.summary(i) for i in range(offset, min(offset + limit, self.listings))]
-            return self.Response({"itemSummaries": page, "total": self.listings})
+            body = {"itemSummaries": page, "total": self.listings}
+            if offset + len(page) < self.listings:
+                body["next"] = f"{url}?offset={offset + len(page)}"     # as eBay does
+            return self.Response(body)
         if url.rstrip("/").endswith("/buy/browse/v1/item"):
             if not self.bulk:
                 return self.Response({"errors": [{"message": "not found"}]}, status=404)
@@ -316,7 +319,9 @@ class FakeEbay:
 
 
 class BatchedDetails(unittest.TestCase):
-    """Details go to eBay 20 at a time, and the fallback finds the same cards."""
+    """The judge fetches one listing per call -- the batch endpoint carries
+    the specifics it needs for about 4 in 100, so batching cost more than it
+    saved -- and finds the same cards whether or not getItems exists."""
 
     LISTINGS = 500
 
@@ -362,10 +367,13 @@ class BatchedDetails(unittest.TestCase):
                               if n % 10 == 0) / engine.DETAIL_BATCH_SIZE)
                 for a in range(0, self.LISTINGS, engine.DETAIL_WINDOW)]
 
-    def test_batching_costs_one_call_per_twenty_fetched_listings(self):
+    def test_judging_never_batches(self):
+        """Measured 17 Sep: 96 batch calls beside 1,873 single calls for one
+        scan. A batch that then needs a single call per listing anyway is a
+        call wasted per twenty."""
         fast, _, _, _ = self.scan(bulk=True)
-        self.assertEqual(fast.detail_calls, sum(self.fetched_per_window()))
-        self.assertEqual(fast.calls["getItem"], 0, "fell back when it did not need to")
+        self.assertEqual(fast.calls["getItems"], 0, "a batch call was spent on judging")
+        self.assertEqual(fast.calls["getItem"], sum(1 for n in range(self.LISTINGS) if n % 10 == 0))
 
     def test_without_getitems_every_fetched_listing_still_gets_judged(self):
         slow, _, _, _ = self.scan(bulk=False)
@@ -403,6 +411,71 @@ class StatusRefresh(unittest.TestCase):
         fake, statuses = self.refresh({i: {"status": "sold"} for i in self.IDS})
         self.assertEqual(fake.detail_calls, 0)
         self.assertTrue(all(s["status"] == "sold" for s in statuses.values()))
+
+    class Refusing(FakeEbay):
+        """eBay with the day's allowance used up: every item call is a 429."""
+        def get(self, url, headers=None, params=None, timeout=None, **kw):
+            if "/buy/browse/v1/item" in url:
+                self.calls["getItems" if url.rstrip("/").endswith("/item") else "getItem"] += 1
+                return self.Response({"errors": [{"message": "call limit exceeded"}]}, status=429)
+            return super().get(url, headers, params, timeout, **kw)
+
+    def test_a_refused_call_keeps_the_last_reading_rather_than_calling_it_ended(self):
+        """17 Sep, 06:21: the allowance was gone, a batch of status calls was
+        refused, and 55 live listings were recorded as ended -- which counts
+        as settled, so they would never have been asked about again."""
+        fake = self.Refusing()
+        requests.get = fake.get
+        previous = {i: {"status": "active", "checkedAt": "2026-09-17T00:00:00Z"} for i in self.IDS[:3]}
+        statuses = engine.refresh_statuses("fake-token", self.IDS[:3], previous)
+        self.assertEqual([s["status"] for s in statuses.values()], ["active"] * 3)
+        # and a refused batch is not followed by twenty single calls to learn the same
+        self.assertEqual(fake.calls["getItem"], 0)
+        unknown = engine.refresh_statuses("fake-token", self.IDS[3:4], {})
+        self.assertEqual(unknown[self.IDS[3]]["status"], "unknown")
+
+    def test_a_listing_ebay_no_longer_serves_is_ended_on_its_word(self):
+        fake = FakeEbay(listings=1)                  # the fake serves only listing 0
+        requests.get = fake.get
+        gone = f"v1|{FakeEbay.BASE_ID + 999}|0"
+        real_detail = fake.detail
+        fake.detail = lambda item_id: real_detail(item_id) if item_id != gone else None
+        fake_get = fake.get
+        def get(url, headers=None, params=None, timeout=None, **kw):
+            if url.rstrip("/").endswith("/item"):
+                ids = [i for i in params["item_ids"].split(",") if i != gone]
+                return fake.Response({"items": [real_detail(i) for i in ids]})
+            if gone in url:
+                return fake.Response({"errors": [{"message": "not found"}]}, status=404)
+            return fake_get(url, headers, params, timeout, **kw)
+        requests.get = get
+        statuses = engine.refresh_statuses("fake-token", [self.IDS[0], gone], {})
+        self.assertEqual(statuses[self.IDS[0]]["status"], "active")
+        self.assertEqual(statuses[gone]["status"], "ended")
+        self.assertTrue(statuses[gone]["gone"])
+        self.assertTrue(engine.status_settled(statuses[gone]))
+
+    def test_an_ended_reading_with_no_evidence_is_asked_about_again(self):
+        """What the 55 look like: ended, no end date, no word from eBay."""
+        legacy = {"status": "ended", "checkedAt": "2026-09-17T06:21:44Z"}
+        self.assertFalse(engine.status_settled(legacy))
+        self.assertTrue(engine.status_settled({"status": "ended", "endDate": "2026-09-01T00:00:00.000Z"}))
+        fake = FakeEbay()
+        requests.get = fake.get
+        engine._bulk_details_supported = True
+        statuses = engine.refresh_statuses(
+            "fake-token", self.IDS[:20], {i: dict(legacy) for i in self.IDS[:20]})
+        self.assertEqual([statuses[i]["status"] for i in self.IDS[:20]], ["active"] * 20)
+        self.assertEqual(fake.calls["getItems"], 1)
+
+    def test_a_fresh_active_reading_is_not_asked_about_again(self):
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        fake, statuses = self.refresh({i: {"status": "active", "checkedAt": now} for i in self.IDS})
+        self.assertEqual(fake.detail_calls, 0)
+        fake = FakeEbay(); requests.get = fake.get
+        engine.refresh_statuses("fake-token", self.IDS[:20], {i: {"status": "active", "checkedAt": now} for i in self.IDS[:20]}, fresh_within=0)
+        self.assertEqual(fake.calls["getItems"], 1, "fresh_within=0 must re-check")
 
 
 
@@ -480,10 +553,10 @@ class BoardDropsCustoms(unittest.TestCase):
                                  "a custom card is on the board")
 
 
-class BulkWithoutItemSpecifics(unittest.TestCase):
-    """getItems can answer fine and still leave out localizedAspects. Every
-    listing then needs its own call regardless, so carrying on batching would
-    cost more than never batching -- and nothing in the HTTP status says so."""
+class TwoWaysToFetch(unittest.TestCase):
+    """A judge needs the item specifics, which getItems rarely carries, so it
+    asks for listings one at a time. A status needs nothing in particular, so
+    statuses go twenty at a time, where the batch really is the answer."""
 
     IDS = [f"v1|{FakeEbay.BASE_ID + n}|0" for n in range(200)]
 
@@ -496,42 +569,20 @@ class BulkWithoutItemSpecifics(unittest.TestCase):
         requests.get = self._get
         engine.consume_api_call = self._consume
         engine._bulk_details_supported = True
-        engine._bulk_details_carry_aspects = True
 
-    def fetch(self, ids, **kwargs):
+    def test_judging_asks_for_each_listing_and_gets_it_in_full(self):
         fake = FakeEbay(aspects_in_bulk=False)
         requests.get = fake.get
-        engine._bulk_details_supported = True
-        engine._bulk_details_carry_aspects = True
-        return fake, engine.get_item_details("fake-token", ids, **kwargs)
-
-    def test_every_listing_is_still_returned_in_full(self):
-        fake, details = self.fetch(self.IDS)
+        details = engine.get_item_details("fake-token", self.IDS)
+        self.assertEqual(fake.calls["getItems"], 0, "a batch call was spent on judging")
+        self.assertEqual(fake.calls["getItem"], len(self.IDS))
         self.assertEqual(len(details), len(self.IDS))
         for item_id, detail in details.items():
             with self.subTest(item=item_id):
                 self.assertTrue(detail.get("localizedAspects"),
                                 "a listing came back with no item specifics to judge on")
 
-    def test_batching_stops_instead_of_costing_more_than_it_saves(self):
-        fake, _ = self.fetch(self.IDS)
-        self.assertFalse(engine._bulk_details_carry_aspects,
-                         "batching stayed on despite never carrying item specifics")
-        # one round of batches to find out, then one call each -- never a
-        # batch call per listing on top of the single call it still needs
-        self.assertLessEqual(fake.calls["getItems"], len(self.IDS) / engine.DETAIL_BATCH_SIZE)
-        self.assertLess(fake.detail_calls, len(self.IDS) * 1.2)
-
-    def test_later_fetches_skip_the_batch_entirely(self):
-        self.fetch(self.IDS)
-        fake = FakeEbay(aspects_in_bulk=False)
-        requests.get = fake.get
-        engine.get_item_details("fake-token", self.IDS)
-        self.assertEqual(fake.calls["getItems"], 0)
-        self.assertEqual(fake.calls["getItem"], len(self.IDS))
-
-    def test_statuses_keep_batching_because_they_need_no_specifics(self):
-        engine._bulk_details_carry_aspects = False
+    def test_statuses_go_twenty_at_a_time(self):
         fake = FakeEbay(aspects_in_bulk=False)
         requests.get = fake.get
         statuses = engine.refresh_statuses("fake-token", self.IDS, {})
@@ -547,7 +598,7 @@ class QuotaControls(unittest.TestCase):
             {"itemId": "old", "itemCreationDate": "2026-09-15T01:59:59.000Z"},
         ]
         completed = []
-        with patch.object(engine, "search_ebay", return_value=(page, 100)) as search:
+        with patch.object(engine, "search_ebay", return_value=(page, 100, True)) as search:
             found = list(engine.iter_listings(
                 "token", None, "NetPro", high_water="2026-09-15T02:00:00.000Z",
                 on_complete=lambda query, newest: completed.append((query, newest))))
@@ -805,9 +856,9 @@ class CursorFollowsTheRules(unittest.TestCase):
         fake = self.Dated(listings=54)
         requests.get = fake.get
 
-        def spy(token, item_ids):
+        def spy(token, item_ids, **kw):
             asked.extend(item_ids)
-            return real(token, item_ids)
+            return real(token, item_ids, **kw)
 
         with patch.object(engine, "get_item_details", side_effect=spy):
             engine.run_scan(None, self.SETS, conditions=["raw"])
@@ -1139,12 +1190,13 @@ class SurvivesABadDay(unittest.TestCase):
         calls = {"n": 0}
 
         # 200 listings arrive in one search call, then go through the judge a
-        # windowful at a time: 8 batch calls for the first 160, 2 for the rest.
-        # Blowing up on call 10 lands after the first window has been judged
-        # and recorded, which is the work this test is about keeping.
+        # windowful at a time, one detail call each: 160 for the first window,
+        # 40 for the rest. Blowing up on call 175 lands after the first window
+        # has been judged and recorded, which is the work this test is about
+        # keeping.
         def blows_up_partway(*a, **kw):
             calls["n"] += 1
-            if calls["n"] > 9:
+            if calls["n"] > 175:
                 raise RuntimeError("eBay said something unexpected")
             return fake.get(*a, **kw)
 
@@ -1405,11 +1457,13 @@ class WhatTwoPlayerScansTaught(unittest.TestCase):
         self.assertIn("neither the first nor the last", seen["v1|7|0"]["reason"])
         self.assertEqual(len(matches), 1)
 
-    def test_a_player_scan_writes_no_cursor(self):
+    def test_a_player_scan_keeps_a_mark_per_search(self):
+        """It used to write marks nobody read. Now each of a player's searches
+        keeps its own, keyed to the search text, so a repeat costs a page."""
         items = [{"itemId": "v1|1|0", "title": "2024 Topps Chrome Coco Gauff 1/50 tennis", "itemCreationDate": "2026-09-17T00:00:00.000Z"}]
 
         def listings(_t, _p, _b, on_complete=None, **kw):
-            if on_complete: on_complete("q", "2026-09-17T00:00:00.000Z")
+            if on_complete: on_complete("Gauff Topps Chrome", "2026-09-17T00:00:00.000Z")
             return iter(items)
 
         with tempfile.TemporaryDirectory() as folder, \
@@ -1419,7 +1473,10 @@ class WhatTwoPlayerScansTaught(unittest.TestCase):
                 patch.object(engine, "get_item_details", return_value={"v1|1|0": self.detail(Manufacturer="Topps", Set="2024 Topps Chrome", Sport="Tennis", **{"Player/Athlete": "Coco Gauff"})}):
             engine.run_scan(["Coco Gauff"], ["Topps Chrome"])
             with open(os.path.join(folder, engine.SCAN_CURSOR_FILE)) as f:
-                self.assertEqual(json.load(f), {})
+                cursors = json.load(f)
+        key = engine.scan_cursor_key("Coco Gauff", "Topps Chrome", 0.0, None, [], "Gauff Topps Chrome")
+        self.assertEqual(list(cursors), [key])
+        self.assertEqual(cursors[key]["newest"], "2026-09-17T00:00:00.000Z")
 
     def test_the_board_drops_a_card_of_another_sport(self):
         self.assertTrue(engine.other_sport_in_title(self.UFC))
@@ -1490,6 +1547,188 @@ class ARejectIsOnlyAsPermanentAsItsRule(unittest.TestCase):
     def test_every_reconsidered_reason_belongs_to_a_version_the_judge_reached(self):
         for version in engine.RECONSIDER_REASONS:
             self.assertLessEqual(version, engine.JUDGE_VERSION)
+
+
+class EveryCallEarnsItsKeep(unittest.TestCase):
+    """The savings made on 17 Sep, each with the completeness it keeps."""
+
+    def page(self, n, start=0, newest="2026-09-17T12:00:00.000Z"):
+        return [{"itemId": f"v1|{start + i}|0", "title": f"2024 Topps Chrome Coco Gauff 1/{50 + i} tennis",
+                 "itemCreationDate": newest if i == 0 else "2026-09-16T00:00:00.000Z"} for i in range(n)]
+
+    def test_the_walk_stops_when_ebay_says_there_is_no_further_page(self):
+        """eBay's total is an estimate that runs high; the last page used to
+        be followed by an empty one, a call each. eBay's own "next" is the
+        word that is trusted -- not a short page, which eBay does not promise
+        to be the last."""
+        with patch.object(engine, "search_ebay", return_value=(self.page(150), 1000, False)) as search:
+            found = list(engine.iter_listings("token", None, "Topps Chrome"))
+        self.assertEqual(len(found), 150)
+        self.assertEqual(search.call_count, 1)
+
+        def short_but_more(token, query, limit, offset=0, **kw):
+            return (self.page(150, start=offset), 1000, offset < 300)
+
+        with patch.object(engine, "search_ebay", side_effect=short_but_more) as search:
+            found = list(engine.iter_listings("token", None, "Topps Chrome"))
+        self.assertEqual(len(found), 450)            # three short pages, all walked
+        self.assertEqual(search.call_count, 3)
+
+    def test_a_player_is_searched_by_surname_and_by_full_name_only_past_the_cap(self):
+        """"Shapovalov Topps Chrome" returns everything "Denis Shapovalov Topps
+        Chrome" would; the narrower search is only worth a call when the wider
+        one hit the cap and more may lie beyond it."""
+        asked = []
+
+        def search(token, query, limit, offset=0, **kw):
+            asked.append(query)
+            return (self.page(50), 50, False)
+
+        with patch.object(engine, "search_ebay", side_effect=search):
+            list(engine.iter_listings("token", "Denis Shapovalov", "Topps Chrome", limit=200))
+        self.assertEqual(asked, ["Shapovalov Topps Chrome"])
+
+        asked.clear()
+
+        def search_capped(token, query, limit, offset=0, **kw):
+            asked.append(query)
+            return (self.page(limit, start=offset), 5000, True)
+
+        with patch.object(engine, "search_ebay", side_effect=search_capped):
+            list(engine.iter_listings("token", "Denis Shapovalov", "Topps Chrome", limit=200))
+        self.assertEqual(asked, ["Shapovalov Topps Chrome", "Denis Shapovalov Topps Chrome"])
+
+    def scan_twice(self, folder, players, bump_judge=False):
+        calls = {"search": 0}
+
+        def search(token, query, limit, offset=0, **kw):
+            calls["search"] += 1
+            return (self.page(3), 3, False) if offset == 0 else ([], 3, False)
+
+        detail = {"localizedAspects": [{"name": "Manufacturer", "value": "Topps"}, {"name": "Set", "value": "2024 Topps Chrome"},
+                                       {"name": "Sport", "value": "Tennis"}, {"name": "Player/Athlete", "value": "Coco Gauff"}],
+                  "price": {"value": "1.00", "currency": "USD"}, "seller": {"username": "s"},
+                  "buyingOptions": ["AUCTION"], "itemWebUrl": "https://www.ebay.com/itm/1"}
+        with patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "search_ebay", side_effect=search), \
+                patch.object(engine, "get_item_details", side_effect=lambda t, ids, **k: {i: dict(detail) for i in ids}), \
+                patch.object(engine, "consume_api_call", lambda _b="browse": None):
+            _, first = engine.run_scan(players, ["Topps Chrome"])
+            before = calls["search"]
+            if bump_judge:
+                with patch.object(engine, "JUDGE_VERSION", engine.JUDGE_VERSION + 1):
+                    _, second = engine.run_scan(players, ["Topps Chrome"])
+            else:
+                _, second = engine.run_scan(players, ["Topps Chrome"])
+        return first, second, before, calls["search"] - before
+
+    def test_a_repeat_player_scan_stops_at_its_mark(self):
+        with tempfile.TemporaryDirectory() as folder:
+            first, second, searches1, searches2 = self.scan_twice(folder, ["Coco Gauff"])
+        self.assertEqual(first, 3)
+        self.assertEqual(second, 1, "the repeat should see only the newest listing, at the mark")
+        self.assertEqual(searches2, 1)
+
+    def test_a_judge_bump_stales_every_mark(self):
+        """A mark says everything older is judged -- by that judge. A newer one
+        walks past the mark once, so listings its rules could reverse are
+        reached without anyone editing a file."""
+        with tempfile.TemporaryDirectory() as folder:
+            first, second, _, _ = self.scan_twice(folder, None, bump_judge=True)
+        self.assertEqual(first, 3)
+        self.assertEqual(second, 3)
+
+    def test_a_listing_gone_between_search_and_fetch_is_recorded_gone_at_once(self):
+        """eBay answered and said the listing is no longer there: nothing to
+        retry, and nothing to hold the set's mark back for."""
+        item = {"itemId": "v1|9|0", "title": "2024 Topps Chrome Coco Gauff 1/50 tennis",
+                "itemCreationDate": "2026-09-17T00:00:00.000Z"}
+
+        def listings(_t, _p, _b, on_complete=None, **kw):
+            if on_complete: on_complete("Topps Chrome tennis", "2026-09-17T00:00:00.000Z")
+            return iter([item])
+
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=listings), \
+                patch.object(engine, "get_item_details", return_value={}):
+            engine.run_scan(None, ["Topps Chrome"])
+            seen = engine.load_state(os.path.join(folder, engine.STATE_FILE))
+            cursors = engine.load_state(os.path.join(folder, engine.SCAN_CURSOR_FILE))
+        self.assertEqual(seen["v1|9|0"]["verdict"], "reject")
+        self.assertIn("no longer serves", seen["v1|9|0"]["reason"])
+        self.assertEqual(len(cursors), 1)
+
+    def test_a_refused_fetch_is_retried_then_recorded_as_gone(self):
+        item = {"itemId": "v1|9|0", "title": "2024 Topps Chrome Coco Gauff 1/50 tennis",
+                "itemCreationDate": "2026-09-17T00:00:00.000Z"}
+
+        def listings(_t, _p, _b, on_complete=None, **kw):
+            if on_complete: on_complete("Topps Chrome tennis", "2026-09-17T00:00:00.000Z")
+            return iter([item])
+
+        def refused(token, ids, failures=None, **kw):
+            if failures is not None:
+                failures.update(ids)
+            return {}
+
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=listings), \
+                patch.object(engine, "get_item_details", side_effect=refused):
+            for attempt in range(1, engine.UNAVAILABLE_TRIES + 1):
+                engine.run_scan(None, ["Topps Chrome"])
+                seen = engine.load_state(os.path.join(folder, engine.STATE_FILE))
+                cursors = engine.load_state(os.path.join(folder, engine.SCAN_CURSOR_FILE))
+                with self.subTest(attempt=attempt):
+                    if attempt < engine.UNAVAILABLE_TRIES:
+                        self.assertEqual(seen["v1|9|0"], {"verdict": "unavailable", "tries": attempt})
+                        self.assertEqual(cursors, {}, "the mark moved on past a listing never judged")
+                    else:
+                        self.assertEqual(seen["v1|9|0"]["verdict"], "reject")
+                        self.assertIn("would not return", seen["v1|9|0"]["reason"])
+                        self.assertEqual(len(cursors), 1, "gone for good, so the mark can move")
+
+    def test_a_blocked_seller_costs_no_call(self):
+        seller = next(iter(engine.BLOCKED_SELLERS))
+        item = {"itemId": "v1|5|0", "title": "2024 Topps Chrome Coco Gauff 1/50 tennis",
+                "seller": {"username": seller.upper()}}
+        self.assertIn("blocked seller", engine.settled_by_summary(item))
+        self.assertEqual(engine.settled_by_summary(dict(item, seller={"username": "someone"})), "")
+        asked = []
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter([item])), \
+                patch.object(engine, "get_item_details", side_effect=lambda t, ids, **k: (asked.extend(ids), {})[1]):
+            engine.run_scan(None, ["Topps Chrome"])
+        self.assertEqual(asked, [])
+
+    def test_the_run_says_where_its_calls_went(self):
+        """So the next saving is decided on numbers, not guesses."""
+        import io, contextlib
+        items = [{"itemId": "v1|1|0", "title": "2024 Topps Chrome Coco Gauff 7/50 tennis"},
+                 {"itemId": "v1|2|0", "title": "2024 Topps Chrome Coco Gauff Refractor tennis"}]
+        detail = {"localizedAspects": [{"name": "Manufacturer", "value": "Topps"}, {"name": "Set", "value": "2024 Topps Chrome"}],
+                  "price": {"value": "1.00", "currency": "USD"}, "seller": {"username": "s"}, "buyingOptions": ["AUCTION"]}
+        out = io.StringIO()
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter(items)), \
+                patch.object(engine, "get_item_details", side_effect=lambda t, ids, **k: {i: dict(detail) for i in ids}), \
+                patch.object(engine, "send_digest_email"), \
+                patch.dict(os.environ, {"SCAN_BRANDS": "Topps Chrome"}), \
+                contextlib.redirect_stdout(out):
+            engine.main()
+        text = out.getvalue()
+        self.assertIn("Detail calls: 1; settled from the search result with no call: 1", text)
+        self.assertIn("turned away:", text)
+        self.assertIn("neither the first nor the last", text)
+        self.assertIn("no serial number", text)
 
 
 if __name__ == "__main__":
