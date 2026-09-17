@@ -239,18 +239,15 @@ class BoardForTheWebsite(unittest.TestCase):
 # ===========================================================================
 
 class FakeEbay:
-    """Stands in for the Browse API so the batching can be tested with no
-    keys and no network. Counts round trips, and can pretend getItems does
-    not exist so the single-call fallback is exercised too."""
+    """Stands in for the Browse API so the calls can be counted with no keys
+    and no network. The batch endpoint (getItems) answers as eBay does for
+    this keyset: it does not, and the engine must never ask."""
 
     BASE_ID = 100000000000
 
-    def __init__(self, listings=500, bulk=True, aspects_in_bulk=True):
-        self.listings, self.bulk = listings, bulk
-        # eBay can answer getItems perfectly well and still leave the item
-        # specifics out of what it sends back
-        self.aspects_in_bulk = aspects_in_bulk
-        self.calls = {"search": 0, "getItem": 0, "getItems": 0}
+    def __init__(self, listings=500):
+        self.listings = listings
+        self.calls = {"search": 0, "getItem": 0}
 
     # -- what eBay would return ------------------------------------------
     def summary(self, n):
@@ -299,15 +296,8 @@ class FakeEbay:
                 body["next"] = f"{url}?offset={offset + len(page)}"     # as eBay does
             return self.Response(body)
         if url.rstrip("/").endswith("/buy/browse/v1/item"):
-            if not self.bulk:
-                return self.Response({"errors": [{"message": "not found"}]}, status=404)
-            self.calls["getItems"] += 1
-            ids = params["item_ids"].split(",")
-            assert len(ids) <= 20, f"batch of {len(ids)} is over eBay's ceiling"
-            items = [self.detail(i) for i in ids]
-            if not self.aspects_in_bulk:
-                items = [{k: v for k, v in d.items() if k != "localizedAspects"} for d in items]
-            return self.Response({"items": items})
+            raise AssertionError("the batch call is not offered to this keyset (run 43: "
+                                 "HTTP 403) and must never be made")
         if "/buy/browse/v1/item/" in url:
             self.calls["getItem"] += 1
             return self.Response(self.detail(urllib.parse.unquote(url.rsplit("/", 1)[-1])))
@@ -315,13 +305,14 @@ class FakeEbay:
 
     @property
     def detail_calls(self):
-        return self.calls["getItem"] + self.calls["getItems"]
+        return self.calls["getItem"]
 
 
-class BatchedDetails(unittest.TestCase):
-    """The judge fetches one listing per call -- the batch endpoint carries
-    the specifics it needs for about 4 in 100, so batching cost more than it
-    saved -- and finds the same cards whether or not getItems exists."""
+class OneCallPerListing(unittest.TestCase):
+    """The judge fetches one listing per call, and only the listings the
+    title cannot settle. There is no cheaper way: eBay's batch call is not
+    offered to this keyset (run 43, 17 Sep: HTTP 403 for every batch ever
+    sent), so the engine no longer has one."""
 
     LISTINGS = 500
 
@@ -337,47 +328,23 @@ class BatchedDetails(unittest.TestCase):
         requests.get, engine.get_ebay_token = self._get, self._token
         engine.consume_api_call = self._consume
         engine.MAX_RESULTS_PER_BRAND = self._per_brand
-        engine._bulk_details_supported = True
 
-    def scan(self, bulk):
-        fake = FakeEbay(self.LISTINGS, bulk=bulk)
+    def scan(self):
+        fake = FakeEbay(self.LISTINGS)
         requests.get = fake.get
-        engine._bulk_details_supported = True
         events = []
         matches, checked = engine.run_scan(
             players=None, brand_keywords=["Topps Chrome"], write_outputs=False,
             on_event=lambda kind, payload: events.append(kind))
         return fake, matches, checked, events
 
-    def test_batching_and_the_fallback_agree(self):
-        fast, fast_matches, fast_checked, fast_events = self.scan(bulk=True)
-        slow, slow_matches, slow_checked, slow_events = self.scan(bulk=False)
-
-        self.assertEqual(fast_checked, slow_checked, "different listings checked")
-        self.assertEqual([m["link"] for m in fast_matches],
-                         [m["link"] for m in slow_matches], "different cards found")
-        self.assertEqual(fast_events, slow_events, "different events, or a different order")
-        self.assertEqual(len(fast_matches), self.LISTINGS // 10)
-
-    def fetched_per_window(self):
-        """Nine in ten fixture titles carry 7/50, which the title alone settles,
-        so only the bookend-titled tenth is ever fetched: one batch per window."""
-        import math
-        return [math.ceil(sum(1 for n in range(a, min(a + engine.DETAIL_WINDOW, self.LISTINGS))
-                              if n % 10 == 0) / engine.DETAIL_BATCH_SIZE)
-                for a in range(0, self.LISTINGS, engine.DETAIL_WINDOW)]
-
-    def test_judging_never_batches(self):
-        """Measured 17 Sep: 96 batch calls beside 1,873 single calls for one
-        scan. A batch that then needs a single call per listing anyway is a
-        call wasted per twenty."""
-        fast, _, _, _ = self.scan(bulk=True)
-        self.assertEqual(fast.calls["getItems"], 0, "a batch call was spent on judging")
-        self.assertEqual(fast.calls["getItem"], sum(1 for n in range(self.LISTINGS) if n % 10 == 0))
-
-    def test_without_getitems_every_fetched_listing_still_gets_judged(self):
-        slow, _, _, _ = self.scan(bulk=False)
-        self.assertEqual(slow.calls["getItem"], sum(1 for n in range(self.LISTINGS) if n % 10 == 0))
+    def test_only_the_titles_the_judge_cannot_settle_are_fetched(self):
+        """Nine in ten fixture titles carry 7/50, which the title alone settles
+        for no call; the bookend-titled tenth costs one call each."""
+        fake, matches, checked, _ = self.scan()
+        self.assertEqual(checked, self.LISTINGS)
+        self.assertEqual(len(matches), self.LISTINGS // 10)
+        self.assertEqual(fake.calls["getItem"], sum(1 for n in range(self.LISTINGS) if n % 10 == 0))
 
 
 class StatusRefresh(unittest.TestCase):
@@ -393,20 +360,17 @@ class StatusRefresh(unittest.TestCase):
     def tearDown(self):
         requests.get = self._get
         engine.consume_api_call = self._consume
-        engine._bulk_details_supported = True
-        engine._bulk_refusal_said = False
 
-    def refresh(self, previous, bulk=True):
-        fake = FakeEbay(bulk=bulk)
+    def refresh(self, previous):
+        fake = FakeEbay()
         requests.get = fake.get
-        engine._bulk_details_supported = True
         return fake, engine.refresh_statuses("fake-token", self.IDS, previous)
 
-    def test_statuses_go_out_in_batches(self):
+    def test_a_status_costs_one_call_each(self):
         fake, statuses = self.refresh({})
         self.assertEqual(len(statuses), len(self.IDS))
         self.assertTrue(all(s["status"] == "active" for s in statuses.values()))
-        self.assertEqual(fake.detail_calls, len(self.IDS) / engine.DETAIL_BATCH_SIZE)
+        self.assertEqual(fake.detail_calls, len(self.IDS))
 
     def test_a_settled_listing_costs_no_call(self):
         fake, statuses = self.refresh({i: {"status": "sold"} for i in self.IDS})
@@ -416,13 +380,13 @@ class StatusRefresh(unittest.TestCase):
     class Refusing(FakeEbay):
         """eBay with the day's allowance used up: every item call is a 429."""
         def get(self, url, headers=None, params=None, timeout=None, **kw):
-            if "/buy/browse/v1/item" in url:
-                self.calls["getItems" if url.rstrip("/").endswith("/item") else "getItem"] += 1
+            if "/buy/browse/v1/item/" in url:
+                self.calls["getItem"] += 1
                 return self.Response({"errors": [{"message": "call limit exceeded"}]}, status=429)
             return super().get(url, headers, params, timeout, **kw)
 
     def test_a_refused_call_keeps_the_last_reading_rather_than_calling_it_ended(self):
-        """17 Sep, 06:21: the allowance was gone, a batch of status calls was
+        """17 Sep, 06:21: the allowance was gone, the status calls were
         refused, and 55 live listings were recorded as ended -- which counts
         as settled, so they would never have been asked about again."""
         fake = self.Refusing()
@@ -430,54 +394,28 @@ class StatusRefresh(unittest.TestCase):
         previous = {i: {"status": "active", "checkedAt": "2026-09-17T00:00:00Z"} for i in self.IDS[:3]}
         statuses = engine.refresh_statuses("fake-token", self.IDS[:3], previous)
         self.assertEqual([s["status"] for s in statuses.values()], ["active"] * 3)
-        # and a refused batch is not followed by twenty single calls to learn the same
-        self.assertEqual(fake.calls["getItem"], 0)
         unknown = engine.refresh_statuses("fake-token", self.IDS[3:4], {})
         self.assertEqual(unknown[self.IDS[3]]["status"], "unknown")
 
-    class Forbidden(FakeEbay):
-        """What run 42 on 17 Sep most likely met: eBay does not offer the bulk
-        call to this keyset, while the single call works as ever."""
-        def get(self, url, headers=None, params=None, timeout=None, **kw):
-            if url.rstrip("/").endswith("/buy/browse/v1/item"):
-                self.calls["getItems"] += 1
-                return self.Response({"errors": [{"errorId": 1100, "message": "Access denied"}]}, status=403)
-            return super().get(url, headers, params, timeout, **kw)
-
-    def test_a_bulk_call_ebay_does_not_offer_falls_back_to_single_calls_and_says_so(self):
-        """Run 42: three batch status calls, every one turned away, and the 55
-        wrongly "ended" statuses left exactly as they were -- with nothing in
-        the log to say so. A refusal that is really "not for you" must fall
-        back to the single call, which repairs them, and name itself."""
-        import io, contextlib
-        legacy = {"status": "ended", "checkedAt": "2026-09-17T06:21:44Z"}
-        fake = self.Forbidden()
-        requests.get = fake.get
-        engine._bulk_details_supported = True
-        report = {}
-        err = io.StringIO()
-        with contextlib.redirect_stderr(err):
-            statuses = engine.refresh_statuses(
-                "fake-token", self.IDS[:55], {i: dict(legacy) for i in self.IDS[:55]}, report=report)
-        self.assertEqual([statuses[i]["status"] for i in self.IDS[:55]], ["active"] * 55)
-        self.assertEqual(fake.calls["getItem"], 55)            # the repair
-        self.assertLessEqual(fake.calls["getItems"], 3)        # then never again this process
-        self.assertFalse(engine._bulk_details_supported)
-        self.assertEqual(report, {"asked": 55, "refused": 0, "gone": 0})
-        self.assertIn("HTTP 403", err.getvalue())
-        self.assertIn("Access denied", err.getvalue())
-
-    def test_a_refusal_is_said_once_and_counted(self):
-        import io, contextlib
+    def test_a_refusal_is_counted_for_the_export_to_say(self):
         fake = self.Refusing()
         requests.get = fake.get
         report = {}
-        err = io.StringIO()
-        with contextlib.redirect_stderr(err):
-            engine.refresh_statuses("fake-token", self.IDS[:55], {}, report=report)
+        engine.refresh_statuses("fake-token", self.IDS[:55], {}, report=report)
         self.assertEqual(report, {"asked": 55, "refused": 55, "gone": 0})
-        self.assertEqual(err.getvalue().count("refused a bulk item call"), 1)
-        self.assertIn("HTTP 429", err.getvalue())
+
+    def test_the_55_wrongly_ended_are_repaired_by_single_calls(self):
+        """Run 43, 17 Sep: 55 statuses recorded "ended" with no evidence,
+        55 single calls, 55 live listings."""
+        legacy = {"status": "ended", "checkedAt": "2026-09-17T06:21:44Z"}
+        fake = FakeEbay()
+        requests.get = fake.get
+        report = {}
+        statuses = engine.refresh_statuses(
+            "fake-token", self.IDS[:55], {i: dict(legacy) for i in self.IDS[:55]}, report=report)
+        self.assertEqual([statuses[i]["status"] for i in self.IDS[:55]], ["active"] * 55)
+        self.assertEqual(fake.calls["getItem"], 55)
+        self.assertEqual(report, {"asked": 55, "refused": 0, "gone": 0})
 
     def test_a_listing_ebay_no_longer_serves_is_ended_on_its_word(self):
         fake = FakeEbay(listings=1)                  # the fake serves only listing 0
@@ -487,9 +425,6 @@ class StatusRefresh(unittest.TestCase):
         fake.detail = lambda item_id: real_detail(item_id) if item_id != gone else None
         fake_get = fake.get
         def get(url, headers=None, params=None, timeout=None, **kw):
-            if url.rstrip("/").endswith("/item"):
-                ids = [i for i in params["item_ids"].split(",") if i != gone]
-                return fake.Response({"items": [real_detail(i) for i in ids]})
             if gone in url:
                 return fake.Response({"errors": [{"message": "not found"}]}, status=404)
             return fake_get(url, headers, params, timeout, **kw)
@@ -509,11 +444,10 @@ class StatusRefresh(unittest.TestCase):
         self.assertTrue(engine.status_settled({"status": "ended", "endDate": "2026-09-01T00:00:00.000Z"}))
         fake = FakeEbay()
         requests.get = fake.get
-        engine._bulk_details_supported = True
         statuses = engine.refresh_statuses(
             "fake-token", self.IDS[:20], {i: dict(legacy) for i in self.IDS[:20]})
         self.assertEqual([statuses[i]["status"] for i in self.IDS[:20]], ["active"] * 20)
-        self.assertEqual(fake.calls["getItems"], 1)
+        self.assertEqual(fake.calls["getItem"], 20)
 
     def test_a_fresh_active_reading_is_not_asked_about_again(self):
         from datetime import datetime, timezone
@@ -522,7 +456,7 @@ class StatusRefresh(unittest.TestCase):
         self.assertEqual(fake.detail_calls, 0)
         fake = FakeEbay(); requests.get = fake.get
         engine.refresh_statuses("fake-token", self.IDS[:20], {i: {"status": "active", "checkedAt": now} for i in self.IDS[:20]}, fresh_within=0)
-        self.assertEqual(fake.calls["getItems"], 1, "fresh_within=0 must re-check")
+        self.assertEqual(fake.calls["getItem"], 20, "fresh_within=0 must re-check")
 
 
 
@@ -600,10 +534,9 @@ class BoardDropsCustoms(unittest.TestCase):
                                  "a custom card is on the board")
 
 
-class TwoWaysToFetch(unittest.TestCase):
-    """A judge needs the item specifics, which getItems rarely carries, so it
-    asks for listings one at a time. A status needs nothing in particular, so
-    statuses go twenty at a time, where the batch really is the answer."""
+class OneWayToFetch(unittest.TestCase):
+    """Judge and statuses alike: one call per listing, and the single call
+    carries the item specifics the judge needs."""
 
     IDS = [f"v1|{FakeEbay.BASE_ID + n}|0" for n in range(200)]
 
@@ -615,13 +548,11 @@ class TwoWaysToFetch(unittest.TestCase):
     def tearDown(self):
         requests.get = self._get
         engine.consume_api_call = self._consume
-        engine._bulk_details_supported = True
 
     def test_judging_asks_for_each_listing_and_gets_it_in_full(self):
-        fake = FakeEbay(aspects_in_bulk=False)
+        fake = FakeEbay()
         requests.get = fake.get
         details = engine.get_item_details("fake-token", self.IDS)
-        self.assertEqual(fake.calls["getItems"], 0, "a batch call was spent on judging")
         self.assertEqual(fake.calls["getItem"], len(self.IDS))
         self.assertEqual(len(details), len(self.IDS))
         for item_id, detail in details.items():
@@ -629,13 +560,12 @@ class TwoWaysToFetch(unittest.TestCase):
                 self.assertTrue(detail.get("localizedAspects"),
                                 "a listing came back with no item specifics to judge on")
 
-    def test_statuses_go_twenty_at_a_time(self):
-        fake = FakeEbay(aspects_in_bulk=False)
+    def test_statuses_cost_the_same(self):
+        fake = FakeEbay()
         requests.get = fake.get
         statuses = engine.refresh_statuses("fake-token", self.IDS, {})
         self.assertEqual(len(statuses), len(self.IDS))
-        self.assertEqual(fake.calls["getItem"], 0)
-        self.assertEqual(fake.calls["getItems"], len(self.IDS) / engine.DETAIL_BATCH_SIZE)
+        self.assertEqual(fake.calls["getItem"], len(self.IDS))
 
 
 class QuotaControls(unittest.TestCase):
