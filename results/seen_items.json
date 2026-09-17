@@ -3117,6 +3117,7 @@
   "v1|298677598326|0": "reject",
   "v1|298677598327|0": "reject",
   "v1|298680330660|0": "reject",
+  "v1|298681854145|0": "reject",
   "v1|303746780274|0": "reject",
   "v1|303792208802|0": "reject",
   "v1|303792219952|0": "reject",
@@ -3302,7 +3303,7 @@
   "v1|317833134346|0": "reject",
   "v1|317833183928|0": {
     "verdict": "filtered",
-    "rules": "60a3c781e14f279c",
+    "rules": "3c755f086561e28c",
     "reason": "1/641: print run not under the ceiling of 500"
   },
   "v1|317909109654|616531183366": "reject",
@@ -4908,7 +4909,7 @@
   "v1|398088842437|0": "reject",
   "v1|398098901892|0": {
     "verdict": "filtered",
-    "rules": "60a3c781e14f279c",
+    "rules": "3c755f086561e28c",
     "reason": "1/6784: print run not under the ceiling of 500"
   },
   "v1|398111578126|0": "reject",
