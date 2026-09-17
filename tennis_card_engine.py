@@ -268,7 +268,7 @@ STATUS_FILE = "status.json"          # active / sold / ended, per listing, for s
 HEADERS = ["Player", "Manufacturer / Set", "Card Description", "Serial #",
            "Bookend Type", "Price", "eBay Item Link", "Date Found (UTC)", "Image",
            "Listed (UTC)", "Listing Type", "Card Type", "Grading", "Extra Images",
-           "Parallel", "Outfit Colour", "Colour Match", "Caution"]
+           "Parallel", "Outfit Colour", "Colour Match", "Caution", "Sport"]
 
 
 # ============================================================================
@@ -1097,6 +1097,13 @@ def is_bookend_serial(card_number, print_run, max_print_run=None, inclusive=None
 
 TENNIS_ONLY_MAKERS = ("netpro", "ace authentic")
 
+# Product lines that are only ever tennis. Topps Graphite and Topps Royalty are
+# tennis sets, so their name is the sport evidence and a listing need not spell
+# it out -- 16 of the 21 recorded matches that say "tennis" nowhere are in these
+# two. Topps Chrome, Topps Now and Panini Instant are printed for every sport,
+# so those do have to say so. Matched against the title and the Set specific.
+TENNIS_ONLY_SETS = ("topps graphite", "topps royalty", "graphite royalty")
+
 
 def name_variants(player):
     """The searches run for one player: the full name, then the surname alone,
@@ -1111,18 +1118,28 @@ def name_variants(player):
     return variants
 
 
+def sport_named(aspects):
+    """The sport the listing states, or "" when it states none. Recorded as
+    found so the question can be settled from the spreadsheet later."""
+    for key in ("Sport", "Sports"):
+        values = [str(v).strip() for v in (aspects or {}).get(key) or [] if str(v).strip()]
+        if values:
+            return values[0]
+    return ""
+
+
 def is_tennis_listing(title, aspects=None):
-    """Something on the listing says tennis: the word, the Sport specific, or
-    a maker that only prints tennis cards."""
+    """Something on the listing says tennis: the word, the Sport specific, a
+    maker that only prints tennis cards, or a set that is only ever tennis."""
     aspects = aspects or {}
     text = title.lower()
     if "tennis" in text:
         return True
-    for key in ("Sport", "Sports"):
-        if any("tennis" in str(v).lower() for v in aspects.get(key) or []):
-            return True
+    if "tennis" in sport_named(aspects).lower():
+        return True
     maker = " ".join(str(v) for k in ("Manufacturer", "Card Manufacturer", "Set") for v in aspects.get(k) or []).lower()
-    return any(m in maker or m in text for m in TENNIS_ONLY_MAKERS)
+    return any(m in maker or m in text
+               for m in TENNIS_ONLY_MAKERS + TENNIS_ONLY_SETS)
 
 
 def matches_player(title, player, aspects=None):
@@ -1189,7 +1206,7 @@ def _write_header(ws):
         cell.font = Font(name="Arial", bold=True, color="FFFFFF")
         cell.fill = PatternFill(start_color="2E5B8A", end_color="2E5B8A", fill_type="solid")
         cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-    widths = [18, 22, 46, 14, 24, 16, 55, 18, 40, 22, 20, 14, 14, 40, 12, 12, 12, 40]
+    widths = [18, 22, 46, 14, 24, 16, 55, 18, 40, 22, 20, 14, 14, 40, 12, 12, 12, 40, 14]
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "A2"
@@ -1197,7 +1214,7 @@ def _write_header(ws):
 
 def append_row(ws, player, manufacturer, set_name, title, card_number, print_run, price, link,
                image="", listed="", listing="", card_type="", grading="", images=None,
-               parallel="", outfit="", colour_match="", caution=""):
+               parallel="", outfit="", colour_match="", caution="", sport=""):
     bookend = "True 1/1 (both bookends)" if card_number == print_run == 1 else (
         f"001 of {print_run}" if card_number == 1 else f"last of {print_run} ({card_number}/{print_run})"
     )
@@ -1220,6 +1237,7 @@ def append_row(ws, player, manufacturer, set_name, title, card_number, print_run
         outfit,
         colour_match,
         caution,
+        sport,                    # what the listing said, "" when it said nothing
     ]
     ws.append(row)
     r = ws.max_row
@@ -1413,6 +1431,7 @@ def build_board(xlsx_path, matches_path=None, limit=24):
             "outfit": cell(row, "Outfit Colour"),
             "colourMatch": cell(row, "Colour Match"),
             "caution": cell(row, "Caution"),
+            "sport": cell(row, "Sport"),
         })
     wb.close()
     # newest listing first; rows from before the Listed column fall back to
@@ -1493,6 +1512,26 @@ def judge_listing(item, detail, player=None, rules=None):
     if not ok:
         return "reject", reason, None
 
+    # The scan searches category 212, which is every sport, and with no player
+    # named nothing else here checks what sport a card is. Turning these away
+    # would cost far more than it saves: of the matches recorded so far, 21 say
+    # "tennis" nowhere, and every one of them is a real tennis card. So this
+    # marks rather than rejects -- a wrong card is one glance to dismiss, a
+    # missed one is gone for good. Recording the sport is what will settle
+    # whether this can ever become a rejection.
+    sport = sport_named(aspects)
+    if not is_tennis_listing(title, aspects):
+        if sport:
+            # The listing was asked and answered: this is somebody else's
+            # sport. No tennis card is lost by believing it.
+            return "reject", f"listing says {sport}, not tennis", None
+        # Nothing on the listing says either way, and that is the common case:
+        # of the matches recorded so far, 21 say "tennis" nowhere and every one
+        # is a real tennis card. So this marks rather than rejects -- a wrong
+        # card is one glance to dismiss, a missed one is gone for good.
+        note = "nothing on the listing says what sport this is; check by eye"
+        caution = f"{caution} \u00b7 {note}" if caution else note
+
     seller = (detail.get("seller", {}) or {}).get("username", "").lower()
     if seller in BLOCKED_SELLERS:
         return "reject", f"blocked seller: {seller}", None
@@ -1547,6 +1586,7 @@ def judge_listing(item, detail, player=None, rules=None):
         "bids": detail.get("bidCount"),
         "cardType": card_type,
         "grading": grading,
+        "sport": sport,
         "caution": caution,
     }
     fields["parallel"], fields["outfit"], fields["colourMatch"] = colour_reading(
@@ -1732,7 +1772,8 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                                                f["card_number"], f["print_run"], f["price"], f["link"],
                                                f["image"], f["listed"], f["listing"],
                                                CARD_TYPES[f["cardType"]], f["grading"], f["images"],
-                                               f["parallel"], f["outfit"], f["colourMatch"], f["caution"])
+                                               f["parallel"], f["outfit"], f["colourMatch"], f["caution"],
+                                               f["sport"])
                     seen[item_id] = "match"
                     record = {
                         "player": f["player"],
@@ -1754,6 +1795,7 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                         "parallel": f["parallel"],
                         "outfit": f["outfit"],
                         "colourMatch": f["colourMatch"],
+                        "sport": f["sport"],
                         "caution": f["caution"],
                         "found": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
                     }

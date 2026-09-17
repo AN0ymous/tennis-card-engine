@@ -33,6 +33,19 @@ on a website.
 - The scan covers all players, all 7 sets, all card types, graded and raw,
   both listing types, any price. Website filters only narrow what is shown.
 - eBay's account deletion notifications: opted out ("not persisting eBay data").
+- **A card of another sport is turned away; a card that says nothing is kept
+  and marked.** The scan searches category 212, which is every sport, and with
+  `SCAN_ALL_PLAYERS` True nothing else checks what sport a card is. Measured
+  against the 56 matches recorded by 17 Sep: 21 said "tennis" nowhere in their
+  title, maker or set, and every one was a real tennis card, so a blanket
+  `is_tennis_listing` requirement would have been expensive and wrong. Instead:
+  `TENNIS_ONLY_SETS` (Topps Graphite, Topps Royalty) joins `TENNIS_ONLY_MAKERS`
+  (NetPro, Ace Authentic), since those lines are only ever tennis -- that alone
+  took the unconfirmed 21 down to 5. For what is left (Topps Chrome, Topps Now,
+  Panini Instant, which every sport is printed in), a listing whose `Sport`
+  specific names another sport is rejected outright, and a listing that states
+  nothing is kept with a "check by eye" caution. A wrong card is one glance to
+  dismiss; a missed one is gone for good.
 - **Custom cards are rejected before the serial is read.** A card somebody
   made themselves carries a real maker in the Manufacturer field and is nearly
   always called a 1/1, because only one exists, so neither the allow-list nor
@@ -90,14 +103,10 @@ on a website.
 
 ## Open items
 
-- **Nothing checks the sport when scanning all players.** `judge_listing` only
-  applies the tennis test through `matches_player`, which is skipped when no
-  player is named -- and `SCAN_ALL_PLAYERS` is True. eBay category 212 is
-  Sports Trading Cards, every sport. So a Topps Chrome *baseball* card with a
-  bookend serial matches today. The obvious fix (require `is_tennis_listing`
-  when no player is named) would also turn away real tennis listings whose
-  title never says "tennis" and that carry no Sport specific, so measure that
-  against the board before changing it.
+- How often eBay states the sport at all is still unknown: the new `Sport`
+  column answers it after the next scan. If nearly every listing states it, the
+  "check by eye" caution below can become a rejection; if many leave it blank,
+  it has to stay a caution. Sort the spreadsheet by `Sport` after the next run.
 - `results/status.json` was empty because `export_static.py` ran without the
   eBay keys; the keys were added to that step, but no scan has run since, so
   the fix is unverified. Check the next run's "Export what the hosted site

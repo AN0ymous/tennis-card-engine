@@ -517,5 +517,78 @@ class BulkWithoutItemSpecifics(unittest.TestCase):
         self.assertEqual(fake.calls["getItems"], len(self.IDS) / engine.DETAIL_BATCH_SIZE)
 
 
+
+class SportGate(unittest.TestCase):
+    """What sport a card is, when nothing named a player to check against."""
+
+    def judge(self, title, aspects):
+        item = {"title": title, "itemId": "v1|1|0", "buyingOptions": ["FIXED_PRICE"]}
+        detail = {
+            "localizedAspects": [{"name": k, "value": v[0]} for k, v in aspects.items()],
+            "price": {"value": "50.00", "currency": "USD"},
+            "seller": {"username": "someseller"},
+            "buyingOptions": ["FIXED_PRICE"],
+        }
+        return engine.judge_listing(item, detail)
+
+    TOPPS = {"Manufacturer": ["Topps"]}
+
+    def test_a_tennis_only_set_needs_no_tennis_word(self):
+        """Topps Graphite and Topps Royalty are tennis sets, so the set name is
+        the evidence. 16 of the 21 recorded matches that never say "tennis" are
+        these, and every one is a real tennis card."""
+        for title, set_name in (
+                ("2024 Topps Graphite Mirra Andreeva Patch Auto 1/1 Rookie Card", "2024 Topps"),
+                ("2024 Topps Royalty Liv Hovde Auto Jumbo Relic Book Cards RC", ""),
+                ("MIOMIR KECMANOVIC 2024 GS-MKC Topps Graphite AUTOGRAPH 1/10", "2024 Topps Graphite")):
+            with self.subTest(title=title):
+                self.assertTrue(engine.is_tennis_listing(
+                    title, {**self.TOPPS, "Set": [set_name]}))
+
+    def test_a_multi_sport_set_saying_nothing_is_kept_but_marked(self):
+        """Topps Chrome is printed for every sport. Sellers leave the Sport
+        field blank often enough that rejecting would cost real cards, so this
+        is a caution, not a rejection."""
+        verdict, _, fields = self.judge(
+            "2021 Topps Chrome Autograph Card Tracy Austin 50/50 Bookend",
+            {**self.TOPPS, "Set": ["2021 Topps Chrome"]})
+        self.assertEqual(verdict, "match")
+        self.assertIn("what sport", fields["caution"])
+        self.assertEqual(fields["sport"], "")
+
+    def test_a_listing_that_names_another_sport_is_rejected(self):
+        """Asked and answered: believing it costs no tennis card."""
+        verdict, reason, _ = self.judge(
+            "2024 Topps Chrome Aaron Judge Refractor 1/25",
+            {**self.TOPPS, "Set": ["2024 Topps Chrome"], "Sport": ["Baseball"]})
+        self.assertEqual(verdict, "reject")
+        self.assertIn("Baseball", reason)
+
+    def test_a_listing_that_says_tennis_is_clean(self):
+        verdict, _, fields = self.judge(
+            "2025 Topps Chrome Tennis Clement Chidekh Auto 1/1",
+            {**self.TOPPS, "Set": ["2025 Topps Chrome"], "Sport": ["Tennis"]})
+        self.assertEqual(verdict, "match")
+        self.assertEqual(fields["sport"], "Tennis")
+        self.assertEqual(fields["caution"], "")
+
+    def test_table_tennis_is_not_turned_away(self):
+        """It says tennis, so it is kept. Deliberate: a card wrongly kept is
+        one glance to dismiss."""
+        self.assertTrue(engine.is_tennis_listing(
+            "2024 Topps Chrome Ma Long 1/25", {**self.TOPPS, "Sport": ["Table Tennis"]}))
+
+    def test_the_sport_is_read_off_the_listing(self):
+        self.assertEqual(engine.sport_named({"Sport": ["Baseball"]}), "Baseball")
+        self.assertEqual(engine.sport_named({"Sports": ["Tennis"]}), "Tennis")
+        self.assertEqual(engine.sport_named({}), "")
+        self.assertEqual(engine.sport_named({"Sport": ["  "]}), "")
+
+    def test_the_spreadsheet_keeps_a_sport_column(self):
+        """So the next run answers how often eBay states it at all, and whether
+        the caution above can ever become a rejection."""
+        self.assertIn("Sport", engine.HEADERS)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
