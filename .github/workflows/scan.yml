@@ -71,6 +71,7 @@ jobs:
           done
 
       - name: Run the engine
+        id: engine
         env:
           EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
           EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
@@ -106,6 +107,10 @@ jobs:
           EBAY_ENV: ${{ vars.EBAY_ENV }}      # leave unset; "sandbox" only to test keys
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional: outfit colours from photos
           VISION_MODEL: ${{ vars.VISION_MODEL }}               # optional; default claude-opus-5
+          # #18 runs this step even when the engine failed, so the results it
+          # saved are not thrown away. The page needs to know that a failed
+          # run is what it is looking at, or it reads as a quiet day.
+          SCAN_OUTCOME: ${{ steps.engine.outcome }}
         run: python export_static.py results
 
       - name: Keep the results in the repo

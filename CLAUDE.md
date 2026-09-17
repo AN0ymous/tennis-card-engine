@@ -109,7 +109,7 @@ on a website.
    capped at 24 while the spreadsheet held 54, so most of the record never
    reached the page. At roughly 780 bytes a card that ceiling is about 390KB
    -- revisit if the spreadsheet approaches it.
-6. **The scan setup is the filter, everywhere, and it survives a reload.**
+5. **The scan setup is the filter, everywhere, and it survives a reload.**
    Players, sets and the print-run ceiling (with "inclusive") go to the engine
    to decide what is recorded -- and until 17 Sep that was all they did:
    "Everything found so far" ignored them, so a scan narrowed to one set and
@@ -130,19 +130,19 @@ on a website.
    appeared. The whole setup is now kept in localStorage (`tce.scanSetup`) and
    restored after the defaults go in. Nothing saved means exactly the old
    behaviour.
-7. **`app.js` and `styles.css` are stamped with the commit on publish.**
+6. **`app.js` and `styles.css` are stamped with the commit on publish.**
    `pages.yml` rewrites the two asset links to `?v=<sha>`, because a browser
    keeps `app.js` for a while and a merge could leave a phone running the old
    page against new results: run 29 on 17 Sep dispatched a scan with no
    settings at all for exactly that reason and looked like a failed fix.
-8. **A name you typed in can be taken out again.** An added chip (a player or
+7. **A name you typed in can be taken out again.** An added chip (a player or
    set from the search box, class `is-added`, remembered in `tce.addedPlayers`
    / `tce.addedSets`) carries a small cross that removes it and drops it from
    the remembered list; the built-in 15 players and 7 sets do not. The cross
    sits inside the chip's label, so its click is stopped from also toggling
    the chip. Taking away the last ticked player turns "every player" back on,
    since nothing ticked would mean nothing to scan and nothing to show.
-5. **eBay calls today.** A small meter under the progress bar, from eBay's own
+8. **eBay calls today.** A small meter under the progress bar, from eBay's own
    Developer Analytics figures. The eBay keys never reach the browser: the
    scheduled run writes `results/usage.json` after each scan, and `py
    server.py` answers `/api/usage` from its `.env` (cached 2 minutes, since
@@ -152,17 +152,7 @@ on a website.
    is published with the page and anyone who looks can read it. It holds
    counts only, never a key. Locally it is always shown.
 
-## Why a scan usually adds nothing, and why that is right
-
-`seen_items.json` held 5,635 judged listings on 17 Sep -- 5,577 permanent
-rejects, 56 matches, 2 filtered -- against roughly 4,840 listings live across
-the seven sets. So nearly everything on eBay has already been judged, and a
-scan started now correctly adds nothing: a card already recorded is reported
-as `known`, not as a new match. The engine is working when it says "Added 0
-new qualifying listing(s)". Judge a scan by the "Checked N listings" line and
-by the lower section of the Matches panel, not by whether anything was new.
-
-6. **A "New" or "Sold" flag beside the star.** Cards the latest scan turned up carry a
+9. **A "New" or "Sold" flag beside the star.** Cards the latest scan turned up carry a
    green NEW pill next to the star, on the board rail and on match cards. It is
    derived from `state.matches` (that is `new_matches.json` hosted, the live
    event stream locally) at render time, so nothing extra is stored. Cards
@@ -187,28 +177,32 @@ by the lower section of the Matches panel, not by whether anything was new.
    at 10px it covered the serial and clipped it. With a flag present the serial
    steps left again (`.mc-photo.has-flag`).
 
+## Why a scan usually adds nothing, and why that is right
+
+`seen_items.json` held 5,635 judged listings on 17 Sep -- 5,577 permanent
+rejects, 56 matches, 2 filtered -- against roughly 4,840 listings live across
+the seven sets. So nearly everything on eBay has already been judged, and a
+scan started now correctly adds nothing: a card already recorded is reported
+as `known`, not as a new match. The engine is working when it says "Added 0
+new qualifying listing(s)". Judge a scan by the "Checked N listings" line and
+by the lower section of the Matches panel, not by whether anything was new.
+
 ## Open items
 
 - How often eBay states the sport at all is still unknown: the new `Sport`
   column answers it after the next scan. If nearly every listing states it, the
   "check by eye" caution below can become a rejection; if many leave it blank,
   it has to stay a caution. Sort the spreadsheet by `Sport` after the next run.
-- `results/status.json` was empty because `export_static.py` ran without the
-  eBay keys; the keys were added to that step, but no scan has run since, so
-  the fix is unverified. Check the next run's "Export what the hosted site
-  reads" step for "status refresh skipped: ...".
 - Whether batching actually saves calls is unconfirmed -- see the note on the
   420 figure under "Things to keep in mind".
-- The seven cursors in `results/scan_cursors.json` are in the old bare-timestamp
-  format, which says nothing about the rules behind it, so the next run ignores
-  them and walks each set in full once before the new format takes over. Expect
-  roughly 200 calls on that run rather than the usual handful; it settles by
-  itself on the run after.
 - `README.md` is not a real readme (it contains pasted engine code).
 
 Done since these notes were written: `app.js` confirmed on `main` (the Matches
 fallback works), `scan.yml`'s six-hourly comment corrected, and `test_engine.py`
-added -- run `py test_engine.py` before pushing engine changes.
+added -- run `py test_engine.py` before pushing engine changes. Later on 17 Sep:
+`results/status.json` verified (56 statuses written by every run since 06:04),
+and the one-time full re-walk after the cursor format changed happened at run
+36, after which all seven cursors carry the resolved fingerprint.
 
 ## Durability
 
@@ -222,6 +216,16 @@ added -- run `py test_engine.py` before pushing engine changes.
 - **`scan.yml` exports and commits with `if: always()`.** Those saved files
   live on the runner; skipping the later steps on a failure would throw them
   away, which is what the saving was for. The run still shows red.
+- **A failed run is published as a failed run.** Because of the above, a run
+  that fails still writes a fresh `lastRun`, and the page reloads into it. With
+  a burnt allowance that read as "Nothing new ... which is normal" under a
+  green "Last scan" pill -- exactly the reassurance that sentence was written
+  to give, in exactly the case it is false. `scan.yml` now passes the engine
+  step's outcome (`SCAN_OUTCOME`, from `steps.engine.outcome`) to the export,
+  `config.json` carries `lastRunOk`, and the page says "Last scan failed" and
+  why nothing is new. Unset, as when `export_static.py` is run by hand, means
+  fine. `.gitignore` also covers the `.writing` and `.unreadable` files the
+  atomic write and the unreadable-file handling can leave beside a state file.
 - **State files are written beside themselves and swapped in**
   (`write_json_atomically`, using `os.replace`, which is atomic on Windows
   too). A kill mid-write used to leave half a document where the real file

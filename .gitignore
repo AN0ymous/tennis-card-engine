@@ -8,6 +8,9 @@
 /scan_cursors.json
 /ebay_api_usage.json
 /engine_run.log
+# a state file caught mid-write, or one that would not parse (see load_state)
+/*.writing
+/*.unreadable
 cron.log
 
 __pycache__/
