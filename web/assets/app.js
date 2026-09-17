@@ -450,12 +450,58 @@ function toggleSaved(card) {
 /* Cards the most recent scan turned up. state.matches is exactly that list --
    new_matches.json on the hosted page, the live event stream on a local one --
    so this is derived from it at render time rather than kept in step by hand.
-   The mark lasts until the next scan replaces that list. */
+
+   A card stops being new an hour after the scan recorded it, whichever device
+   is looking and whether or not another scan has run since: the clock is the
+   "Date Found" the scan wrote, so every device agrees and nothing has to be
+   remembered per browser. A card whose date cannot be read keeps its flag
+   until the next scan replaces the list, the same as before. */
+const NEW_FOR_MS = 60 * 60 * 1000;
 const newlyFound = new Set();
+let newFlagTimer = null;
+
+function foundAt(card) {
+  const d = new Date(String(card.found || "").replace(/ UTC$/, "Z").replace(" ", "T"));
+  return isNaN(d) ? null : d;
+}
+
+/* when this card's flag goes, or null when it has no readable date */
+function newFlagGoesAt(card) {
+  const at = foundAt(card);
+  return at ? at.getTime() + NEW_FOR_MS : null;
+}
 
 function markNewlyFound() {
   newlyFound.clear();
-  state.matches.forEach((m) => { if (m.link) newlyFound.add(m.link); });
+  const now = Date.now();
+  state.matches.forEach((m) => {
+    if (!m.link) return;
+    const goes = newFlagGoesAt(m);
+    if (goes === null || goes > now) newlyFound.add(m.link);
+  });
+  scheduleNewFlagSweep();
+}
+
+/* Take the flags off by themselves, without waiting for a reload. Timers in a
+   hidden tab are throttled or stopped, so coming back to the tab sweeps too --
+   see initWakeChecks. */
+function scheduleNewFlagSweep() {
+  clearTimeout(newFlagTimer);
+  newFlagTimer = null;
+  const now = Date.now();
+  let soonest = Infinity;
+  state.matches.forEach((m) => {
+    const goes = m.link ? newFlagGoesAt(m) : null;
+    if (goes !== null && goes > now && goes < soonest) soonest = goes;
+  });
+  if (soonest === Infinity) return;
+  newFlagTimer = setTimeout(sweepNewFlags, Math.max(soonest - now, 1000));
+}
+
+function sweepNewFlags() {
+  markNewlyFound();
+  renderBoard();
+  renderMatches();
 }
 
 function isNewCard(card) {
@@ -465,8 +511,9 @@ function isNewCard(card) {
 /* the "new" flag that rides next to the star */
 function newFor(card) {
   const tag = el("span", "new-tag", "New");
-  tag.title = "Found by the latest scan";
-  tag.setAttribute("aria-label", "Found by the latest scan");
+  const words = "Found in the last hour";
+  tag.title = words;
+  tag.setAttribute("aria-label", words);
   return tag;
 }
 
@@ -2340,6 +2387,7 @@ async function resumeLocalScan() {
 function initWakeChecks() {
   const wake = () => {
     if (document.visibilityState === "hidden") return;
+    sweepNewFlags();            // an hour may have passed with our timers stopped
     if (HOSTED) {
       const watching = savedWatch();
       if (!watching) return;
