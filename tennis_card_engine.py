@@ -342,6 +342,47 @@ def get_ebay_token():
     return resp.json()["access_token"]
 
 
+# eBay's own figures for how much of the daily call allowance is left. The
+# keys never leave the machine holding them: the scheduled run writes the
+# numbers into results/, and the local server answers from its .env, so the
+# browser is only ever handed the counts.
+RATE_LIMIT_URL = f"{EBAY_API_BASE}/developer/analytics/v1_beta/rate_limit/"
+BROWSE_RATE_FILTER = {"api_context": "buy", "api_name": "browse", "api_version": "v1"}
+
+
+def browse_allowance(token):
+    """What is left of the Browse API's daily allowance, or {} if eBay says
+    nothing. eBay answers 204 with no body when it holds no figures at all --
+    a keyset that has made no calls yet, or one not enabled for the Analytics
+    API -- which is not an error, just nothing to show."""
+    try:
+        resp = requests.get(RATE_LIMIT_URL, headers={"Authorization": f"Bearer {token}"},
+                            params=BROWSE_RATE_FILTER, timeout=20)
+        if resp.status_code != 200:
+            log.warning("Rate limit read returned %s: %s", resp.status_code, resp.text[:200])
+            return {}
+        limits = resp.json().get("rateLimits", [])
+    except (requests.RequestException, ValueError) as exc:
+        log.warning("Rate limit read failed: %s", exc)
+        return {}
+
+    for entry in limits:
+        for resource in entry.get("resources", []):
+            for rate in resource.get("rates", []):
+                cap, left = rate.get("limit"), rate.get("remaining")
+                if cap is None or left is None:
+                    continue
+                return {
+                    "name": resource.get("name") or entry.get("apiName") or "buy.browse",
+                    "limit": cap,
+                    "remaining": left,
+                    "used": cap - left,
+                    "resets": rate.get("reset") or "",
+                    "window": rate.get("timeWindow") or 0,
+                }
+    return {}
+
+
 def price_filter(min_price=None, max_price=None):
     """The Browse API's price clause for a range; '' when the range is open."""
     lo = f"{float(min_price):g}" if min_price else ""

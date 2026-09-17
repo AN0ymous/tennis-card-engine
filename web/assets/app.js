@@ -1253,11 +1253,13 @@ function addKey(c) {
   }
   setGithubToken(token);
   renderHostedNote(c, "Key saved on this device. Run a scan now starts one on GitHub straight away. ");
+  loadAllowance();                       // the allowance is shown once a key is set
 }
 
 function forgetKey(c) {
   setGithubToken("");
   renderHostedNote(c, "Key removed from this device. Run a scan on GitHub opens GitHub again. ");
+  $("allowance").hidden = true;
 }
 
 async function onHostedRun(c) {
@@ -1393,6 +1395,57 @@ function resumeHostedWatch(c) {
   run.textContent = "Scan running";
   watchForNewResults(watching);
   return true;
+}
+
+/* ------------------------------------------ eBay's daily call allowance */
+/* The figures come from eBay, but the keys that read them never reach the
+   browser: the scheduled run writes results/usage.json after each scan, and
+   the local server answers /api/usage from its own .env. On the hosted site
+   this is shown only once a one-tap key has been set for the device -- it is
+   operating detail, not part of the card board. That gate is what is drawn,
+   not a secret kept: results/ is published with the page, so the file is
+   readable by anyone who looks for it. */
+
+function allowanceLabel(reset) {
+  const at = new Date(reset || "");
+  if (isNaN(at)) return "";
+  const hours = Math.max(0, Math.round((at.getTime() - Date.now()) / 3600000));
+  return hours ? `, resets in about ${hours}h` : ", resets shortly";
+}
+
+function renderAllowance(usage) {
+  const box = $("allowance");
+  if (!usage || !usage.limit) {
+    // no figures: eBay reports none until a keyset has been used, and says
+    // nothing at all about one not enabled for its Analytics API
+    box.hidden = !usage || !usage.error;
+    if (usage && usage.error) {
+      $("allowance-used").textContent = "Not available";
+      $("allowance-left").textContent = "";
+      $("allowance-bar").style.width = "0%";
+      $("allowance-note").textContent = usage.error;
+    }
+    return;
+  }
+  const pct = Math.min(100, Math.round((usage.used / usage.limit) * 100));
+  box.hidden = false;
+  $("allowance-bar").style.width = `${pct}%`;
+  $("allowance-bar").classList.toggle("is-low", usage.remaining / usage.limit < 0.2);
+  $("allowance-used").textContent = `${usage.used.toLocaleString()} of ${usage.limit.toLocaleString()} used`;
+  $("allowance-left").textContent = `${usage.remaining.toLocaleString()} left`;
+  $("allowance-note").textContent =
+    (HOSTED ? "As of the last scan" : "Checked just now") + allowanceLabel(usage.resets)
+    + ". Shared with scans run from your PC and phone.";
+}
+
+async function loadAllowance() {
+  if (HOSTED && !githubToken()) { $("allowance").hidden = true; return; }
+  try {
+    const url = HOSTED ? `results/usage.json?t=${Date.now()}` : "api/usage";
+    renderAllowance(await (await fetch(url, { cache: "no-store" })).json());
+  } catch {
+    $("allowance").hidden = true;          // no file yet, or no server: say nothing
+  }
 }
 
 /* ------------------------------------ how far along a scan on GitHub is */
@@ -2176,7 +2229,7 @@ async function stopScan() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initSaved();
-  loadConfig().then(loadSavedMatches).then(loadBoard).then(resumeLocalScan);
+  loadConfig().then(loadSavedMatches).then(loadBoard).then(resumeLocalScan).then(loadAllowance);
   initRail();
   initWakeChecks();
 
