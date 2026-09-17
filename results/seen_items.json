@@ -292,29 +292,129 @@
   "v1|117393695852|0": "reject",
   "v1|117393721848|0": "reject",
   "v1|117400724137|0": "reject",
+  "v1|117400947008|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|117401357507|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|117403136878|0": "reject",
   "v1|117404081298|0": "reject",
+  "v1|117404086956|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
   "v1|117404223996|0": "reject",
+  "v1|117404407761|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|117404509383|0": "reject",
+  "v1|117404510770|0": {
+    "verdict": "reject",
+    "reason": "968/999 is neither the first nor the last of its run",
+    "judge": 2
+  },
   "v1|117405029408|0": "reject",
   "v1|117405166438|0": "reject",
+  "v1|117406658460|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|117407219552|0": "reject",
   "v1|117407221031|0": "reject",
   "v1|117407358373|0": "reject",
   "v1|117407358377|0": "reject",
   "v1|117407358383|0": "reject",
+  "v1|117407731806|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|117408152016|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|117408152020|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|117408152022|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|117408225741|0": "reject",
+  "v1|117408721840|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|117408721927|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|117408774614|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
   "v1|117409318884|0": "reject",
+  "v1|117409707823|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|117410190334|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|117411132938|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|117411133703|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|117411812514|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|117412276981|0": "reject",
+  "v1|117412944781|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|117412965626|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|117414528574|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|117416158838|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
   },
   "v1|117416293010|0": {
     "verdict": "filtered",
@@ -707,6 +807,16 @@
   "v1|128056607091|0": "reject",
   "v1|128058157098|0": "reject",
   "v1|128060354655|0": "reject",
+  "v1|128063623869|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|128063624759|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|128063658105|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -731,6 +841,11 @@
   },
   "v1|128076063693|0": "reject",
   "v1|128076205220|0": "reject",
+  "v1|128076500822|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|128076781567|0": "reject",
   "v1|128077219567|0": {
     "verdict": "filtered",
@@ -754,10 +869,40 @@
   "v1|128078000498|0": "reject",
   "v1|128078187044|0": "reject",
   "v1|128079509609|0": "reject",
+  "v1|128081268808|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|128081269577|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|128081328670|0": "reject",
   "v1|128081328700|0": "reject",
+  "v1|128081952799|0": {
+    "verdict": "reject",
+    "reason": "149/150 is neither the first nor the last of its run",
+    "judge": 2
+  },
   "v1|128082000262|0": "reject",
   "v1|128082317265|0": "reject",
+  "v1|128082857642|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|128082857682|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|128082857730|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
   "v1|128083221418|0": "reject",
   "v1|133579508472|0": "reject",
   "v1|133579645742|0": "reject",
@@ -1245,6 +1390,11 @@
   "v1|137724489336|0": "reject",
   "v1|137725341306|0": "reject",
   "v1|137725499083|0": "reject",
+  "v1|137729565529|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
   "v1|137729598324|0": "reject",
   "v1|137729648290|0": "reject",
   "v1|137732947821|0": "reject",
@@ -1257,6 +1407,16 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|137739395409|0": "reject",
+  "v1|137739442394|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|137739442396|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|137740177241|0": "match",
   "v1|137741777919|0": "reject",
   "v1|137741862856|0": {
@@ -1269,7 +1429,62 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|137744361031|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|137745864113|0": "reject",
+  "v1|137746861857|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|137746861860|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|137746861863|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|137746861864|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|137746861866|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|137746861871|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|137746861873|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|137746861877|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|137746861879|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|137746861880|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|143194836919|0": "reject",
   "v1|143194838607|0": "reject",
   "v1|143194841040|0": "reject",
@@ -1642,6 +1857,26 @@
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|147552550525|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|147559405360|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|147559642579|0": {
+    "verdict": "reject",
+    "reason": "914/999 is neither the first nor the last of its run",
+    "judge": 2
+  },
+  "v1|147559651992|0": {
+    "verdict": "reject",
+    "reason": "22/150 is neither the first nor the last of its run",
+    "judge": 2
+  },
   "v1|147560100169|0": "reject",
   "v1|147560100205|0": "reject",
   "v1|147563020877|0": "reject",
@@ -1655,6 +1890,21 @@
   "v1|147565356697|0": "reject",
   "v1|147565356700|0": "reject",
   "v1|147565356706|0": "reject",
+  "v1|147565491517|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|147565491523|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|147565491542|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|147566738210|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -1701,10 +1951,20 @@
   },
   "v1|147571449850|0": "reject",
   "v1|147571470213|0": "reject",
+  "v1|147572961835|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|147573050856|445843817757": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|147576274294|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|147577399807|0": "reject",
   "v1|147577412117|0": "reject",
@@ -2131,15 +2391,50 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|158269544032|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|158271712112|0": "reject",
   "v1|158272015014|0": "reject",
   "v1|158272015075|0": "reject",
+  "v1|158273421369|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|158273478309|0": "reject",
+  "v1|158275322204|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|158276251913|0": "reject",
   "v1|158276297372|0": "reject",
   "v1|158276311837|0": "reject",
   "v1|158276526401|0": "reject",
   "v1|158277219924|0": "reject",
+  "v1|158279571231|0": {
+    "verdict": "reject",
+    "reason": "set/title doesn't confirm ['panini instant']",
+    "judge": 2
+  },
+  "v1|158279572330|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|158279608358|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|158279608360|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|158279937466|0": "reject",
   "v1|158281651899|0": "reject",
   "v1|158281845477|0": "reject",
@@ -2178,8 +2473,18 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|158295289520|0": "reject",
+  "v1|158295295494|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|158297439102|0": "reject",
   "v1|158300606264|0": "reject",
+  "v1|158300722996|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|163645078559|0": "reject",
   "v1|163659653891|0": "reject",
   "v1|163659657297|0": "reject",
@@ -2569,6 +2874,61 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|168667307687|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
+  "v1|168667319944|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168667320052|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168667320060|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168667350288|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
+  "v1|168667373213|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168667373292|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168667373331|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168668677192|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|168669621199|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168669650772|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|168670018285|0": "reject",
   "v1|168671211756|0": "reject",
   "v1|168671378195|0": "reject",
@@ -2576,6 +2936,31 @@
   "v1|168671493561|0": "reject",
   "v1|168671756194|0": "reject",
   "v1|168671891512|0": "reject",
+  "v1|168672420217|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|168674407537|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'Collezioni Firenze'",
+    "judge": 2
+  },
+  "v1|168674615495|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168674679558|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168674696369|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|168676427288|0": "reject",
   "v1|168676790056|0": "reject",
   "v1|168677522765|0": {
@@ -2584,18 +2969,113 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|168678372027|0": "reject",
+  "v1|168679689968|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
+  "v1|168679694110|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168679697436|0": {
+    "verdict": "reject",
+    "reason": "2/20 is neither the first nor the last of its run",
+    "judge": 2
+  },
+  "v1|168679697451|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: ''",
+    "judge": 2
+  },
+  "v1|168679697476|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168679732108|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|168680185621|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
   "v1|168681229287|0": "reject",
+  "v1|168681233379|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|168681235702|0": "reject",
   "v1|168681530317|0": "reject",
   "v1|168682218598|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|168684389482|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168684389485|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168684389500|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168684389535|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168684389560|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168684389607|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168684397308|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168684397326|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168684417058|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
+  "v1|168684417086|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168684417124|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168685598514|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
   },
   "v1|168685939397|0": "reject",
   "v1|168686247958|0": "reject",
@@ -2681,7 +3161,27 @@
   "v1|168691376508|0": "reject",
   "v1|168691564882|0": "reject",
   "v1|168691694703|0": "reject",
+  "v1|168691737986|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168691737991|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168691738022|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
   "v1|168691740835|0": "reject",
+  "v1|168691764908|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|168691935989|0": "reject",
   "v1|168691941685|0": "reject",
   "v1|168691947171|0": "reject",
@@ -2700,8 +3200,83 @@
   "v1|168693975076|0": "reject",
   "v1|168693975154|0": "reject",
   "v1|168693975159|0": "reject",
+  "v1|168694212111|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|168694218846|0": "reject",
+  "v1|168694249454|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168694249475|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168694266784|0": {
+    "verdict": "reject",
+    "reason": "blocked manufacturer string: 'Pro Net'",
+    "judge": 2
+  },
+  "v1|168694273125|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: ''",
+    "judge": 2
+  },
+  "v1|168694273146|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: ''",
+    "judge": 2
+  },
+  "v1|168694273157|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: ''",
+    "judge": 2
+  },
+  "v1|168694273238|0": {
+    "verdict": "reject",
+    "reason": "blocked manufacturer string: 'Pro Net'",
+    "judge": 2
+  },
+  "v1|168694294381|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'Select'",
+    "judge": 2
+  },
+  "v1|168694294431|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168694294454|0": {
+    "verdict": "reject",
+    "reason": "blocked manufacturer string: 'Pro Net'",
+    "judge": 2
+  },
+  "v1|168694294507|0": {
+    "verdict": "reject",
+    "reason": "blocked manufacturer string: 'Pro Net'",
+    "judge": 2
+  },
   "v1|168694329875|0": "reject",
+  "v1|168694390859|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|168694444844|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|168694449594|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|173880100026|0": "reject",
   "v1|173880100031|0": "reject",
   "v1|174236896323|0": "reject",
@@ -3136,12 +3711,42 @@
   "v1|178477140283|0": "reject",
   "v1|178477442807|477792865158": "reject",
   "v1|178477452597|477792534859": "reject",
+  "v1|178478074426|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|178479309307|0": "reject",
   "v1|178480033463|0": "reject",
   "v1|178480379756|0": "reject",
   "v1|178480390550|0": "reject",
+  "v1|178480455789|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|178480456364|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|178482399098|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|178482399099|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|178482403148|0": "reject",
   "v1|178482641592|0": "reject",
+  "v1|178485439783|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|178485808331|477816134303": "reject",
   "v1|178485821562|477816145965": "reject",
   "v1|178485828114|477816132454": "reject",
@@ -3156,6 +3761,31 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|178489254482|0": {
+    "verdict": "reject",
+    "reason": "95/150 is neither the first nor the last of its run",
+    "judge": 2
+  },
+  "v1|178490264087|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|178490346991|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|178490346993|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|178490347081|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|178491175947|0": "reject",
   "v1|178492432770|0": "reject",
   "v1|178492938796|0": "reject",
@@ -3167,6 +3797,11 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|178494278489|0": "reject",
+  "v1|178496206094|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|178497441563|0": "reject",
   "v1|178497664438|0": "reject",
   "v1|178498470402|0": "reject",
@@ -3174,6 +3809,11 @@
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
+  },
+  "v1|178499916360|0": {
+    "verdict": "reject",
+    "reason": "6/25 is neither the first nor the last of its run",
+    "judge": 2
   },
   "v1|178500389948|477829119562": "reject",
   "v1|178500391645|477828799108": "reject",
@@ -3186,6 +3826,11 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|178502729627|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
   },
   "v1|178503407926|0": "reject",
   "v1|178503439381|0": "reject",
@@ -3638,8 +4283,23 @@
   "v1|188885467340|0": "reject",
   "v1|188890593447|0": "reject",
   "v1|188890772371|0": "reject",
+  "v1|188894982706|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|188895304220|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|188895977512|0": "reject",
   "v1|188896384736|0": "reject",
+  "v1|188896488962|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|188896749653|0": "reject",
   "v1|188897654964|0": "reject",
   "v1|188897822433|0": {
@@ -3661,6 +4321,11 @@
   "v1|188905479493|0": "reject",
   "v1|188906395959|0": "reject",
   "v1|188906692725|0": "reject",
+  "v1|188907265670|0": {
+    "verdict": "reject",
+    "reason": "29/250 is neither the first nor the last of its run",
+    "judge": 2
+  },
   "v1|188908950003|0": "reject",
   "v1|188909031049|0": "reject",
   "v1|188911459995|0": "reject",
@@ -3669,6 +4334,11 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|188914180397|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
   },
   "v1|188914617516|0": {
     "verdict": "filtered",
@@ -3699,6 +4369,21 @@
   },
   "v1|188920828967|0": "reject",
   "v1|188921079136|0": "reject",
+  "v1|188921260551|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|188921320747|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|188921398373|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|188922389078|0": "reject",
   "v1|188922389087|0": "reject",
   "v1|188922742264|0": "reject",
@@ -3707,18 +4392,68 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|188922947632|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|188922952632|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|188922968083|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|188923200200|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
   "v1|188923437472|0": "reject",
+  "v1|188927050358|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: ''",
+    "judge": 2
+  },
   "v1|188929305125|0": "reject",
+  "v1|188929907476|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|188929981431|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|188929981779|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|188930013854|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|188930031149|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|188930082473|0": "reject",
   "v1|188930095302|0": "reject",
   "v1|188930095305|0": "reject",
   "v1|188930095306|0": "reject",
   "v1|188930095310|0": "reject",
+  "v1|188930347166|0": {
+    "verdict": "reject",
+    "reason": "2/999 is neither the first nor the last of its run",
+    "judge": 2
+  },
   "v1|188931169977|0": "reject",
   "v1|188931169980|0": "reject",
   "v1|188931169981|0": "reject",
@@ -3767,7 +4502,17 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|188934174038|0": "reject",
+  "v1|188935037256|0": {
+    "verdict": "reject",
+    "reason": "13/25 is neither the first nor the last of its run",
+    "judge": 2
+  },
   "v1|188935204208|0": "reject",
+  "v1|188935336074|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|188935815083|0": "reject",
   "v1|188938764146|0": "match",
   "v1|188940348112|0": "reject",
@@ -4058,22 +4803,492 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|198623546550|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|198623561154|0": "reject",
   "v1|198623564123|0": "reject",
   "v1|198629526417|0": "reject",
+  "v1|198629828717|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629828719|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|198629828734|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629828755|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629828759|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629828766|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629828767|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|198629828797|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|198629828803|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629828817|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|198629847194|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|198629926094|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629926096|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|198629926098|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|198629926099|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629926100|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629926104|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629926105|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629926106|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629926108|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629926109|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629976098|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629976134|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629976325|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629976379|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629976451|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629976500|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629976536|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629976612|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198629977206|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630012208|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630012215|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630012218|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630012220|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630012225|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630012231|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630012233|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630012240|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630012248|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630012399|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630123275|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630123278|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630123279|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630123281|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630123283|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630123285|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630123286|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630123287|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630123288|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630123289|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|198630328537|0": "reject",
   "v1|198630329912|0": "reject",
+  "v1|198630373747|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630373755|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630373799|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630373810|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630373815|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630373827|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630373842|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630373855|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630373889|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630373914|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|198630396212|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|198630408256|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630408257|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630408258|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|198630408259|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630408261|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630408262|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630408264|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630408266|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630408267|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198630408269|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632224576|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632224578|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632224579|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632224585|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632224609|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632224610|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632224658|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632224664|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632224754|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632224908|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632294700|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|198632294738|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632294745|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632294769|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632294776|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632294788|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632294806|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632294812|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632294817|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632294819|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632294848|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632294851|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|198632295221|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|198632722528|0": "reject",
+  "v1|198633125786|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|198633433426|0": "reject",
   "v1|198635332125|0": "reject",
   "v1|198635332126|0": "match",
@@ -4114,10 +5329,25 @@
   },
   "v1|198643757488|0": "reject",
   "v1|198643987477|0": "reject",
+  "v1|198644179405|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|198644666711|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|198645805283|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|198646149437|0": {
+    "verdict": "reject",
+    "reason": "blocked set: Netpro glossy",
+    "judge": 2
   },
   "v1|198646816171|0": "match",
   "v1|198646816692|0": "reject",
@@ -4451,11 +5681,36 @@
   "v1|206544846963|0": "reject",
   "v1|206544992312|0": "reject",
   "v1|206545007797|0": "reject",
+  "v1|206546127533|0": {
+    "verdict": "reject",
+    "reason": "set/title doesn't confirm ['topps chrome', 'graphite', 'royalty', 'topps now']",
+    "judge": 2
+  },
+  "v1|206546127537|0": {
+    "verdict": "reject",
+    "reason": "set/title doesn't confirm ['topps chrome', 'graphite', 'royalty', 'topps now']",
+    "judge": 2
+  },
+  "v1|206546127545|0": {
+    "verdict": "reject",
+    "reason": "set/title doesn't confirm ['topps chrome', 'graphite', 'royalty', 'topps now']",
+    "judge": 2
+  },
   "v1|206546302193|0": "reject",
   "v1|206546305443|0": "reject",
   "v1|206546308914|0": "reject",
   "v1|206547300053|0": "reject",
   "v1|206547322287|0": "reject",
+  "v1|206547610361|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|206547612320|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|206549177384|0": "reject",
   "v1|206549292010|0": "reject",
   "v1|206549371033|0": "reject",
@@ -4500,8 +5755,18 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|206559023970|0": {
+    "verdict": "reject",
+    "reason": "9/2000 is neither the first nor the last of its run",
+    "judge": 2
+  },
   "v1|206559236499|0": "reject",
   "v1|206559293257|0": "reject",
+  "v1|206559381851|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|206559445493|0": "reject",
   "v1|206559764312|0": "reject",
   "v1|206559814601|0": "reject",
@@ -5000,6 +6265,51 @@
   "v1|227511170441|0": "reject",
   "v1|227512340649|0": "reject",
   "v1|227512349875|0": "reject",
+  "v1|227512914685|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|227512914899|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
+  "v1|227512928809|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
+  "v1|227512930702|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
+  "v1|227512932213|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|227512932601|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|227512932927|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|227512933077|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|227512934440|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|227513879774|0": "reject",
   "v1|227513894589|0": "reject",
   "v1|227513912446|0": "reject",
@@ -5012,6 +6322,41 @@
   "v1|227515989127|0": "reject",
   "v1|227516258497|0": "reject",
   "v1|227517236137|0": "reject",
+  "v1|227517744570|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
+  "v1|227517745360|0": {
+    "verdict": "reject",
+    "reason": "389/500 is neither the first nor the last of its run",
+    "judge": 2
+  },
+  "v1|227517745700|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|227517745886|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|227517745986|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|227517746668|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
+  "v1|227517747286|0": {
+    "verdict": "reject",
+    "reason": "432/500 is neither the first nor the last of its run",
+    "judge": 2
+  },
   "v1|227518431794|0": "reject",
   "v1|227518448777|0": "reject",
   "v1|227518450244|0": "reject",
@@ -5021,6 +6366,11 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|227518670913|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
   },
   "v1|227519049418|0": {
     "verdict": "filtered",
@@ -5042,7 +6392,32 @@
   },
   "v1|227521903145|0": "reject",
   "v1|227521920727|0": "reject",
+  "v1|227521939923|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|227521941122|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|227521941239|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|227521942675|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|227522123728|0": "reject",
+  "v1|227522842060|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
   "v1|227524953810|0": "reject",
   "v1|233807725021|0": "reject",
   "v1|233807732188|0": "reject",
@@ -6117,6 +7492,16 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|237051615397|0": "reject",
+  "v1|237051651365|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237051746811|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237051779677|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -6128,16 +7513,91 @@
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|237051902934|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237051916097|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237051980001|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237052032029|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237052037620|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237052041216|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|237052044349|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237052078484|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237052078751|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237052098956|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|237052113742|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'Sports Illustrated'",
+    "judge": 2
+  },
+  "v1|237052178023|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237052202052|0": "reject",
+  "v1|237052217262|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237052220271|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237052245397|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
+  },
+  "v1|237052252989|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237052344646|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|237052345630|0": {
     "verdict": "filtered",
@@ -6155,17 +7615,137 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|237052576005|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237052576775|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237052579092|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237052603349|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|237052603374|0": "reject",
+  "v1|237052603988|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237052614709|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|237052617509|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|237052622557|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237052641186|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|237052653387|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237052684329|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|237052686447|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
+  },
+  "v1|237052752757|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|237052753056|0": "reject",
   "v1|237052790161|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|237052812076|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237052812438|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237052816110|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237052821080|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237052826857|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237052826907|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237052839786|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237052864649|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237052944971|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237052963140|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237052965510|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237052969482|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|237052970179|0": {
     "verdict": "filtered",
@@ -6177,10 +7757,50 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|237053000515|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|237053004662|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|237053040890|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237053072842|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237053277435|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237053277670|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237053285299|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237053291358|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237053351384|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
   },
   "v1|237053375643|0": {
     "verdict": "filtered",
@@ -6192,6 +7812,11 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|237053667487|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|237053733291|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
@@ -6201,9 +7826,39 @@
   "v1|237053793024|0": "reject",
   "v1|237053886452|0": "reject",
   "v1|237053910320|0": "reject",
+  "v1|237054057055|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237054110747|0": "reject",
   "v1|237054112956|0": "reject",
   "v1|237054280338|0": "reject",
+  "v1|237054387414|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237054474390|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237054568540|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237054571068|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237054753584|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237054815735|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
@@ -6214,11 +7869,51 @@
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|237054832820|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237054858610|0": "reject",
   "v1|237054935213|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
+  },
+  "v1|237054949668|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|237054994563|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237055044477|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237055058788|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237055058794|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237055059060|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237055081807|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|237055107939|0": "reject",
   "v1|237055251720|0": {
@@ -6230,6 +7925,21 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|237055266894|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237055276118|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|237055276784|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
   },
   "v1|237055445248|0": {
     "verdict": "filtered",
@@ -6252,13 +7962,108 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|237055843417|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237055937121|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237055973211|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|237056039409|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237056327249|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237056327252|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237056327254|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237056327261|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237056335966|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237056335972|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237056335978|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237056335980|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237056336087|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237056339651|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237056339652|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237056339658|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237056339660|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237056381572|0": "reject",
   "v1|237056687178|0": "reject",
+  "v1|237056756414|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237057124620|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237057205497|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|237057262455|0": "reject",
   "v1|237057450315|0": {
     "verdict": "filtered",
@@ -6270,22 +8075,77 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|237057990004|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237058005933|0": "reject",
   "v1|237058019723|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|237058027023|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237058112315|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237058138327|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237058176243|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237058280110|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237059031854|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|237059105262|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
   },
   "v1|237059259928|0": "reject",
   "v1|237059271370|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|237059302975|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'Sports Illustrated'",
+    "judge": 2
+  },
+  "v1|237059551966|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237059676272|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|237059766030|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|237059863799|0": "reject",
   "v1|237060054868|0": "reject",
@@ -6301,6 +8161,21 @@
   "v1|237060662166|0": "reject",
   "v1|237060662834|0": "reject",
   "v1|237060663336|0": "reject",
+  "v1|237060728450|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237060728484|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|237060830254|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|237060845268|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
@@ -6321,6 +8196,31 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|237062659144|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|237062720632|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|237062720645|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|237062720696|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|237062720781|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|237062751864|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -6332,6 +8232,36 @@
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
+  },
+  "v1|237063662830|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237063676247|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237063677213|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237063678463|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237063681528|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237063691535|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
   },
   "v1|237063714070|0": {
     "verdict": "filtered",
@@ -6361,10 +8291,20 @@
   "v1|237064874047|0": "reject",
   "v1|237064875600|0": "reject",
   "v1|237064877531|0": "reject",
+  "v1|237064901787|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237064913022|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
+  },
+  "v1|237064916310|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|237064927708|0": {
     "verdict": "filtered",
@@ -6382,7 +8322,42 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|237065944331|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237065944540|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237065944569|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|237066172273|0": "reject",
+  "v1|237066357708|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237066430527|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237066596840|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237066613833|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237066703916|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -6423,11 +8398,56 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|237067313226|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|237067339417|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237067564730|0": "reject",
+  "v1|237067713238|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|237067738142|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237068035117|0": {
+    "verdict": "reject",
+    "reason": "3354/5000 is neither the first nor the last of its run",
+    "judge": 2
+  },
   "v1|237068181763|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|237068191578|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237068255042|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237068281013|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237068309162|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
   },
   "v1|237068323284|0": {
     "verdict": "filtered",
@@ -6442,6 +8462,11 @@
   "v1|237068527446|0": "reject",
   "v1|237068527449|0": "reject",
   "v1|237068527535|0": "reject",
+  "v1|237068539667|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|237068690382|0": "reject",
   "v1|237068915729|0": {
     "verdict": "filtered",
@@ -6452,6 +8477,11 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|237069148274|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|237070020094|0": {
     "verdict": "filtered",
@@ -6468,10 +8498,45 @@
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|237070237945|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237070506973|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|237070732733|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|237071210176|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|237071255654|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237072281024|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|237072286200|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237072299826|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|237072309196|0": "reject",
   "v1|237072340427|0": "reject",
@@ -6481,7 +8546,42 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|237072418650|0": "reject",
+  "v1|237072429633|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|237072458696|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237072564472|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237072573509|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237072587289|0": "reject",
+  "v1|237072694351|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237072729986|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|237072766234|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|237072987480|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
@@ -7552,17 +9652,117 @@
   "v1|257724632860|0": "reject",
   "v1|257725590720|0": "reject",
   "v1|257725606753|0": "reject",
+  "v1|257725702024|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257725767552|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|257725857714|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257725858480|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257725860902|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257725885074|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257725948324|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257725948596|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257725948698|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257725949812|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257725950007|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257725950172|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257726029044|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257726061761|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257726086335|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257726186186|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|257726354367|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257726357615|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|257726427920|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|257726453278|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257726479571|0": "reject",
+  "v1|257726503006|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257726563250|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257726586005|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
@@ -7573,20 +9773,175 @@
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|257726600199|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257726634807|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|257726658860|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257726781832|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257726816445|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257726819108|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257726828441|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257726857910|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257726916258|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257726924149|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257726944082|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257726952262|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257726963930|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257727127667|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257727213395|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257727219483|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257727237177|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257727245177|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|257727247066|0": "reject",
+  "v1|257727270222|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257727327602|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257727369468|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257727402406|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257727425143|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257727426211|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257727460198|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257727767997|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257727802544|0": "reject",
+  "v1|257727929921|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257727990459|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257728012096|0": "reject",
+  "v1|257728012926|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257728013552|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257728013755|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|257728093786|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
   "v1|257728261911|0": "reject",
+  "v1|257728325687|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|257728404657|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -7597,17 +9952,102 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|257728581639|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257728582135|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257728677947|0": "reject",
+  "v1|257728711711|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257728748392|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257728748834|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257728834664|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257728835790|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257728836200|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257728856335|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257728884971|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257728902834|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257728905728|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257728942921|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|257728981083|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
   "v1|257728999909|0": "reject",
+  "v1|257729031566|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257729207253|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|257729229902|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257729237731|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|257729238778|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
   },
   "v1|257729328059|0": {
     "verdict": "filtered",
@@ -7621,7 +10061,37 @@
   },
   "v1|257729411844|0": "reject",
   "v1|257729465545|0": "reject",
+  "v1|257729518764|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257729541000|0": "reject",
+  "v1|257729554835|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257729834101|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257729834104|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257729867456|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257729884582|0": {
+    "verdict": "reject",
+    "reason": "3/500 is neither the first nor the last of its run",
+    "judge": 2
+  },
   "v1|257729893812|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -7634,24 +10104,94 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|257729922242|0": "reject",
+  "v1|257729939185|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257729954736|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257730060826|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
   "v1|257730189119|0": "reject",
+  "v1|257730297878|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257730297881|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257730305171|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257730309786|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257730309788|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257730309789|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257730577490|558281154768": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|257730868535|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|257731015786|0": "reject",
   "v1|257731232007|0": "reject",
   "v1|257731232017|0": "reject",
+  "v1|257731276653|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257731308123|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|257731505379|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|257731505521|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|257731542656|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|257731581797|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|257731670533|0": {
     "verdict": "filtered",
@@ -7659,15 +10199,40 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|257731686461|0": "reject",
+  "v1|257731715282|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257731795945|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|257731875743|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257731890813|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257731909390|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|257731931949|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257732008034|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|257732584229|0": "reject",
   "v1|257732599873|0": {
@@ -7681,18 +10246,43 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|257733040325|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'Australian Open'",
+    "judge": 2
+  },
   "v1|257733109136|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
   "v1|257733164331|0": "reject",
+  "v1|257733166743|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|257733518747|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257733646863|0": "reject",
+  "v1|257733674096|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257733748440|0": "reject",
   "v1|257733751249|0": "reject",
   "v1|257733752810|0": "reject",
   "v1|257733761848|0": "reject",
   "v1|257733782953|0": "reject",
+  "v1|257733866634|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257733948945|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -7706,11 +10296,66 @@
   "v1|257734235062|0": "reject",
   "v1|257734236082|0": "reject",
   "v1|257734238068|0": "reject",
+  "v1|257734451084|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257734761125|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257734823964|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257735120457|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257735120639|0": "reject",
   "v1|257735805166|0": "reject",
   "v1|257735805174|0": "reject",
   "v1|257735805176|0": "reject",
   "v1|257735863865|0": "reject",
+  "v1|257736299139|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257736453021|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257736498117|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257736561103|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257736561127|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257736561150|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257736597695|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|257736720053|0": "reject",
   "v1|257736830744|0": "reject",
   "v1|257736897515|558288613883": {
@@ -7725,10 +10370,40 @@
   },
   "v1|257736915722|0": "reject",
   "v1|257736995075|0": "reject",
+  "v1|257737485137|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257737487164|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|257737518095|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257737524111|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257737722504|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257737735714|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|257737797393|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|257738372014|0": "reject",
   "v1|257738373061|0": {
@@ -7742,6 +10417,11 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|257738730896|0": "reject",
+  "v1|257738801621|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257738967795|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -7766,7 +10446,27 @@
   },
   "v1|257739560110|0": "reject",
   "v1|257739581503|0": "reject",
+  "v1|257739777855|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257740062071|0": "reject",
+  "v1|257740076979|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257740076988|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257740113210|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257740316835|0": "reject",
   "v1|257740334734|558292061502": "reject",
   "v1|257740334734|558292061530": {
@@ -7787,6 +10487,11 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|257740753266|0": "reject",
+  "v1|257740942232|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|257740990300|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -7798,6 +10503,11 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|257741043263|0": "reject",
+  "v1|257741076874|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|257741086464|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -7805,6 +10515,11 @@
   },
   "v1|257741299417|0": "reject",
   "v1|257741299421|0": "reject",
+  "v1|257741322519|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257741369026|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -7850,15 +10565,90 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|257741896514|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257742292610|0": "reject",
   "v1|257742370102|0": "reject",
+  "v1|257742421748|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257742483964|0": "reject",
+  "v1|257742593458|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257742610981|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257742720072|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257742720073|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257742720074|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257742720075|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257742808178|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257742830268|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257742830273|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257742843790|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|257742853941|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257742853958|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|257742853968|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257742940552|0": "reject",
+  "v1|257743079811|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257743274429|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
@@ -7877,6 +10667,16 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|257743988946|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257743989780|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257744000477|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -7888,13 +10688,38 @@
     "reason": "not a Coco Gauff card"
   },
   "v1|257744338180|0": "reject",
+  "v1|257744401072|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|257744567393|0": "reject",
   "v1|257744668934|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|257744712250|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|257744731435|0": "reject",
+  "v1|257744731516|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257744951277|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|257744957844|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257744986152|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -7906,6 +10731,11 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|257745184728|0": "reject",
+  "v1|257745326451|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|257745374028|0": "reject",
   "v1|257745430821|0": {
     "verdict": "filtered",
@@ -7916,6 +10746,16 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|257745797300|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257745942519|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
   },
   "v1|257746451717|0": {
     "verdict": "filtered",
@@ -7943,12 +10783,67 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|257747241544|0": "match",
+  "v1|257747323232|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257747323860|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257747362166|0": "reject",
   "v1|257747424153|0": "reject",
   "v1|257747453238|0": "reject",
+  "v1|257747481332|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257747481413|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|257747497587|0": "reject",
   "v1|257747505812|0": "reject",
   "v1|257747556963|0": "reject",
+  "v1|257747632224|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257747725211|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257747768800|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257747791451|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257747799631|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|257748002922|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|257748177666|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|265096764141|0": "reject",
   "v1|265096766009|0": "reject",
   "v1|265096780751|0": "reject",
@@ -8236,17 +11131,47 @@
   "v1|267778689169|0": "reject",
   "v1|267779343961|0": "reject",
   "v1|267779825136|0": "reject",
+  "v1|267780419755|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|267781733894|0": "reject",
   "v1|267781756484|0": "reject",
   "v1|267781756953|0": "reject",
   "v1|267781757597|0": "match",
   "v1|267781758201|0": "reject",
+  "v1|267783745823|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|267784403694|567651491531": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
   "v1|267784976325|0": "reject",
+  "v1|267785300747|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|267785300750|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|267785300751|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|267785300758|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|267785491398|0": "reject",
   "v1|267785816603|0": "reject",
   "v1|267786744431|0": "reject",
@@ -8636,6 +11561,11 @@
   "v1|278324014645|0": "reject",
   "v1|278326822333|0": "reject",
   "v1|278344293593|0": "reject",
+  "v1|278348502360|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|278353313937|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
@@ -8647,14 +11577,74 @@
   "v1|278353482863|0": "reject",
   "v1|278353574177|0": "reject",
   "v1|278353719224|0": "reject",
+  "v1|278354983149|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|278357564255|0": "reject",
   "v1|278358230921|0": "reject",
+  "v1|278360731410|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|278362319384|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|278362527680|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|278362527747|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|278362527794|0": "reject",
+  "v1|278362527840|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|278362527878|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|278362527932|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|278362527968|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|278362528007|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|278362528617|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|278362528675|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|278362529012|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|278362577518|0": "reject",
   "v1|278363777104|0": {
     "verdict": "filtered",
@@ -8716,12 +11706,22 @@
     "reason": "not a Coco Gauff card"
   },
   "v1|278380717881|0": "reject",
+  "v1|278380974460|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|278381804897|0": "reject",
   "v1|278381830126|0": "reject",
   "v1|278381830304|0": "reject",
   "v1|278381830319|0": "reject",
   "v1|278381830368|0": "reject",
   "v1|278381830516|0": "reject",
+  "v1|278381914477|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|278382034088|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -9078,6 +12078,16 @@
   "v1|287572549259|0": "reject",
   "v1|287573897838|0": "reject",
   "v1|287575719775|0": "reject",
+  "v1|287576132280|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|287576142781|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|287576243316|0": "reject",
   "v1|287577491806|0": "reject",
   "v1|287578760312|0": "reject",
@@ -9096,6 +12106,11 @@
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|287582556779|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|287583139908|0": "reject",
   "v1|287583877725|0": "reject",
   "v1|287583877781|0": "reject",
@@ -9111,6 +12126,16 @@
   "v1|287584685272|0": "reject",
   "v1|287584685677|0": "reject",
   "v1|287584685681|0": "reject",
+  "v1|287585062665|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|287585514780|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|287586253506|0": "reject",
   "v1|287586715279|0": "reject",
   "v1|287586805352|0": "reject",
@@ -9132,6 +12157,11 @@
   "v1|287587319599|0": "reject",
   "v1|287588222674|0": "reject",
   "v1|287588498213|0": "reject",
+  "v1|287588550725|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|287588946796|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -9142,6 +12172,11 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|287589101292|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|287589192162|0": "reject",
   "v1|287590524572|0": {
     "verdict": "filtered",
@@ -9150,6 +12185,11 @@
   },
   "v1|287590557891|0": "reject",
   "v1|287590565623|0": "reject",
+  "v1|287590861420|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|287591036385|0": "reject",
   "v1|287591810704|0": {
     "verdict": "filtered",
@@ -9513,11 +12553,27 @@
   "v1|298643431909|0": "reject",
   "v1|298643476380|0": "reject",
   "v1|298644996256|0": "reject",
+  "v1|298650762114|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
   "v1|298651538423|0": "reject",
   "v1|298651927881|0": "reject",
   "v1|298653301550|0": "reject",
   "v1|298653435479|0": "reject",
   "v1|298653435481|0": "reject",
+  "v1|298654435050|0": "match",
+  "v1|298654448285|0": {
+    "verdict": "reject",
+    "reason": "77/150 is neither the first nor the last of its run",
+    "judge": 2
+  },
+  "v1|298654670056|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|298655949784|0": "reject",
   "v1|298657405388|0": "reject",
   "v1|298657405389|0": "reject",
@@ -9525,14 +12581,49 @@
   "v1|298657472236|0": "reject",
   "v1|298657649449|0": "reject",
   "v1|298658832677|0": "reject",
+  "v1|298659353862|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|298659357549|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|298662322431|0": "reject",
   "v1|298663037151|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|298663326279|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
+  "v1|298664815681|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|298664823284|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|298665015397|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|298672305356|0": "reject",
   "v1|298672432902|0": "reject",
+  "v1|298674508089|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|298674814465|0": "reject",
   "v1|298674893395|0": {
     "verdict": "filtered",
@@ -9543,6 +12634,11 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|298676244538|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
   },
   "v1|298677153017|0": "reject",
   "v1|298677598326|0": "reject",
@@ -9801,6 +12897,21 @@
   "v1|307161761838|0": "reject",
   "v1|307163373886|0": "reject",
   "v1|307164542518|0": "reject",
+  "v1|307165227949|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|307165886594|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|307166290368|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|307166556457|0": "reject",
   "v1|307167438385|0": "reject",
   "v1|307167439340|0": "reject",
@@ -9818,12 +12929,22 @@
   "v1|307169580822|0": "reject",
   "v1|307169583246|0": "reject",
   "v1|307169584047|0": "reject",
+  "v1|307169592129|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|307170679395|607014262164": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
   "v1|307170722715|0": "reject",
+  "v1|307170727270|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|307172426222|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -9838,8 +12959,28 @@
   "v1|307172935366|0": "reject",
   "v1|307172935368|0": "reject",
   "v1|307172935371|0": "reject",
+  "v1|307172979323|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|307174223726|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|307174271824|0": "reject",
   "v1|307174273980|0": "reject",
+  "v1|307174665065|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
+  "v1|307174877638|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|307175699904|0": "reject",
   "v1|307175981067|0": "reject",
   "v1|307176108378|0": {
@@ -9852,6 +12993,16 @@
   "v1|307178026441|0": "reject",
   "v1|307178034210|0": "reject",
   "v1|307178283317|0": "reject",
+  "v1|307178643251|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro glossy",
+    "judge": 2
+  },
+  "v1|307180370677|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|307180540822|0": "reject",
   "v1|307180884116|0": "reject",
   "v1|307180884846|0": "reject",
@@ -9864,6 +13015,11 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|307181801365|0": "reject",
+  "v1|307181924609|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|307182163011|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -10354,6 +13510,11 @@
   "v1|318830837567|0": "reject",
   "v1|318835302749|0": "reject",
   "v1|318839273376|0": "reject",
+  "v1|318841246954|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|318841316228|0": "reject",
   "v1|318841939412|0": "reject",
   "v1|318848134833|0": "reject",
@@ -10403,6 +13564,11 @@
   },
   "v1|318862062138|0": "reject",
   "v1|318862062155|0": "reject",
+  "v1|318862525465|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|318862643175|0": "reject",
   "v1|318862823141|0": "reject",
   "v1|318862824069|0": "reject",
@@ -10413,6 +13579,11 @@
     "reason": "not a Coco Gauff card"
   },
   "v1|318865360945|0": "reject",
+  "v1|318866126983|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|318866498715|0": "reject",
   "v1|318871777832|0": "reject",
   "v1|318872505515|0": "reject",
@@ -10433,6 +13604,16 @@
   "v1|318877447708|0": "reject",
   "v1|318878476024|0": "reject",
   "v1|318878478218|0": "reject",
+  "v1|318878968553|0": {
+    "verdict": "reject",
+    "reason": "set/title doesn't confirm ['panini instant']",
+    "judge": 2
+  },
+  "v1|318879176406|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|318879938067|0": "reject",
   "v1|318880434724|0": "reject",
   "v1|318880569557|0": "reject",
@@ -11109,6 +14290,11 @@
   "v1|327343907255|0": "reject",
   "v1|327343907259|0": "reject",
   "v1|327343907261|0": "reject",
+  "v1|327344237003|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|327344445253|0": "reject",
   "v1|327344950161|0": "reject",
   "v1|327344950783|0": "reject",
@@ -11192,6 +14378,11 @@
   "v1|327353498745|0": "reject",
   "v1|327353498749|0": "reject",
   "v1|327353756984|0": "reject",
+  "v1|327353992230|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'Sports Illustrated'",
+    "judge": 2
+  },
   "v1|327354026409|0": "reject",
   "v1|327354120767|0": "reject",
   "v1|327356714037|0": "reject",
@@ -12418,11 +15609,61 @@
   },
   "v1|336780241535|0": "reject",
   "v1|336780257701|0": "reject",
+  "v1|336780352564|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336780353593|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336780431090|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336780467320|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336780467857|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336780469372|0": "reject",
   "v1|336780524324|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|336780546385|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336780646089|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336780646128|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336780652989|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336780711590|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|336780719245|0": "reject",
   "v1|336780719431|0": {
@@ -12435,6 +15676,21 @@
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|336780772641|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336780782260|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336780783868|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336780790049|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
@@ -12444,6 +15700,16 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|336780828599|0": {
+    "verdict": "reject",
+    "reason": "216/500 is neither the first nor the last of its run",
+    "judge": 2
+  },
+  "v1|336780869696|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|336781041972|0": {
     "verdict": "filtered",
@@ -12460,6 +15726,16 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|336781076091|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336781076340|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|336781091212|0": "reject",
   "v1|336781109234|0": "reject",
   "v1|336781109731|0": "reject",
@@ -12473,24 +15749,194 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|336781114255|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336781180395|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336781184091|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336781231687|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336781258499|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336781265843|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336781280369|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336781284249|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336781289665|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336781296086|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336781316523|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336781323165|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336781325131|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336781395884|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336781589790|0": "reject",
+  "v1|336781617945|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336781620020|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336781641764|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336781645096|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336781651247|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336781657241|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336781865271|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|336781909344|0": "reject",
   "v1|336781927310|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|336782042660|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336782076429|0": "reject",
+  "v1|336782082921|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336782106784|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
   "v1|336782274503|0": "reject",
+  "v1|336782309776|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336782310597|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336782382367|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336782417927|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336782418017|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336782479251|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336782560913|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|336782600012|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336782606261|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336782606835|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336782683452|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336782750657|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
   },
   "v1|336782770924|0": "reject",
   "v1|336782770952|0": {
@@ -12503,6 +15949,11 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|336782860369|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336782962512|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -12512,6 +15963,11 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|336783055888|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
   },
   "v1|336783114974|0": {
     "verdict": "filtered",
@@ -12534,9 +15990,129 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|336783325742|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336783335414|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336783380424|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783535655|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783535656|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336783544048|0": "reject",
+  "v1|336783570524|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783595622|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783605969|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783663002|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783785246|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783946283|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336783967703|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783967711|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783976519|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783976520|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783976521|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783976549|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783976560|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336783979822|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336784060969|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336784062893|0": "reject",
   "v1|336784263888|0": "reject",
+  "v1|336784293720|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336784296457|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336784296458|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336784296467|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336784321731|0": "reject",
   "v1|336784551688|0": {
     "verdict": "filtered",
@@ -12544,6 +16120,11 @@
     "reason": "not a Coco Gauff card"
   },
   "v1|336784589646|0": "reject",
+  "v1|336784607262|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336784675799|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -12564,10 +16145,40 @@
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|336785080539|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336785368479|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336785368480|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336785368483|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336785372596|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
+  },
+  "v1|336785375898|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336785404276|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|336785592456|0": "reject",
   "v1|336786186076|0": {
@@ -12575,19 +16186,134 @@
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|336786303634|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|336786337289|0": "reject",
+  "v1|336786621042|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336786732712|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336786732715|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|336786732726|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336786959908|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336787134372|0": "reject",
+  "v1|336787176263|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336787180952|0": "reject",
   "v1|336787181148|0": "reject",
+  "v1|336787471674|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336787480202|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336787657111|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|336787659500|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|336787729979|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336787808262|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336787951511|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|336788064179|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|336788289641|0": "reject",
   "v1|336788289687|0": "reject",
+  "v1|336788362106|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336788616251|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
   "v1|336788669624|0": "reject",
+  "v1|336788789105|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|336788791937|0": "reject",
+  "v1|336789006873|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336789158607|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336789209116|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336789304313|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336789304648|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336789940226|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|336789951071|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -12595,6 +16321,11 @@
   },
   "v1|336789981507|0": "reject",
   "v1|336789987934|0": "reject",
+  "v1|336790040376|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336790236148|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -12614,12 +16345,22 @@
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|336790928086|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|336791034990|0": "reject",
   "v1|336791035147|0": "reject",
   "v1|336791037544|0": "reject",
   "v1|336791045829|0": "reject",
   "v1|336791047124|0": "reject",
   "v1|336791049226|0": "reject",
+  "v1|336791162641|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|336791250478|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -12628,14 +16369,54 @@
   "v1|336791351421|0": "reject",
   "v1|336791513356|0": "reject",
   "v1|336791513397|0": "reject",
+  "v1|336791971115|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336791971118|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336791971412|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|336792145979|0": "reject",
   "v1|336792162330|0": "reject",
+  "v1|336792163565|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336792165385|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|336792206665|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|336792310535|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
   "v1|336792344709|0": "reject",
+  "v1|336792384789|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336792510215|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336792608229|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -12676,24 +16457,144 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|336792963098|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336793113842|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|336793453370|0": "reject",
+  "v1|336793457937|0": {
+    "verdict": "reject",
+    "reason": "58/150 is neither the first nor the last of its run",
+    "judge": 2
+  },
+  "v1|336793509831|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336793521821|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336793541198|0": "reject",
   "v1|336793578607|0": "reject",
+  "v1|336793589436|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|336793673297|0": "reject",
+  "v1|336793831995|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336793838430|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336793841251|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|336793858125|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|336793885773|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336793885780|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336793931710|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336793973961|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336793979248|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
+  "v1|336794064708|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336794068133|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
   },
   "v1|336794093145|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|336794179270|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336794180222|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336794250410|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|336794383425|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|336794671126|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336794675728|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336794978978|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336795190289|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336795200169|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
   },
   "v1|336795256739|0": {
     "verdict": "filtered",
@@ -12705,6 +16606,11 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|336795343569|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|336795468565|0": "reject",
   "v1|336795472408|0": "reject",
@@ -12718,6 +16624,16 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|336795883505|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336796119797|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|336796308157|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -12727,6 +16643,11 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|336796333628|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
   },
   "v1|336796376967|0": {
     "verdict": "filtered",
@@ -12739,6 +16660,11 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|336796950051|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336797184690|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -12749,8 +16675,58 @@
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|336797209935|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336797270541|0": "reject",
   "v1|336797278112|0": "reject",
+  "v1|336797371790|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|336797403128|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336797443473|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336797542815|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336797546289|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336797547583|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336797571807|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336797572338|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336797623249|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|336797669874|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -12759,6 +16735,11 @@
   "v1|336797712136|0": "reject",
   "v1|336797712206|0": "reject",
   "v1|336797712265|0": "reject",
+  "v1|336797935295|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 2
+  },
   "v1|336797957894|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -13494,6 +17475,11 @@
   "v1|366645471095|0": "reject",
   "v1|366645471097|0": "reject",
   "v1|366645471102|0": "reject",
+  "v1|366651296687|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|366651330788|0": "reject",
   "v1|366651330789|0": "reject",
   "v1|366651330791|0": "reject",
@@ -13511,6 +17497,11 @@
     "reason": "not a Coco Gauff card"
   },
   "v1|366653376541|0": "reject",
+  "v1|366653637303|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|366654540733|0": "reject",
   "v1|366654781951|636318475232": "reject",
   "v1|366654781951|636318475256": {
@@ -13531,10 +17522,20 @@
   "v1|366655777374|0": "reject",
   "v1|366656281057|0": "reject",
   "v1|366657799954|0": "reject",
+  "v1|366658416588|0": {
+    "verdict": "reject",
+    "reason": "set/title doesn't confirm ['topps chrome', 'graphite', 'royalty', 'topps now']",
+    "judge": 2
+  },
   "v1|366658936271|0": "reject",
   "v1|366659495501|0": "reject",
   "v1|366659696727|0": "reject",
   "v1|366660237333|0": "reject",
+  "v1|366661128750|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|366661768222|0": "reject",
   "v1|366661893636|0": {
     "verdict": "filtered",
@@ -13554,6 +17555,16 @@
   },
   "v1|366663524583|0": "reject",
   "v1|366664868674|0": "reject",
+  "v1|366665204938|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|366665394105|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|366666054156|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
@@ -13566,10 +17577,25 @@
   "v1|366667432757|0": "reject",
   "v1|366667442066|0": "reject",
   "v1|366668352076|0": "reject",
+  "v1|366668827339|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|366668937192|0": "reject",
   "v1|366668975892|0": "reject",
   "v1|366668983475|0": "reject",
   "v1|366669043932|0": "reject",
+  "v1|366669071686|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|366669451105|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|366669460128|0": "reject",
   "v1|366671313244|0": {
     "verdict": "filtered",
@@ -13580,6 +17606,11 @@
   "v1|366671867183|0": "reject",
   "v1|366672862193|0": "reject",
   "v1|366673145008|0": "reject",
+  "v1|366673796748|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|372712691091|0": "reject",
   "v1|372749930296|0": "reject",
   "v1|372749930297|0": "reject",
@@ -14045,6 +18076,11 @@
     "reason": "not a Coco Gauff card"
   },
   "v1|377472110534|0": "reject",
+  "v1|377473608186|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|377473755979|0": "reject",
   "v1|377475687355|0": "reject",
   "v1|377476316655|0": {
@@ -14053,6 +18089,11 @@
     "reason": "not a Coco Gauff card"
   },
   "v1|377482710679|0": "reject",
+  "v1|377483814727|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|377485281894|0": "reject",
   "v1|377485349050|0": "reject",
   "v1|377485362195|0": "reject",
@@ -14064,6 +18105,11 @@
   },
   "v1|377487687910|0": "reject",
   "v1|377487689061|0": "reject",
+  "v1|377487763724|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|377489228617|0": "reject",
   "v1|377489583719|0": "reject",
   "v1|377489615215|0": "reject",
@@ -14087,6 +18133,11 @@
     "reason": "not a Coco Gauff card"
   },
   "v1|377497511026|0": "reject",
+  "v1|377498103482|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|377498591173|0": "reject",
   "v1|377498591356|0": "reject",
   "v1|377498592867|0": "reject",
@@ -14095,6 +18146,16 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|377500247310|0": {
+    "verdict": "reject",
+    "reason": "19/50 is neither the first nor the last of its run",
+    "judge": 2
+  },
+  "v1|377501001911|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
   },
   "v1|377501811806|0": "reject",
   "v1|377502589928|0": "reject",
@@ -14669,6 +18730,11 @@
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|398314965308|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|398316986048|0": "reject",
   "v1|398320778274|0": {
     "verdict": "filtered",
@@ -14719,6 +18785,11 @@
   "v1|398370342480|0": "reject",
   "v1|398371102226|0": "reject",
   "v1|398374808189|0": "reject",
+  "v1|398378922624|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|398379749813|0": "reject",
   "v1|398379749814|0": "reject",
   "v1|398382121566|0": "reject",
@@ -15277,20 +19348,60 @@
   "v1|407195695946|0": "reject",
   "v1|407195892066|0": "reject",
   "v1|407195896592|0": "reject",
+  "v1|407197810219|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|407200447641|0": "reject",
   "v1|407200455887|0": "reject",
   "v1|407203076029|0": "reject",
   "v1|407205867478|0": "reject",
+  "v1|407206004233|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|407206150641|0": "reject",
+  "v1|407207328845|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|407208138376|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|407208461785|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|407208501064|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: ''",
+    "judge": 2
+  },
+  "v1|407208501286|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|407208501376|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|407210302476|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|407210384624|0": {
+    "verdict": "reject",
+    "reason": "445/500 is neither the first nor the last of its run",
+    "judge": 2
   },
   "v1|407210677272|0": {
     "verdict": "filtered",
@@ -15313,6 +19424,11 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|407212527703|0": "reject",
+  "v1|407213154063|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|407213910397|0": "reject",
   "v1|407214537904|0": "reject",
   "v1|407214803612|0": "reject",
@@ -15322,6 +19438,11 @@
   "v1|407215061180|0": "reject",
   "v1|407215061193|0": "reject",
   "v1|407216686080|0": "reject",
+  "v1|407216831687|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|407216928438|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -15329,7 +19450,22 @@
   },
   "v1|407217028296|0": "reject",
   "v1|407217080584|0": "reject",
+  "v1|407217263134|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|407217269804|0": "reject",
+  "v1|407217270283|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|407218792103|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|407219128560|0": "reject",
   "v1|407219714666|0": {
     "verdict": "filtered",
@@ -15663,6 +19799,11 @@
     "reason": "not a Coco Gauff card"
   },
   "v1|800622843839|0": "reject",
+  "v1|800626653107|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|800626735296|0": "reject",
   "v1|800633101369|0": "reject",
   "v1|800635715294|0": {
@@ -15722,10 +19863,20 @@
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
   },
+  "v1|800651030268|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|800651657389|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|800651968573|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
   },
   "v1|800652085621|0": "reject",
   "v1|800652143598|0": "reject",
@@ -15734,6 +19885,11 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|800653270664|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
   },
   "v1|800653467583|0": {
     "verdict": "filtered",
@@ -15747,6 +19903,11 @@
   },
   "v1|800657056862|0": "reject",
   "v1|800659880308|0": "reject",
+  "v1|800662556246|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|800662743161|0": "reject",
   "v1|800664106889|0": "reject",
   "v1|800664573565|0": {
@@ -15760,12 +19921,62 @@
     "reason": "not a Denis Shapovalov card"
   },
   "v1|800666191553|0": "reject",
+  "v1|800667695860|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|800667695863|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|800667695865|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|800667695869|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
+  "v1|800667695872|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|800667695876|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|800667695885|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|800671127942|0": {
     "verdict": "filtered",
     "rules": "086699ade17cfc7d",
     "reason": "not a Coco Gauff card"
   },
+  "v1|800671594205|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|800671600136|0": "reject",
+  "v1|800671604486|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|800671607308|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|800673935242|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -16066,6 +20277,11 @@
   "v1|820098944052|0": "reject",
   "v1|820098946412|0": "reject",
   "v1|820098956164|0": "reject",
+  "v1|820100405388|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|820103497859|0": "reject",
   "v1|820103499796|0": "reject",
   "v1|820103502104|0": "reject",
@@ -16096,6 +20312,11 @@
   "v1|820106987378|0": "reject",
   "v1|820106990744|0": "reject",
   "v1|820106991946|0": "reject",
+  "v1|820107846422|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
   "v1|820107914305|0": "reject",
   "v1|820107920569|0": "reject",
   "v1|820110756018|0": "reject",
@@ -16141,6 +20362,16 @@
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
     "reason": "not a Denis Shapovalov card"
+  },
+  "v1|820114768372|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'NA'",
+    "judge": 2
+  },
+  "v1|820114768417|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'NA'",
+    "judge": 2
   },
   "v1|820114804610|0": "reject",
   "v1|820114804614|0": "reject",
@@ -16226,6 +20457,11 @@
   "v1|820128065193|0": "reject",
   "v1|820128070181|0": "reject",
   "v1|820128077961|0": "reject",
+  "v1|820128155535|0": {
+    "verdict": "reject",
+    "reason": "blocked set: NetPro base",
+    "judge": 2
+  },
   "v1|820130045927|0": "reject",
   "v1|820131085612|0": {
     "verdict": "filtered",
