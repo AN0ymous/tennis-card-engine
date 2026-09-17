@@ -43,12 +43,15 @@ import re
 import sys
 import json
 import base64
+import hashlib
 import logging
 import smtplib
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from zoneinfo import ZoneInfo
 
 import requests
 from openpyxl import load_workbook, Workbook
@@ -264,6 +267,10 @@ STATE_FILE = "seen_items.json"
 LOG_FILE = "engine_run.log"
 NEW_MATCHES_FILE = "new_matches.json"
 STATUS_FILE = "status.json"          # active / sold / ended, per listing, for saved cards
+SCAN_CURSOR_FILE = "scan_cursors.json"  # newest listing timestamp reached by each exact search
+API_USAGE_FILE = "ebay_api_usage.json"  # persistent daily safety counter (Pacific date)
+API_DAILY_BUDGET = int(os.environ.get("EBAY_DAILY_CALL_BUDGET") or "4500")
+_API_USAGE_LOCK = threading.Lock()
 
 HEADERS = ["Player", "Manufacturer / Set", "Card Description", "Serial #",
            "Bookend Type", "Price", "eBay Item Link", "Date Found (UTC)", "Image",
@@ -390,6 +397,33 @@ def price_filter(min_price=None, max_price=None):
     if not lo and not hi:
         return ""
     return f"price:[{lo}..{hi}],priceCurrency:{PRICE_CURRENCY}"
+
+
+def consume_api_call(bucket="browse"):
+    """Reserve one call from a conservative per-key, per-Pacific-day budget."""
+    with _API_USAGE_LOCK:
+        path = os.path.join(_BASE_DIR, API_USAGE_FILE)
+        today = datetime.now(ZoneInfo("America/Los_Angeles")).date().isoformat()
+        usage = {"date": today, "browse": 0, "getItems": 0}
+        if os.path.exists(path):
+            try:
+                with open(path) as f:
+                    saved = json.load(f)
+                if saved.get("date") == today:
+                    usage.update(saved)
+            except (OSError, ValueError, AttributeError):
+                pass
+        used = int(usage.get(bucket, 0) or 0)
+        if used >= API_DAILY_BUDGET:
+            raise EngineError(
+                f"Stopped before eBay's daily limit: local {bucket} safety budget "
+                f"of {API_DAILY_BUDGET} calls is exhausted for {today} Pacific time."
+            )
+        usage[bucket] = used + 1
+        temporary = path + ".tmp"
+        with open(temporary, "w") as f:
+            json.dump(usage, f, indent=2)
+        os.replace(temporary, path)
 
 
 def _has_word(words, text):
@@ -594,6 +628,7 @@ def search_ebay(token, query, limit=None, offset=0, newest_first=False,
     }
     if newest_first:
         params["sort"] = "newlyListed"
+    consume_api_call("browse")
     resp = requests.get(
         f"{EBAY_API_BASE}/buy/browse/v1/item_summary/search",
         headers={
@@ -630,7 +665,7 @@ class SearchError(EngineError):
 
 def iter_listings(token, player, brand_kw, on_page=None, should_stop=None,
                   min_price=None, max_price=None, listing_types=None, limit=None,
-                  on_error=None):
+                  on_error=None, high_water=None, on_complete=None):
     """Yield listings for one brand search: a single page when a player is
     named, or up to MAX_RESULTS_PER_BRAND newest-first when scanning everyone."""
     price = {"min_price": min_price, "max_price": max_price, "listing_types": listing_types}
@@ -645,6 +680,8 @@ def iter_listings(token, player, brand_kw, on_page=None, should_stop=None,
     seen_here = set()
     for query in queries:
         fetched = 0
+        newest_seen = ""
+        completed = True
         while fetched < cap:
             if should_stop and should_stop():
                 return
@@ -655,6 +692,7 @@ def iter_listings(token, player, brand_kw, on_page=None, should_stop=None,
                 # say so where the reader can see it, then move to the next query
                 if on_error:
                     on_error(str(exc))
+                completed = False
                 break
             if on_page:
                 on_page(len(items), fetched, total, query)
@@ -662,6 +700,15 @@ def iter_listings(token, player, brand_kw, on_page=None, should_stop=None,
                 break
             fetched += len(items)
             for item in items:
+                created = item.get("itemCreationDate") or ""
+                if created and not newest_seen:
+                    newest_seen = created
+                # Include equal timestamps so a listing created during the
+                # same timestamp tick after the last run cannot be missed.
+                if high_water and created and created < high_water:
+                    if completed and on_complete:
+                        on_complete(query, newest_seen)
+                    return
                 item_id = item.get("itemId")
                 if item_id in seen_here:
                     continue                                    # already fetched under another name
@@ -669,10 +716,13 @@ def iter_listings(token, player, brand_kw, on_page=None, should_stop=None,
                 yield item
             if fetched >= total:
                 break
+        if completed and on_complete:
+            on_complete(query, newest_seen)
 
 
 def get_item_detail(token, item_id):
     """One listing's full details. None when eBay will not return it."""
+    consume_api_call("browse")
     try:
         resp = requests.get(
             f"{EBAY_API_BASE}/buy/browse/v1/item/{item_id}",
@@ -717,6 +767,7 @@ def _bulk_item_details(token, item_ids):
     global _bulk_details_supported
     if not _bulk_details_supported or not item_ids:
         return {}
+    consume_api_call("getItems")
     try:
         resp = requests.get(
             f"{EBAY_API_BASE}/buy/browse/v1/item",
@@ -1237,9 +1288,7 @@ def append_row(ws, player, manufacturer, set_name, title, card_number, print_run
 # ============================================================================
 
 def load_state(path):
-    """Listings already judged: item id -> "match" (recorded) or "reject"
-    (turned down for a reason that cannot change, so never fetched again).
-    Older files are a plain list of recorded matches."""
+    """Listings already judged. Older string/list formats remain supported."""
     if os.path.exists(path):
         with open(path) as f:
             data = json.load(f)
@@ -1252,6 +1301,35 @@ def load_state(path):
 def save_state(path, seen):
     with open(path, "w") as f:
         json.dump(dict(sorted(seen.items())), f, indent=2)
+
+
+def state_verdict(entry):
+    return entry.get("verdict") if isinstance(entry, dict) else entry
+
+
+def rules_fingerprint(rules):
+    """Stable identity for settings that can change a filtered verdict."""
+    serializable = {
+        key: sorted(value) if isinstance(value, set) else value
+        for key, value in rules.items()
+    }
+    raw = json.dumps(serializable, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
+def filtered_for_rules(entry, fingerprint):
+    return (isinstance(entry, dict) and entry.get("verdict") == "filtered"
+            and entry.get("rules") == fingerprint)
+
+
+def scan_cursor_key(player, brand_kw, min_price, max_price, listing_types):
+    scope = {
+        "player": player or "*", "brand": brand_kw,
+        "minPrice": min_price, "maxPrice": max_price,
+        "listingTypes": sorted(listing_types or []),
+        "marketplace": MARKETPLACE_ID, "category": EBAY_CATEGORY_ID,
+    }
+    return hashlib.sha256(json.dumps(scope, sort_keys=True).encode()).hexdigest()[:20]
 
 
 # ============================================================================
@@ -1650,10 +1728,13 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
 
     xlsx_path = os.path.join(_BASE_DIR, OUTPUT_XLSX)
     state_path = os.path.join(_BASE_DIR, STATE_FILE)
+    cursor_path = os.path.join(_BASE_DIR, SCAN_CURSOR_FILE)
     new_matches_path = os.path.join(_BASE_DIR, NEW_MATCHES_FILE)
 
     token = get_ebay_token()
     seen = load_state(state_path)
+    cursors = load_state(cursor_path)
+    rule_key = rules_fingerprint(rules)
     wb, ws = load_or_create_sheet(xlsx_path)
 
     total_queries = len(targets) * len(brand_keywords)
@@ -1679,9 +1760,19 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
             emit("query", player=label, brand=brand_kw,
                  index=query_index, total=total_queries)
 
+            cursor_key = scan_cursor_key(player, brand_kw, min_price, max_price, listing_types)
+            high_water = cursors.get(cursor_key, "") if write_outputs and player is None else ""
+            next_high_water = {"value": ""}
+            failed_before_query = failed
+
+            def remember_cursor(_query, newest):
+                if newest:
+                    next_high_water["value"] = max(next_high_water["value"], newest)
+
             listings = iter_listings(
                 token, player, brand_kw, should_stop=should_stop,
                 min_price=min_price, max_price=max_price, listing_types=listing_types,
+                high_water=high_water, on_complete=remember_cursor,
                 on_error=lambda message: emit("error", message=message),
                 on_page=lambda count, offset, total, query="": emit(
                     "results", player=label, brand=brand_kw, query=query,
@@ -1700,17 +1791,20 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                           for item in window if item.get("itemId")]
                 checked += len(triage)
                 details = get_item_details(
-                    token, [item["itemId"] for item, earlier in triage if earlier is None])
+                    token, [item["itemId"] for item, earlier in triage
+                            if state_verdict(earlier) not in ("match", "reject")
+                            and not filtered_for_rules(earlier, rule_key)])
 
                 for item, earlier in triage:
                     item_id = item["itemId"]
                     title = item.get("title", "")
-                    if earlier == "match":
+                    earlier_verdict = state_verdict(earlier)
+                    if earlier_verdict == "match":
                         # recorded on an earlier run: say so instead of vanishing
                         known += 1
                         emit("known", title=title, link=item.get("itemWebUrl", ""))
                         continue
-                    if earlier == "reject":
+                    if earlier_verdict == "reject" or filtered_for_rules(earlier, rule_key):
                         judged += 1             # turned down before for good; no call to eBay
                         continue
 
@@ -1726,6 +1820,9 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                         emit("reject", title=title, reason=reason)
                         if verdict == "reject":
                             seen[item_id] = "reject"
+                        else:
+                            seen[item_id] = {"verdict": "filtered", "rules": rule_key,
+                                             "reason": reason}
                         continue
 
                     bookend_label = append_row(ws, f["player"], f["manufacturer"], f["set_name"], title,
@@ -1761,12 +1858,19 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                     log.info("MATCH: %s | %s | %s/%s | %s", f["player"], title, f["card_number"], f["print_run"], f["link"])
                     emit("match", **record)
 
+            # Retry a query next run if even one listing detail was missing;
+            # otherwise persist its newest successfully processed timestamp.
+            if (write_outputs and not cancelled and next_high_water["value"]
+                    and failed == failed_before_query):
+                cursors[cursor_key] = next_high_water["value"]
+
         if cancelled:
             break
 
     if write_outputs:
         wb.save(xlsx_path)
         save_state(state_path, seen)
+        save_state(cursor_path, cursors)
         with open(new_matches_path, "w") as f:
             json.dump(new_match_records, f, indent=2)
 

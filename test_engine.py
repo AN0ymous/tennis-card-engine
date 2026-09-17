@@ -14,8 +14,10 @@ tests below run against those too.
 
 import os
 import json
+import tempfile
 import unittest
 import urllib.parse
+from unittest.mock import patch
 
 import requests
 
@@ -316,12 +318,15 @@ class BatchedDetails(unittest.TestCase):
 
     def setUp(self):
         self._get, self._token = requests.get, engine.get_ebay_token
+        self._consume = engine.consume_api_call
         self._per_brand = engine.MAX_RESULTS_PER_BRAND
         engine.get_ebay_token = lambda: "fake-token"
+        engine.consume_api_call = lambda _bucket="browse": None
         engine.MAX_RESULTS_PER_BRAND = self.LISTINGS
 
     def tearDown(self):
         requests.get, engine.get_ebay_token = self._get, self._token
+        engine.consume_api_call = self._consume
         engine.MAX_RESULTS_PER_BRAND = self._per_brand
         engine._bulk_details_supported = True
 
@@ -362,9 +367,12 @@ class StatusRefresh(unittest.TestCase):
 
     def setUp(self):
         self._get = requests.get
+        self._consume = engine.consume_api_call
+        engine.consume_api_call = lambda _bucket="browse": None
 
     def tearDown(self):
         requests.get = self._get
+        engine.consume_api_call = self._consume
         engine._bulk_details_supported = True
 
     def refresh(self, previous, bulk=True):
@@ -469,9 +477,12 @@ class BulkWithoutItemSpecifics(unittest.TestCase):
 
     def setUp(self):
         self._get = requests.get
+        self._consume = engine.consume_api_call
+        engine.consume_api_call = lambda _bucket="browse": None
 
     def tearDown(self):
         requests.get = self._get
+        engine.consume_api_call = self._consume
         engine._bulk_details_supported = True
         engine._bulk_details_carry_aspects = True
 
@@ -515,6 +526,62 @@ class BulkWithoutItemSpecifics(unittest.TestCase):
         self.assertEqual(len(statuses), len(self.IDS))
         self.assertEqual(fake.calls["getItem"], 0)
         self.assertEqual(fake.calls["getItems"], len(self.IDS) / engine.DETAIL_BATCH_SIZE)
+
+
+class QuotaControls(unittest.TestCase):
+    def test_incremental_search_stops_at_high_water(self):
+        page = [
+            {"itemId": "new", "itemCreationDate": "2026-09-16T02:00:00.000Z"},
+            {"itemId": "old", "itemCreationDate": "2026-09-15T01:59:59.000Z"},
+        ]
+        completed = []
+        with patch.object(engine, "search_ebay", return_value=(page, 100)) as search:
+            found = list(engine.iter_listings(
+                "token", None, "NetPro", high_water="2026-09-15T02:00:00.000Z",
+                on_complete=lambda query, newest: completed.append((query, newest))))
+        self.assertEqual([item["itemId"] for item in found], ["new"])
+        self.assertEqual(search.call_count, 1)
+        self.assertEqual(completed[0][1], "2026-09-16T02:00:00.000Z")
+
+    def test_filtered_cache_is_scoped_to_rules(self):
+        first = engine.rules_fingerprint({"max": 100, "types": {"base"}})
+        second = engine.rules_fingerprint({"max": 200, "types": {"base"}})
+        entry = {"verdict": "filtered", "rules": first}
+        self.assertTrue(engine.filtered_for_rules(entry, first))
+        self.assertFalse(engine.filtered_for_rules(entry, second))
+
+    def test_daily_safety_budget_persists(self):
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "API_DAILY_BUDGET", 1):
+            engine.consume_api_call("browse")
+            with self.assertRaises(engine.EngineError):
+                engine.consume_api_call("browse")
+            with open(os.path.join(folder, engine.API_USAGE_FILE)) as f:
+                self.assertEqual(json.load(f)["browse"], 1)
+
+    def test_scan_persists_filtered_result_and_cursor(self):
+        item = {"itemId": "v1|1|0", "title": "card"}
+
+        def listings(_token, _player, _brand, **kwargs):
+            kwargs["on_complete"]("NetPro tennis card", "2026-09-16T02:00:00.000Z")
+            yield item
+
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=listings), \
+                patch.object(engine, "get_item_details", return_value={"v1|1|0": item}), \
+                patch.object(engine, "judge_listing", return_value=("filtered", "price", {})):
+            matches, checked = engine.run_scan(brand_keywords=["NetPro"])
+            with open(os.path.join(folder, engine.STATE_FILE)) as f:
+                saved = json.load(f)
+            with open(os.path.join(folder, engine.SCAN_CURSOR_FILE)) as f:
+                cursors = json.load(f)
+
+        self.assertEqual((matches, checked), ([], 1))
+        self.assertEqual(saved["v1|1|0"]["verdict"], "filtered")
+        self.assertEqual(len(cursors), 1)
 
 
 if __name__ == "__main__":

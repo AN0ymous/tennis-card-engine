@@ -233,7 +233,7 @@ class ScanJob:
 JOB = ScanJob()
 
 STATUS_CACHE = {"at": 0.0, "token": None, "statuses": {}}
-STATUS_TTL = 600            # re-ask eBay about a listing after ten minutes
+STATUS_TTL = 21600          # active listings are fresh enough for six hours
 
 USAGE_CACHE = {"at": 0.0, "value": {}}
 USAGE_TTL = 120             # the allowance barely moves; don't spend a call per page load

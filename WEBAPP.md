@@ -49,9 +49,15 @@ The web app scans when you click. For unattended runs keep scheduling
 writes the same spreadsheet and sends the same digest email, and the web app
 will show whatever the last run found.
 
+Scheduled all-player scans remember the newest listing reached by each exact
+search and stop there on the next run. Filtered decisions are reused while the
+filter settings stay the same, and a local daily safety counter stops at 4,500
+calls per eBay quota bucket by default. Set `EBAY_DAILY_CALL_BUDGET` only if
+eBay has assigned the application a different allowance.
+
 ## Running it from an iPad, or unattended
 
-See `IPAD_SETUP.md`: a GitHub Actions workflow runs the engine every six hours
+See `IPAD_SETUP.md`: a GitHub Actions workflow runs the engine once a day
 on GitHub's machines and commits the results to `results/`.
 
 ## If a scan misses a card you found by hand

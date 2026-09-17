@@ -33,7 +33,7 @@ jobs:
         # spreadsheet, so both come back from the results folder first.
         run: |
           mkdir -p results
-          for f in tennis_cards_verified.xlsx seen_items.json vision_cache.json; do
+          for f in tennis_cards_verified.xlsx seen_items.json scan_cursors.json ebay_api_usage.json vision_cache.json; do
             [ -f "results/$f" ] && cp "results/$f" . || true
           done
 
