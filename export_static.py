@@ -50,7 +50,8 @@ try:
 except Exception as exc:                                  # noqa: BLE001
     print(f"colour readings skipped: {exc}")
 
-for name in (engine.NEW_MATCHES_FILE, engine.OUTPUT_XLSX, engine.STATE_FILE, engine.VISION_CACHE_FILE):
+for name in (engine.NEW_MATCHES_FILE, engine.OUTPUT_XLSX, engine.STATE_FILE,
+             engine.SCAN_CURSOR_FILE, engine.VISION_CACHE_FILE):
     src = os.path.join(here, name)
     if os.path.exists(src):
         shutil.copy(src, os.path.join(out, name))
@@ -90,5 +91,11 @@ with open(os.path.join(out, "usage.json"), "w") as f:
     json.dump(dict(allowance, checkedAt=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")), f)
 if allowance:
     print(f"eBay allowance: {allowance['used']:,} of {allowance['limit']:,} calls used")
+
+# Persist the local safety counter after scanning and status refreshes have
+# completed, so the next scheduled process sees the full daily usage.
+usage = os.path.join(here, engine.API_USAGE_FILE)
+if os.path.exists(usage):
+    shutil.copy(usage, os.path.join(out, engine.API_USAGE_FILE))
 
 print(f"exported {len(board)} board card(s), {len(statuses)} listing status(es) and config to {out}/")

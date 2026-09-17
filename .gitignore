@@ -5,6 +5,8 @@
 /tennis_cards_verified.xlsx
 /new_matches.json
 /seen_items.json
+/scan_cursors.json
+/ebay_api_usage.json
 /engine_run.log
 cron.log
 
