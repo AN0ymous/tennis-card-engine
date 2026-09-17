@@ -36,6 +36,13 @@ jobs:
           mkdir -p site/results
           cp -r web/. site/
           [ -d results ] && cp results/*.json results/*.xlsx site/results/ 2>/dev/null || true
+          # Browsers keep app.js for a while, so a merge could leave a phone
+          # running the old page against new results (run 29 on 17 Sep looked
+          # like a failed fix for exactly that reason). Stamping the commit on
+          # the asset links makes every publish fetch fresh copies.
+          v="${GITHUB_SHA::12}"
+          sed -i "s|assets/app.js\"|assets/app.js?v=$v\"|; s|assets/styles.css\"|assets/styles.css?v=$v\"|" site/index.html
+          grep -n "assets/app.js\|assets/styles.css" site/index.html
           ls -R site | head -40
 
       - uses: actions/configure-pages@v5

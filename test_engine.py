@@ -987,5 +987,83 @@ class PublishingSurvivesAMovingMain(unittest.TestCase):
         self.assertIn('git diff --quiet "$base" origin/main -- results', self.step())
 
 
+class TheScanSetupIsTheFilter(unittest.TestCase):
+    """Players, sets and the print-run ceiling narrow what is shown, not only
+    what is recorded, and the setup survives the reload a finished hosted
+    scan triggers.
+
+    Reproduced on 17 Sep with real clicks: Topps Chrome only, one player,
+    ceiling 100 -- "Everything found so far" still said 54; and the reload put
+    every control back to the engine default, so the setup was gone by the
+    time the results appeared. Card type and condition had narrowed and
+    survived all along, which is why the filters looked half-broken.
+    """
+
+    def test_a_brand_is_read_from_the_set_field(self):
+        self.assertEqual(engine.brand_of("Topps", "2025 Topps Chrome", ""), "Topps Chrome")
+        self.assertEqual(engine.brand_of("Topps", "2024 Graphite Signature Relics", ""), "Topps Graphite")
+        self.assertEqual(engine.brand_of("Topps", "Topps Royalty / Museum / Premium Set", ""), "Topps Royalty")
+        self.assertEqual(engine.brand_of("Topps", "2026 Topps Now", ""), "Topps Now")
+        self.assertEqual(engine.brand_of("Panini", "2026 Panini Instant Tennis", ""), "Panini Instant")
+        self.assertEqual(engine.brand_of("NetPro", "", ""), "NetPro")
+        self.assertEqual(engine.brand_of("Ace Authentic, Inc", "", ""), "Ace Authentic")
+
+    def test_a_bare_topps_set_is_placed_by_the_title(self):
+        """Nine recorded cards say just "2024 Topps" in the Set field; the
+        title is what the gate accepted them on."""
+        self.assertEqual(engine.brand_of("Topps", "2024 Topps", "2024 Topps Chrome Coco Gauff 1/25"),
+                         "Topps Chrome")
+        # the same qualification the gate needs: "royalty" alone in a title is prose
+        self.assertEqual(engine.brand_of("Topps", "2024 Topps", "tennis royalty Iga Swiatek 1/10"), "")
+        self.assertEqual(engine.brand_of("Topps", "2024 Topps", "2024 Topps Royalty Iga Swiatek 1/10"),
+                         "Topps Royalty")
+
+    def test_an_unplaceable_card_is_blank_not_wrong(self):
+        self.assertEqual(engine.brand_of("Upper Deck", "2003 SP Authentic", "Federer 1/1"), "")
+        self.assertEqual(engine.brand_of("Topps", "2024 Topps", "Coco Gauff 1/25"), "")
+
+    def test_every_board_card_carries_a_brand_the_setup_knows(self):
+        xlsx = os.path.join(HERE, "results", engine.OUTPUT_XLSX)
+        if not os.path.exists(xlsx):
+            self.skipTest("no results/tennis_cards_verified.xlsx yet")
+        board = engine.build_board(xlsx)
+        self.assertTrue(board)
+        for card in board:
+            with self.subTest(card=card["title"][:60]):
+                self.assertIn("brand", card)
+                if card["brand"]:
+                    self.assertIn(card["brand"], engine.DEFAULT_BRAND_KEYWORDS)
+        placed = sum(1 for c in board if c["brand"])
+        self.assertGreaterEqual(placed, len(board) * 0.9, "most of the record should be placeable")
+
+    def js(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            return f.read()
+
+    def test_the_page_applies_all_three_to_what_is_shown(self):
+        js = self.js()
+        for fn in ("inPlayers", "inBrands", "underCeiling"):
+            self.assertIn(f"{fn}(card)", js.split("function passesFilters")[1].split("}")[0],
+                          f"passesFilters does not apply {fn}")
+
+    def test_the_setup_is_remembered_and_restored(self):
+        js = self.js()
+        self.assertIn("SCAN_SETUP_KEY", js)
+        self.assertIn("restoreScanSetup();", js.split("async function loadConfig")[1],
+                      "loadConfig never restores the saved setup")
+        for control in ('$("all-players").addEventListener("change", scanSetupChanged)',
+                        '$("inclusive").addEventListener("change", scanSetupChanged)',
+                        '$("max-print-run").addEventListener("input", scanSetupChanged)'):
+            self.assertIn(control, js)
+
+    def test_the_published_page_cannot_serve_a_stale_app_js(self):
+        """Run 29 on 17 Sep: a phone still on the old app.js against the new
+        results looked exactly like a failed fix."""
+        with open(os.path.join(HERE, ".github", "workflows", "pages.yml")) as f:
+            yml = f.read()
+        self.assertIn("assets/app.js?v=", yml)
+        self.assertIn("assets/styles.css?v=", yml)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

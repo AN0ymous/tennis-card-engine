@@ -1493,6 +1493,31 @@ def send_digest_email(matches):
 BOARD_LIMIT = 500
 
 
+# The set a recorded card belongs to, as the scan setup names it, decided from
+# the same evidence the brand gate accepted it on. Keys are the gate's own
+# keywords, so the two cannot disagree.
+BRAND_FOR_KEYWORD = {"topps chrome": "Topps Chrome", "graphite": "Topps Graphite",
+                     "royalty": "Topps Royalty", "topps now": "Topps Now"}
+
+
+def brand_of(manufacturer, set_name, title=""):
+    """Which of DEFAULT_BRAND_KEYWORDS a card is, or "" when none fits. The
+    page filters the record by set with this; a card it cannot place is shown
+    rather than hidden, so "" never loses anything."""
+    manu, set_lower, title_lower = manufacturer.lower(), set_name.lower(), title.lower()
+    if "netpro" in manu:
+        return "NetPro"
+    if "ace authentic" in manu:
+        return "Ace Authentic"
+    if "panini" in manu:
+        return "Panini Instant"
+    if "topps" in manu:
+        for kw in ALLOWED_MANUFACTURERS["topps"]:
+            if kw in set_lower or QUALIFIED_IN_TITLE.get(kw, kw) in title_lower:
+                return BRAND_FOR_KEYWORD[kw]
+    return ""
+
+
 def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
     if not os.path.exists(xlsx_path):
         return []
@@ -1530,6 +1555,7 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
             "player": cell(row, "Player") or "Unknown player",
             "manufacturer": manufacturer,
             "set_name": set_name,
+            "brand": brand_of(manufacturer, set_name, cell(row, "Card Description")),
             "title": cell(row, "Card Description"),
             "serial": cell(row, "Serial #"),
             "bookend": cell(row, "Bookend Type"),
@@ -1921,6 +1947,7 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                         "player": f["player"],
                         "manufacturer": f["manufacturer"],
                         "set_name": f["set_name"],
+                        "brand": brand_of(f["manufacturer"], f["set_name"], title),
                         "title": title,
                         "serial": f"{f['card_number']}/{f['print_run']}",
                         "bookend": bookend_label,
