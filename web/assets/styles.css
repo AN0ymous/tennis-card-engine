@@ -608,8 +608,18 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
 /* a scan is running: the bar's own movement is slow, so it also breathes */
 .progress-bar.is-live { animation: progress-breathe 2.4s ease-in-out infinite; }
 @keyframes progress-breathe { 50% { opacity: .62; } }
+/* nothing to measure yet -- a bar running back and forth, not a stuck 0% */
+.progress-bar.is-waiting {
+  width: 32%;
+  animation: progress-sweep 1.5s var(--ease-out) infinite;
+}
+@keyframes progress-sweep {
+  0%   { margin-left: -32%; }
+  100% { margin-left: 100%; }
+}
 @media (prefers-reduced-motion: reduce) {
   .progress-bar.is-live { animation: none; }
+  .progress-bar.is-waiting { animation: none; width: 100%; opacity: .45; }
   .progress-bar { transition: none; }
 }
 .progress-meta {
