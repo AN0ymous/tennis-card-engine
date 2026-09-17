@@ -298,8 +298,7 @@ and the one-time full re-walk after the cursor format changed happened at run
 - **A refused call is not an answer.** `get_item_detail` returns `None` when
   eBay no longer serves a listing (404, 410) and `REFUSED` when the call
   itself failed (allowance gone, eBay down, network); `get_item_details`
-  reports the refused ids through its `failures` set, and a refused batch is
-  not followed by twenty single calls to learn the same thing. Before this
+  reports the refused ids through its `failures` set. Before this
   both were `None`, and "nothing came back" was read as "ended": on 17 Sep at
   06:21, with the allowance used up, one refused batch of status calls
   recorded 55 live listings as ended -- which counts as settled, so they were
@@ -312,18 +311,17 @@ and the one-time full re-walk after the cursor format changed happened at run
   retried-then-gone case above. **Run 42 (17 Sep, 12:45) then showed the
   other half:** the export made three batch status calls for the 55, every
   one was turned away, and not one status changed -- with nothing in the log,
-  since the warning went to `engine_run.log`. Single calls were working
-  minutes earlier, so the batch endpoint itself is what eBay turns away (eBay
-  lists `getItems` as a limited release, so a 403 for this keyset is the
-  likely answer; the next run's log prints the status and eBay's words). A
-  400/403/404/405 on the batch call now switches the process to single calls
-  and says so; a 429, a 5xx or a dropped connection is a refusal, said once,
-  and the readings are kept. The export prints "statuses: asked eBay about N
-  ... M refused ... K no longer served" every time, so "nothing changed" can
-  be told from "nothing was asked".
+  since the warning went to `engine_run.log`. Run 43 printed eBay's answer:
+  `HTTP 403 Access denied, insufficient permissions to fulfill the request`.
+  The batch call (`getItems`) is a limited release eBay never offered this
+  keyset; every batch ever sent was a wasted call, hidden by a silent
+  fallback to single calls. It is gone from the engine. The 55 were repaired
+  by single calls in run 43 (all 55 live). The export prints "statuses: asked
+  eBay about N ... M refused ... K no longer served" every time, so "nothing
+  changed" can be told from "nothing was asked".
 - **An active status younger than `STATUS_FRESH_SECONDS` (an hour) is not
   asked about again.** Several scans in an hour used to re-check every unsold
-  row each time -- four batch calls a run, more than a repeat scan itself.
+  row each time -- a call a row, far more than a repeat scan itself.
   The daily run is always past the hour. The one visible cost: a SOLD flag
   can lag by up to an hour; set the constant to 0 to re-check every run.
 - **A digest email that will not send is a warning, not a failed scan.** It is
@@ -395,12 +393,10 @@ and the one-time full re-walk after the cursor format changed happened at run
 - **Measured 17 Sep: a never-seen listing costs one call, and batching never
   helped.** The Shapovalov scan judged 2,077 listings for 1,873 single
   detail calls plus 96 batch calls. That was first read as "`getItems` hands
-  back the specifics for about 4 listings in 100"; run 42 showed the likelier
-  truth, that `getItems` answered nothing usable at all and the old code fell
-  back to singles without a word, which gives the same arithmetic. Either
-  way a batch of 20 cost one call and then 20 singles. Judging no longer
-  batches; statuses try one batch per process and fall back to singles the
-  moment eBay turns it away. The old 420-calls-a-scan figure was wrong. What does
+  back the specifics for about 4 listings in 100"; run 43 settled it:
+  `getItems` returned HTTP 403 to this keyset every time, and the old code
+  fell back to singles without a word, which gives the same arithmetic. There
+  is no batch call any more. The old 420-calls-a-scan figure was wrong. What does
   save calls: `seen_items.json` (a judged listing is never fetched again), the
   cursor (a repeat wide scan fetches only what was listed since), and
   `settled_by_title` (a custom, another sport, or a serial that is not a
@@ -425,21 +421,16 @@ and the one-time full re-walk after the cursor format changed happened at run
   "reason": ...}`; older entries are the bare string). To see why a listing
   was passed over, take the number from its eBay URL (`/itm/336797712136`)
   and look up `v1|336797712136|0` in `results/seen_items.json`.
-- **Those two warnings do not appear in the Actions log.** `logging.basicConfig`
-  sends every `log.warning` to `engine_run.log`, a file on whichever machine
-  ran the scan, and that file is gitignored -- so "Bulk item details carry no
-  localizedAspects" and "Bulk item details unavailable" never leave the
-  runner. An earlier note here said to look for them in the run's output; that
-  was wrong. To settle whether batching saves calls, read the allowance before
-  and after a scan (`py ebay_usage.py --raw`, or the "eBay calls today" panel
-  on the page) and compare -- the difference is the real call count.
-- Detail fetching for the judge is one call per listing, `DETAIL_WORKERS`
-  (8) in flight at once; lower it if eBay starts refusing calls. Statuses
-  try batches of `DETAIL_BATCH_SIZE` (20, eBay's ceiling, do not raise) and
-  fall back to single calls the moment eBay turns the batch call away, which
-  as of run 42 it seems always to do; the batch costs one wasted call per
-  process until it is settled and removed. `TwoWaysToFetch` and
-  `StatusRefresh` in `test_engine.py` pin both paths, with no keys.
+- **A `log.warning` does not appear in the Actions log.** `logging.basicConfig`
+  sends it to `engine_run.log`, a file on whichever machine ran the scan, and
+  that file is gitignored. Anything a reader must see goes through `say()`,
+  which also prints to stderr. To measure what a scan really cost, read
+  `results/ebay_api_usage.json` before and after (the local counter, exact),
+  not the "eBay calls today" panel, whose figure is eBay's and lags.
+- Every detail is one call per listing, `DETAIL_WORKERS` (8) in flight at
+  once, for the judge and for statuses alike; lower it if eBay starts
+  refusing calls. `OneCallPerListing` and `StatusRefresh` in `test_engine.py`
+  pin it, with no keys.
 - **A search stops when eBay says there is no further page.** eBay's `total`
   is an estimate that runs high, so the last page used to be followed by an
   empty one, a call each. `search_ebay` now hands back whether the response

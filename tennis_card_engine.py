@@ -70,13 +70,14 @@ from openpyxl.utils import get_column_letter
 SCAN_ALL_PLAYERS = True
 MAX_RESULTS_PER_BRAND = 1200   # when scanning all players: listings fetched per set, newest first
 
-# Item details are the scan's bulk cost: one per listing not judged before.
-# eBay's getItems takes up to 20 ids in a single call, and the calls run
-# concurrently, so a window of listings costs a few round trips instead of
-# one each. Lower DETAIL_WORKERS if eBay starts refusing calls.
-DETAIL_BATCH_SIZE = 20         # eBay's getItems ceiling; do not raise
-DETAIL_WORKERS = 8             # batches in flight at once
-DETAIL_WINDOW = DETAIL_BATCH_SIZE * DETAIL_WORKERS   # listings judged per round
+# Item details are the scan's bulk cost: one call per listing not judged
+# before, DETAIL_WORKERS of them in flight at once. There is no cheaper way:
+# eBay's batch call (getItems) is a limited release it does not offer this
+# keyset -- run 43 on 17 Sep got "HTTP 403 Access denied, insufficient
+# permissions" for every batch ever sent -- so it is gone. Lower
+# DETAIL_WORKERS if eBay starts refusing calls.
+DETAIL_WORKERS = 8             # single detail calls in flight at once
+DETAIL_WINDOW = 160            # listings judged per round of the log
 
 PLAYERS = [
     "Roger Federer",
@@ -786,77 +787,6 @@ def get_item_detail(token, item_id):
         return REFUSED
 
 
-# Set False for the rest of the process the first time eBay says it has no
-# bulk item endpoint, or does not offer it to this keyset, so a scan stops
-# paying for a call that cannot work. Run 42 on 17 Sep: three batch status
-# calls, all turned away, and not one of the 55 wrongly "ended" statuses
-# repaired -- the old code fell back to single calls without a word, and
-# every batch call ever made may have been the same wasted call.
-_bulk_details_supported = True
-_bulk_refusal_said = False
-
-
-def _say_bulk_refused(what):
-    """Once per process: a refused batch is worth one line in the run log,
-    not one per batch."""
-    global _bulk_refusal_said
-    if not _bulk_refusal_said:
-        _bulk_refusal_said = True
-        say(f"eBay refused a bulk item call ({what}); the listings in it keep "
-            "their last reading and are asked about again next run")
-
-# Judging never batches. Measured 17 Sep: eBay's getItems hands back the item
-# specifics the judge reads for about 4 listings in 100, so a batch of 20
-# cost one call and then 19 single calls anyway -- 20.2 calls per 20
-# listings against 20 without it. Statuses need no specifics, so they still
-# go in batches of 20, where the batch really is the answer.
-
-
-def _bulk_item_details(token, item_ids):
-    """One getItems call: up to DETAIL_BATCH_SIZE listings, keyed by item id.
-
-    Returns what the call gave back; {} when the endpoint is not there in this
-    form, so the caller falls back to single calls; REFUSED when the call
-    itself failed, so the caller does not spend a single call per listing
-    finding out the same thing twenty times over."""
-    global _bulk_details_supported
-    if not _bulk_details_supported or not item_ids:
-        return {}
-    consume_api_call("getItems")
-    try:
-        resp = requests.get(
-            f"{EBAY_API_BASE}/buy/browse/v1/item",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "X-EBAY-C-MARKETPLACE-ID": MARKETPLACE_ID,
-            },
-            params={"item_ids": ",".join(item_ids)},
-            timeout=30,
-        )
-    except requests.RequestException as exc:
-        _say_bulk_refused(f"the call failed: {exc}")
-        return REFUSED
-    if resp.status_code in (400, 403, 404, 405):
-        # not there, not there in this form, or not offered to this keyset
-        # (eBay lists getItems as a limited release): stop asking for this
-        # process and let the single calls, which do work, take over. Said
-        # out loud, with eBay's own words, so the run log settles which it is.
-        _bulk_details_supported = False
-        say(f"eBay does not answer the bulk item call for this keyset (HTTP "
-            f"{resp.status_code}: {resp.text[:200]}); checking listings one at a "
-            "time for the rest of this run")
-        return {}
-    if resp.status_code != 200:
-        _say_bulk_refused(f"HTTP {resp.status_code}: {resp.text[:200]}")
-        return REFUSED
-    try:
-        items = resp.json().get("items") or []
-    except ValueError:
-        _say_bulk_refused("the answer was not JSON")
-        return REFUSED
-    return {entry["itemId"]: entry for entry in items if entry.get("itemId")}
-
-
 def _in_parallel(fn, jobs, workers=None):
     """fn over jobs, results in the order of jobs. fn must not raise."""
     jobs = list(jobs)
@@ -869,48 +799,23 @@ def _in_parallel(fn, jobs, workers=None):
         return list(pool.map(fn, jobs))
 
 
-def get_item_details(token, item_ids, workers=None, require="localizedAspects", failures=None):
-    """Details for many listings, keyed by item id.
-
-    With `require` set (the judge needs localizedAspects) every listing is
-    fetched singly, several at a time: the batch endpoint rarely carries the
-    specifics, so batching cost more than it saved. With no requirement
-    (statuses) the ids go in batches of DETAIL_BATCH_SIZE, and anything a
-    batch leaves out is fetched singly afterwards.
+def get_item_details(token, item_ids, workers=None, failures=None):
+    """Details for many listings, keyed by item id: one call each, several
+    in flight at once. The single call carries localizedAspects -- the
+    manufacturer, set, print run and card number the judge reads -- and
+    everything a status needs.
 
     An id absent from the result is one eBay no longer serves. An id whose
     call failed instead -- nothing is known about it -- goes into `failures`
     when a set is given, so a caller can tell "gone" from "not answered"."""
     ids = [i for i in dict.fromkeys(item_ids) if i]
-    if not ids:
-        return {}
-    refused = set()
-
     details = {}
-    if not require:
-        batches = [ids[i:i + DETAIL_BATCH_SIZE] for i in range(0, len(ids), DETAIL_BATCH_SIZE)]
-        for batch, got in zip(batches, _in_parallel(
-                lambda batch: _bulk_item_details(token, batch), batches, workers)):
-            if got is REFUSED:
-                refused.update(batch)             # not worth twenty single calls to learn again
-            else:
-                details.update(got)
-
-    # localizedAspects carries the manufacturer, set, print run and card
-    # number: without it a listing cannot be judged, only wrongly rejected.
-    missing = [i for i in ids if i not in refused
-               and not (details.get(i) if not require else (details.get(i) or {}).get(require))]
-    if missing:
-        for item_id, detail in zip(missing, _in_parallel(
-                lambda i: get_item_detail(token, i), missing, workers)):
-            if detail:
-                details[item_id] = detail
-            else:
-                details.pop(item_id, None)
-                if detail is REFUSED:
-                    refused.add(item_id)
-    if failures is not None:
-        failures.update(refused)
+    for item_id, detail in zip(ids, _in_parallel(
+            lambda i: get_item_detail(token, i), ids, workers)):
+        if detail:
+            details[item_id] = detail
+        elif detail is REFUSED and failures is not None:
+            failures.add(item_id)
     return details
 
 
@@ -996,8 +901,8 @@ def settled_by_title(title):
     serial is read exactly as the judge reads it (the title first), so this
     never turns away a card the judge would have kept. A title with no serial
     is not settled -- the specifics may carry one -- and is fetched as before.
-    Measured on 17 Sep: a never-seen listing costs about one call whatever the
-    batching does, so every listing settled here is a call kept."""
+    Measured on 17 Sep: a never-seen listing costs one call, so every listing
+    settled here is a call kept."""
     custom = looks_custom(title, "")
     if custom:
         return f"custom or novelty card: says {custom!r}"
@@ -1081,8 +986,8 @@ def check_listing_status(token, item_id):
 
 
 # An active reading younger than this is not asked for again: several scans
-# in an hour used to re-check every unsold row each time, four batch calls a
-# run that cost more than the repeat scan itself. The daily run is always
+# in an hour used to re-check every unsold row each time, a call a row that
+# cost far more than the repeat scan itself. The daily run is always
 # past it. A SOLD flag can therefore lag by up to an hour; set 0 to re-check
 # every run.
 STATUS_FRESH_SECONDS = 3600
@@ -1126,7 +1031,7 @@ def refresh_statuses(token, item_ids, previous=None, fresh_within=None, report=N
         return statuses
     # no field is required: a status reads off whatever eBay returns
     refused = set()
-    details = get_item_details(token, stale, require=None, failures=refused)
+    details = get_item_details(token, stale, failures=refused)
     stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     gone = 0
     for item_id in stale:
@@ -2268,9 +2173,9 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                         count=count, offset=offset, total=total))
 
                 # Listings are judged a windowful at a time so their details can be
-                # fetched in batches, several batches at once, rather than one round
-                # trip per listing. The window is still walked in the order eBay
-                # returned it, so the live log reads exactly as it did before.
+                # fetched several at once rather than one round trip after another.
+                # The window is still walked in the order eBay returned it, so the
+                # live log reads exactly as it did before.
                 for window in _windows(listings, DETAIL_WINDOW):
                     if should_stop and should_stop():
                         cancelled = True
