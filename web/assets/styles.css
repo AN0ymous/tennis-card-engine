@@ -447,6 +447,17 @@ a { color: var(--gold); text-underline-offset: 3px; }
 .chip input:focus-visible + span { outline: 1.5px solid var(--gold); outline-offset: 3px; }
 .chip span:hover { border-color: var(--gold-lit); transform: translateY(-1px); }
 
+/* a name you typed in: room on the right for the cross that takes it out again */
+.chip.is-added > span { padding-right: 26px; }
+.chip-x {
+  position: absolute; top: 50%; right: 5px; transform: translateY(-50%);
+  width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%;
+  font: inherit; font-size: 14px; line-height: 18px; cursor: pointer;
+  background: transparent; color: var(--muted);
+  transition: background .2s var(--ease), color .2s var(--ease);
+}
+.chip-x:hover, .chip-x:focus-visible { background: var(--line-2); color: var(--ink); outline: none; }
+
 .row { display: flex; gap: 14px; align-items: flex-end; }
 .row > * { flex: 1; }
 input[type="number"], input[type="search"] {

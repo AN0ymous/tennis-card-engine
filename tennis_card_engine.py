@@ -2096,10 +2096,32 @@ def main():
     options = scan_options_from_env()
     brand_keywords = options["brand_keywords"]
     players = options["players"]
+
+    # A refused search used to vanish here: run_scan hands it to on_event,
+    # main() passed none, and the only other copy went to engine_run.log,
+    # which the hosted runner throws away. Runs 32 to 35 on 17 Sep each
+    # checked 0 listings with the day's allowance used up, and every one went
+    # green -- indistinguishable from a quiet day. Now each refusal is said out
+    # loud, and a run that could check nothing at all fails, so it shows red.
+    refusals = []
+
+    def on_event(kind, payload):
+        if kind == "error":
+            refusals.append(payload.get("message", ""))
+            say(payload.get("message", ""))
+
     try:
-        new_match_records, checked = run_scan(**options)
+        new_match_records, checked = run_scan(**options, on_event=on_event)
     except EngineError as e:
         sys.exit(f"ERROR: {e}")
+
+    if refusals and not checked:
+        sys.exit(f"ERROR: eBay refused every search ({len(refusals)} of them) and not one "
+                 f"listing was checked, so this run found nothing because it could not look. "
+                 f"First refusal: {refusals[0]}")
+    if refusals:
+        say(f"{len(refusals)} search(es) were refused, so this run covered less than usual; "
+            "see the warnings above.")
 
     scope = "all players" if not players else f"{len(players)} players"
     print(f"Checked {checked} listings across {scope} x {len(brand_keywords)} sets.")

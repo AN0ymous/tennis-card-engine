@@ -1175,5 +1175,82 @@ class DigestEmail(unittest.TestCase):
                 os.environ.pop(k, None)
 
 
+class ARefusedSearchIsNotSilent(unittest.TestCase):
+    """Runs 32 to 35 on 17 Sep each checked 0 listings with the day's eBay
+    allowance used up, and every one went green. The refusal went to an
+    on_event nobody had passed and to a log file the runner throws away."""
+
+    REFUSAL = ("eBay refused the search 'NetPro tennis card' at listing 1: HTTP 429 "
+               "-- eBay's daily call allowance is used up; it resets at midnight Pacific time")
+
+    def run_main(self, refuse_every=True):
+        calls = {"n": 0}
+
+        def listings(_token, _player, _brand, on_error=None, **kwargs):
+            calls["n"] += 1
+            if refuse_every or calls["n"] == 1:
+                on_error(self.REFUSAL)
+                return iter(())
+            return iter([{"itemId": f"v1|{calls['n']}|0", "title": "card"}])
+
+        import io, contextlib
+        err = io.StringIO()
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=listings), \
+                patch.object(engine, "get_item_details", return_value={}), \
+                patch.object(engine, "send_digest_email"), \
+                patch.dict(os.environ, {"SCAN_BRANDS": "NetPro,Topps Chrome"}), \
+                contextlib.redirect_stderr(err):
+            try:
+                engine.main()
+            except SystemExit as exc:
+                return exc.code, err.getvalue()
+        return 0, err.getvalue()
+
+    def test_a_run_that_could_check_nothing_fails_and_says_why(self):
+        code, stderr = self.run_main(refuse_every=True)
+        self.assertNotEqual(code, 0, "an all-refused run still exited 0")
+        self.assertIn("refused every search", str(code))
+        self.assertIn("allowance is used up", str(code))
+        self.assertIn("WARNING: eBay refused", stderr, "the refusal never reached stderr")
+
+    def test_a_partly_refused_run_warns_but_still_counts(self):
+        code, stderr = self.run_main(refuse_every=False)
+        self.assertEqual(code, 0)
+        self.assertIn("WARNING: eBay refused", stderr)
+        self.assertIn("covered less than usual", stderr)
+
+
+class AnAddedChipCanBeTakenOut(unittest.TestCase):
+    """A name typed in used to be a chip for ever: remembered in localStorage,
+    rebuilt on every load, with nothing on the page to remove it."""
+
+    def js(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            return f.read()
+
+    def test_only_typed_in_chips_get_a_cross(self):
+        js = self.js()
+        self.assertIn("if (added) label.append(removeButton(", js)
+        # the built-in players and sets are built without the flag
+        self.assertIn("values.forEach((value) => buildChip(box, value, name, true));", js)
+
+    def test_the_cross_forgets_the_name_and_narrows_the_view(self):
+        js = self.js()
+        body = js.split("function removeButton")[1].split("\nfunction ")[0]
+        self.assertIn("forget(group, value)", body)
+        self.assertIn("label.remove()", body)
+        self.assertIn("scanSetupChanged()", body)
+        self.assertIn("e.preventDefault()", body, "the click would also toggle the chip")
+
+    def test_forget_edits_the_remembered_list(self):
+        js = self.js()
+        body = js.split("function forget(")[1].split("\nfunction ")[0]
+        self.assertIn("remembered(group).filter(", body)
+        self.assertIn("SEARCHES[group].key", body)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

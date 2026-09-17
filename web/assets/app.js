@@ -951,9 +951,9 @@ function syncPlayerChips() {
   $("players-chips").style.opacity = all ? ".45" : "";
 }
 
-function buildChip(box, value, name, checked) {
+function buildChip(box, value, name, checked, added = false) {
   const id = `${name}-${box.children.length}`;
-  const label = el("label", "chip");
+  const label = el("label", "chip" + (added ? " is-added" : ""));
   label.htmlFor = id;
   const input = el("input");
   input.type = "checkbox";
@@ -962,8 +962,32 @@ function buildChip(box, value, name, checked) {
   input.checked = checked;
   input.dataset.group = name;
   label.append(input, el("span", null, value));
+  if (added) label.append(removeButton(name, value, label));
   box.append(label);
   return input;
+}
+
+/* A name you typed in can be taken out again; the built-in ones cannot. The
+   cross sits inside the label, so its click has to be stopped from also
+   toggling the chip underneath it. */
+function removeButton(group, value, label) {
+  const x = el("button", "chip-x", "\u00d7");
+  x.type = "button";
+  x.title = `Remove ${value}`;
+  x.setAttribute("aria-label", `Remove ${value}`);
+  x.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    forget(group, value);
+    label.remove();
+    // taking away the last ticked name would leave nothing to scan or show
+    if (group === "player" && !selected("player").length) {
+      $("all-players").checked = true;
+      syncPlayerChips();
+    }
+    scanSetupChanged();
+  });
+  return x;
 }
 
 function buildChips(containerId, values, name) {
@@ -992,6 +1016,13 @@ function remember(group, name) {
       localStorage.setItem(SEARCHES[group].key, JSON.stringify([...list, name].slice(-40)));
     }
   } catch { /* storage unavailable; the chip still works this session */ }
+}
+
+function forget(group, name) {
+  try {
+    localStorage.setItem(SEARCHES[group].key, JSON.stringify(
+      remembered(group).filter((n) => n.toLowerCase() !== name.toLowerCase())));
+  } catch { /* storage unavailable; the chip is gone for this session anyway */ }
 }
 
 function chipsOf(group) {
@@ -1061,7 +1092,7 @@ function showNote(group, text) {
 function restoreRemembered(group) {
   remembered(group).forEach((name) => {
     if (!findChip(group, name)) {
-      buildChip($(SEARCHES[group].box), name, group, false).parentElement.classList.add("is-added");
+      buildChip($(SEARCHES[group].box), name, group, false, true);
     }
   });
 }
@@ -1074,8 +1105,7 @@ function addSearched(group, raw) {
   const name = String(raw || "").replace(/\s+/g, " ").trim();
   if (!name) return null;
   const existing = closestChip(group, name);
-  const chip = existing || buildChip($(cfg.box), name, group, true);
-  if (!existing) chip.parentElement.classList.add("is-added");
+  const chip = existing || buildChip($(cfg.box), name, group, true, true);
   if (existing && existing.value.toLowerCase() !== name.toLowerCase()) {
     showNote(group, `Took \u201c${name}\u201d as ${existing.value}.`);
   } else {
