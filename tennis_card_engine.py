@@ -673,8 +673,9 @@ class SearchError(EngineError):
 def iter_listings(token, player, brand_kw, on_page=None, should_stop=None,
                   min_price=None, max_price=None, listing_types=None, limit=None,
                   on_error=None, high_water=None, on_complete=None):
-    """Yield listings for one brand search: a single page when a player is
-    named, or up to MAX_RESULTS_PER_BRAND newest-first when scanning everyone."""
+    """Yield listings for one brand search, up to MAX_RESULTS_PER_BRAND
+    newest-first per query -- a named player runs two such queries (full name,
+    surname), scanning everyone runs one."""
     price = {"min_price": min_price, "max_price": max_price, "listing_types": listing_types}
     # A named player is searched by full name and by surname, so a listing
     # titled just "Federer" is still fetched; the judge decides afterwards
@@ -688,7 +689,8 @@ def iter_listings(token, player, brand_kw, on_page=None, should_stop=None,
         fetched = 0
         newest_seen = ""
         completed = True
-        while fetched < cap:
+        reached_mark = False
+        while fetched < cap and not reached_mark:
             if should_stop and should_stop():
                 return
             page = min(200, cap - fetched)                      # 200 is the API ceiling
@@ -711,10 +713,15 @@ def iter_listings(token, player, brand_kw, on_page=None, should_stop=None,
                     newest_seen = created
                 # Include equal timestamps so a listing created during the
                 # same timestamp tick after the last run cannot be missed.
+                # A named player runs more than one query (full name, then
+                # surname): stop paging *this* query once past the mark, but
+                # let the loop below move on to the next one -- a bare
+                # `return` here used to end the whole generator, so the
+                # surname search never ran at all once the full-name search
+                # reached its mark.
                 if high_water and created and created < high_water:
-                    if completed and on_complete:
-                        on_complete(query, newest_seen)
-                    return
+                    reached_mark = True
+                    break
                 item_id = item.get("itemId")
                 if item_id in seen_here:
                     continue                                    # already fetched under another name
@@ -1555,8 +1562,11 @@ def cursor_high_water(entry, fingerprint):
 def scan_cursor_key(player, brand_kw, min_price, max_price, listing_types):
     scope = {
         "player": player or "*", "brand": brand_kw,
-        # the search text itself: change it and every mark is stale
-        "query": wide_query(brand_kw) if player is None else "",
+        # the search text itself: change it and every mark is stale, for a
+        # player search as much as for the wide one -- name_variants() changed
+        # today and would otherwise have kept an old mark that skipped the
+        # very listings the new query text was meant to reach.
+        "query": wide_query(brand_kw) if player is None else name_variants(player),
         "minPrice": min_price, "maxPrice": max_price,
         "listingTypes": sorted(listing_types or []),
         "marketplace": MARKETPLACE_ID, "category": EBAY_CATEGORY_ID,
@@ -2069,7 +2079,7 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
 
                 cursor_key = scan_cursor_key(player, brand_kw, min_price, max_price, listing_types)
                 high_water = (cursor_high_water(cursors.get(cursor_key), rule_key)
-                              if write_outputs and player is None else "")
+                              if write_outputs else "")
                 next_high_water = {"value": ""}
                 failed_before_query = failed
 
@@ -2188,7 +2198,11 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
 
                 # Retry a query next run if even one listing detail was missing;
                 # otherwise persist its newest successfully processed timestamp.
-                if (write_outputs and player is None and not cancelled
+                # A named player earns this exactly like the wide scan: repeating
+                # the same player, brand and filters should cost eBay only what
+                # was listed since, not a full re-walk of everything that name
+                # ever matched.
+                if (write_outputs and not cancelled
                         and next_high_water["value"] and failed == failed_before_query):
                     cursors[cursor_key] = {"newest": next_high_water["value"],
                                            "rules": rule_key}

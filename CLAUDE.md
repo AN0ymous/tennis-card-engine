@@ -338,12 +338,37 @@ and the one-time full re-walk after the cursor format changed happened at run
   again singly; the guard that would stop batching trips only when *none*
   carry them, so it never trips. The 420 figure above was wrong. What does
   save calls: `seen_items.json` (a judged listing is never fetched again), the
-  cursor (a repeat wide scan fetches only what was listed since), and
+  cursor (a repeat scan fetches only what was listed since), and
   `settled_by_title` (a custom, another sport, or a serial that is not a
   bookend is rejected from the title with no call at all; a title with no
   serial is still fetched, because the specifics may carry one). A first-time
   player scan still costs roughly one call per listing eBay returns for the
   name, so a common surname is expensive.
+- **A named player earns and reads a cursor now too, so a repeat of the same
+  specific search is cheap the second time.** Until 17 Sep only the wide,
+  "every player" scan (`player is None`) ever read or wrote `scan_cursors.json`
+  -- a player scan re-walked its full name-and-surname search from scratch on
+  every single run, however many times the same player, brand and filters were
+  scanned again, which is what made a specific search cost roughly one call
+  per listing eBay returns for the name *every time*, not just the first.
+  Reported live: a wide scan with every filter on cost 12 calls where a
+  specific search cost 1,209. `scan_cursor_key` now folds `name_variants(player)`
+  into the key for a named player exactly as it folds `wide_query(brand_kw)` in
+  for "*", so a future change to how a player is searched stales the mark
+  automatically instead of silently skipping listings; `run_scan` no longer
+  gates the cursor read or write on `player is None`. Fixing this surfaced a
+  second, older bug in `iter_listings`: hitting the high-water mark did a bare
+  `return`, which ends the *whole generator*, not just the query in progress.
+  That was invisible before because the wide scan only ever queues one query,
+  so ending the generator there was the same as moving to the next one --
+  there wasn't one. A player scan queues two (full name, then surname), so the
+  surname
+  search was silently never run at all once the full-name search reached its
+  mark. Now a mark sets a flag and breaks the inner loop, so paging stops for
+  that query alone and the next query variant still runs. The first run of any
+  specific search stays expensive -- everything genuinely has to be judged
+  once -- but repeating it unchanged now costs close to nothing, the same
+  saving the wide scan already had.
 - **A reject is only as permanent as its rule.** A reject carries the
   `JUDGE_VERSION` it was made under. When a permanent rule changes in a way
   that could reverse old rejects, bump the version and name the old reason's

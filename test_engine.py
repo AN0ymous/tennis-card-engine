@@ -738,10 +738,10 @@ class CursorFollowsTheRules(unittest.TestCase):
         engine.consume_api_call, engine.MAX_RESULTS_PER_BRAND = self._consume, self._per_brand
         engine._BASE_DIR = self._base
 
-    def scan(self, **kwargs):
+    def scan(self, player=None, **kwargs):
         fake = self.Dated(listings=54)
         requests.get = fake.get
-        matches, checked = engine.run_scan(None, self.SETS, **kwargs)
+        matches, checked = engine.run_scan([player] if player else None, self.SETS, **kwargs)
         return matches, checked, fake.calls["search"]
 
     def cursors(self):
@@ -778,6 +778,20 @@ class CursorFollowsTheRules(unittest.TestCase):
         entry = next(iter(self.cursors().values()))
         self.assertIn("newest", entry)
         self.assertIn("rules", entry)
+
+    def test_a_named_player_scan_also_stops_at_the_mark(self):
+        """A player scan used to re-walk everything that name ever matched on
+        every run, since only the wide scan's cursor was ever read or written.
+        That made a repeat of the same specific search cost as much as the
+        first one, however many times it was run -- unlike the wide scan,
+        which was already cheap the second time round. Fixed by letting a
+        named player earn and use a cursor exactly like "*" already does."""
+        first_matches, first_checked, first_searches = self.scan(player="Denis Shapovalov")
+        self.assertTrue(first_checked)
+        self.assertEqual(first_searches, 2)            # full name, then surname
+        _, checked, searches = self.scan(player="Denis Shapovalov")
+        self.assertEqual(searches, 2)                  # still one page per query
+        self.assertLess(checked, first_checked)
 
     def test_a_cursor_from_the_old_format_is_ignored(self):
         """A bare timestamp says nothing about the rules behind it, so it is
@@ -1405,7 +1419,11 @@ class WhatTwoPlayerScansTaught(unittest.TestCase):
         self.assertIn("neither the first nor the last", seen["v1|7|0"]["reason"])
         self.assertEqual(len(matches), 1)
 
-    def test_a_player_scan_writes_no_cursor(self):
+    def test_a_player_scan_writes_a_cursor_too(self):
+        """A named player used to walk its whole history again on every run,
+        however many times the same search was repeated -- only the wide scan
+        ever earned a cursor. A specific search needed to stop costing full
+        price forever, so a player scan now writes one exactly like "*" does."""
         items = [{"itemId": "v1|1|0", "title": "2024 Topps Chrome Coco Gauff 1/50 tennis", "itemCreationDate": "2026-09-17T00:00:00.000Z"}]
 
         def listings(_t, _p, _b, on_complete=None, **kw):
@@ -1419,7 +1437,10 @@ class WhatTwoPlayerScansTaught(unittest.TestCase):
                 patch.object(engine, "get_item_details", return_value={"v1|1|0": self.detail(Manufacturer="Topps", Set="2024 Topps Chrome", Sport="Tennis", **{"Player/Athlete": "Coco Gauff"})}):
             engine.run_scan(["Coco Gauff"], ["Topps Chrome"])
             with open(os.path.join(folder, engine.SCAN_CURSOR_FILE)) as f:
-                self.assertEqual(json.load(f), {})
+                cursors = json.load(f)
+        self.assertEqual(len(cursors), 1)
+        entry = next(iter(cursors.values()))
+        self.assertEqual(entry["newest"], "2026-09-17T00:00:00.000Z")
 
     def test_the_board_drops_a_card_of_another_sport(self):
         self.assertTrue(engine.other_sport_in_title(self.UFC))
