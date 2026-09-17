@@ -34,6 +34,7 @@ const state = {
   savedstatus: "all",
   statusCheckedAt: null,
   showingExamples: false,
+  hostedScan: null,          // {startedAt, phase, phaseAt} while a GitHub scan is watched
   since: 0,
   polling: null,
   running: false,
@@ -1202,6 +1203,7 @@ function enterHostedMode(c) {
   document.body.classList.add("is-hosted");
   $("stop-btn").hidden = true;
   $("download-btn").hidden = !c.spreadsheetExists;
+  stopHostedProgress(c.lastRun ? `Last scan finished ${c.lastRun}.` : "Idle.");
 
   const run = $("run-btn");
   run.onclick = (e) => { e.stopImmediatePropagation(); onHostedRun(c); };
@@ -1312,17 +1314,116 @@ const RESULT_POLL_LIMIT_MS = 45 * 60000;
 
 function watchForNewResults(before) {
   const until = Date.now() + RESULT_POLL_LIMIT_MS;
+  startHostedProgress();
+  let tick = 0;
   const timer = setInterval(async () => {
-    if (Date.now() > until) { clearInterval(timer); renderHostedNote(state.config); return; }
+    paintHostedProgress();
+    if (Date.now() > until) {
+      clearInterval(timer);
+      stopHostedProgress("Gave up waiting. The scan may still be running on GitHub.");
+      renderHostedNote(state.config);
+      return;
+    }
+    tick += 1;
+    if (tick % (RESULT_POLL_MS / HOSTED_PAINT_MS) !== 0) return;   // paint often, ask rarely
+
+    const run = await hostedRunStatus(state.config);
+    if (run) setHostedPhase(HOSTED_RUN_PHASE[run.status] || "scanning");
     try {
       const r = await fetch(`results/config.json?t=${Date.now()}`, { cache: "no-store" });
       const fresh = await r.json();
       if (fresh.lastRun && fresh.lastRun !== before) {
         clearInterval(timer);
+        setHostedPhase("done");
+        paintHostedProgress();
         window.location.reload();
       }
     } catch { /* try again on the next tick */ }
-  }, RESULT_POLL_MS);
+  }, HOSTED_PAINT_MS);
+}
+
+/* ------------------------------------ how far along a scan on GitHub is */
+/* A hosted scan runs on GitHub, so there is no event stream to follow the way
+   the local server provides one. Two things are knowable: the workflow run's
+   own status, when a key has been set for this device, and the clock. The
+   phases below are what actually happens -- GitHub queues the job, the engine
+   scans, then pages.yml republishes the site, and only then is the result
+   visible here. Within a phase the bar moves on elapsed time, so it is an
+   estimate; the phase changes themselves are real whenever a key is set. */
+
+const HOSTED_PAINT_MS = 1000;
+const HOSTED_PHASES = {
+  queued:     { from: 4,  to: 18,  over: 45000,  text: "Waiting for GitHub to start" },
+  scanning:   { from: 18, to: 76,  over: 90000,  text: "Scanning eBay" },
+  publishing: { from: 76, to: 96,  over: 90000,  text: "Publishing the page" },
+  done:       { from: 100, to: 100, over: 1,     text: "Done" },
+};
+const HOSTED_RUN_PHASE = {
+  queued: "queued", requested: "queued", waiting: "queued", pending: "queued",
+  in_progress: "scanning",
+  completed: "publishing",
+};
+
+function startHostedProgress() {
+  state.hostedScan = { startedAt: Date.now(), phase: "queued", phaseAt: Date.now() };
+  $("progress-bar").classList.add("is-live");
+  paintHostedProgress();
+}
+
+function setHostedPhase(phase) {
+  const p = state.hostedScan;
+  if (!p || p.phase === phase) return;
+  // a phase never goes backwards: a slow status read must not rewind the bar
+  if (Object.keys(HOSTED_PHASES).indexOf(phase) < Object.keys(HOSTED_PHASES).indexOf(p.phase)) return;
+  p.phase = phase;
+  p.phaseAt = Date.now();
+}
+
+function elapsedSince(at) {
+  const s = Math.max(0, Math.round((Date.now() - at) / 1000));
+  return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`;
+}
+
+function paintHostedProgress() {
+  const p = state.hostedScan;
+  if (!p) return;
+  const spec = HOSTED_PHASES[p.phase];
+  const into = Math.min(1, (Date.now() - p.phaseAt) / spec.over);
+  $("progress-bar").style.width = `${Math.round(spec.from + (spec.to - spec.from) * into)}%`;
+  $("progress-count").textContent = spec.text;
+  $("progress-checked").textContent = elapsedSince(p.startedAt);
+  if (p.phase !== "done") {
+    $("progress-now").textContent = githubToken()
+      ? "This page reloads by itself when the new results are published."
+      : "Timings are estimated: without a key this page can't read the run's status.";
+  }
+}
+
+function stopHostedProgress(message) {
+  state.hostedScan = null;
+  $("progress-bar").classList.remove("is-live");
+  $("progress-bar").style.width = "0%";
+  $("progress-count").textContent = "Not scanning";
+  $("progress-checked").textContent = "";
+  $("progress-now").textContent = message || "Idle.";
+}
+
+/* The run's real status, when this device has a key. Without one the Actions
+   API would have to be called unauthenticated, which is rate-limited well
+   below this poll, so the clock is used on its own instead. */
+async function hostedRunStatus(c) {
+  const token = githubToken();
+  if (!token || !c || !c.repo) return null;
+  try {
+    const r = await fetch(
+      `https://api.github.com/repos/${c.repo}/actions/workflows/${c.workflow || "scan.yml"}/runs?per_page=1`,
+      { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" } });
+    if (!r.ok) return null;
+    const run = ((await r.json()).workflow_runs || [])[0];
+    return run ? { status: run.status, conclusion: run.conclusion } : null;
+  } catch {
+    return null;                       // offline or refused: the clock still works
+  }
 }
 
 /* ------------------------------------------------------------- contents */

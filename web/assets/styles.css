@@ -605,6 +605,13 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
   background: linear-gradient(90deg, var(--gold), var(--gold-lit));
   transition: width .6s var(--ease-out);
 }
+/* a scan is running: the bar's own movement is slow, so it also breathes */
+.progress-bar.is-live { animation: progress-breathe 2.4s ease-in-out infinite; }
+@keyframes progress-breathe { 50% { opacity: .62; } }
+@media (prefers-reduced-motion: reduce) {
+  .progress-bar.is-live { animation: none; }
+  .progress-bar { transition: none; }
+}
 .progress-meta {
   display: flex; justify-content: space-between; gap: 12px;
   font-family: var(--mono); font-size: 10.5px; color: var(--muted);
@@ -1224,6 +1231,8 @@ footer.site .inline-code { background: rgba(255, 255, 255, .1); border-color: rg
 
 /* hosted on GitHub Pages: no live scanning from the browser */
 .hosted-note { margin: 0 0 4px; color: var(--ink-2); font-size: 13px; line-height: 1.6; }
-.is-hosted .progress, .is-hosted #activity, .is-hosted #write-outputs, .is-hosted #portraits { display: none; }
+/* The progress bar stays: a hosted scan is followed by its phase and the
+   clock. The per-listing activity log does not, since GitHub sends none. */
+.is-hosted #activity, .is-hosted #write-outputs, .is-hosted #portraits { display: none; }
 .is-hosted label[for="write-outputs"], .is-hosted label[for="portraits"],
 .is-hosted label[for="write-outputs"] + .hint, .is-hosted label[for="portraits"] + .hint { display: none; }

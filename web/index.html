@@ -368,15 +368,22 @@
         <div class="serial-demo pass"><div class="n">001/250</div><div class="v">First of the run &mdash; keep</div></div>
         <div class="serial-demo pass"><div class="n">250/250</div><div class="v">Last of the run &mdash; keep</div></div>
         <div class="serial-demo pass"><div class="n">1/1</div><div class="v">True 1/1, both bookends &mdash; keep</div></div>
+        <div class="serial-demo pass"><div class="n">1/0</div><div class="v">Listed &ldquo;-1/0&rdquo;; the minus can't be shown &mdash; keep</div></div>
         <div class="serial-demo fail"><div class="n">042/250</div><div class="v">Middle of the run &mdash; drop</div></div>
         <div class="serial-demo fail"><div class="n">001/750</div><div class="v">Run is 500 or more &mdash; drop</div></div>
+        <div class="serial-demo fail"><div class="n">1 of 2000</div><div class="v">Printed on every card in the run, not a serial &mdash; drop</div></div>
       </div>
+      <p class="hint" style="margin-top:12px">
+        A serial is read from the listing's own fields, never invented from them: the
+        checklist number printed in a card's design is not a serial, and a
+        &ldquo;1 of 2000&rdquo; run statement is printed identically on every card.
+      </p>
     </div>
 
     <div class="ref-block" id="stages">
       <span class="ref-part">Part 2 of 6</span>
       <h3>How a listing is filtered</h3>
-      <p>Each of the queries runs through the same six stages, in order.</p>
+      <p>Each of the queries runs through the same seven stages, in order.</p>
       <ol class="stages">
         <li class="stage">
           <div><h4>Search eBay</h4>
@@ -393,12 +400,27 @@
         <li class="stage">
           <div><h4>Pull the full listing</h4>
           <p>Titles lie. The engine fetches the item's own specifics — manufacturer, set,
-             print run, card number — and judges those.</p></div>
+             print run, card number — and judges those. Details are asked for twenty
+             listings at a time, several requests at once, so a scan costs eBay a
+             fraction of the calls it used to and finishes in seconds. A listing judged
+             on an earlier run is never fetched again.</p></div>
+        </li>
+        <li class="stage">
+          <div><h4>Turn away cards somebody made themselves</h4>
+          <p>A custom carries a real maker in its Manufacturer field — one drawn over a
+             Topps design still says Topps — and is nearly always called a 1/1, because
+             only one exists. So neither the allow-list nor the serial rule stops it.
+             Words like <span class="inline-code">custom</span>, <span class="inline-code">aceo</span>,
+             <span class="inline-code">hand drawn</span> and <span class="inline-code">sketch</span> do,
+             matched as whole words against the title and the set. This also turns away
+             licensed artist sketch cards, which read the same in a title.</p></div>
         </li>
         <li class="stage">
           <div><h4>Check the manufacturer allow-list</h4>
           <p>Anything outside the table below is rejected. Panini and Topps also have to
-             name the right set, since those two print far more than tennis.</p></div>
+             name the right set, since those two print far more than tennis. A set name
+             generic enough to appear in a seller's prose — <em>royalty</em>, say — counts
+             only from eBay's own Set field, or from a title that names the maker with it.</p></div>
         </li>
         <li class="stage">
           <div><h4>Drop known novelty sellers</h4>
@@ -431,30 +453,37 @@
       <span class="ref-part">Part 4 of 6</span>
       <h3>Running it on a schedule</h3>
       <p>
-        The web app is for scanning on demand. To have it run unattended, schedule the
-        engine itself — the command-line script writes the same spreadsheet and sends
-        the same digest email.
+        The scan runs itself on GitHub once a day, with nothing of yours left switched
+        on. Everything below is optional — ways to run the same engine on your own
+        machine instead.
       </p>
       <div class="cards-2">
         <div class="minicard">
-          <h4>macOS or Linux</h4>
-          <p>Every six hours, via <span class="inline-code">crontab -e</span>:</p>
-          <pre>0 */6 * * * cd /path/to/folder &amp;&amp; \
-  /usr/bin/python3 tennis_card_engine.py \
-  &gt;&gt; cron.log 2&gt;&amp;1</pre>
+          <h4>On GitHub, daily</h4>
+          <p>
+            <span class="inline-code">scan.yml</span> runs the engine every morning, then
+            commits the results and republishes this page. Press <strong>Run a scan</strong>
+            above to start one now rather than waiting.
+          </p>
         </div>
         <div class="minicard">
-          <h4>Windows</h4>
-          <p>Task Scheduler &rarr; new task:</p>
+          <h4>What a scan does</h4>
+          <p>
+            GitHub queues the job, the engine searches and judges, then the site is
+            rebuilt from the new results — the bar above follows those phases. Two to
+            four minutes end to end, most of it the queue and the rebuild rather than
+            the scan.
+          </p>
+        </div>
+        <div class="minicard">
+          <h4>Or on your own machine</h4>
+          <p>Windows Task Scheduler &rarr; new task:</p>
           <pre>Action:    python.exe
 Arguments: tennis_card_engine.py</pre>
-        </div>
-        <div class="minicard">
-          <h4>iPad</h4>
-          <p>
-            An iPad can't run cron. Use GitHub Actions instead — it's free, cloud-hosted,
-            and needs no device left switched on. See <span class="inline-code">IPAD_SETUP.md</span>.
-          </p>
+          <p>On macOS or Linux, <span class="inline-code">crontab -e</span>:</p>
+          <pre>0 7 * * * cd /path/to/folder &amp;&amp; \
+  /usr/bin/python3 tennis_card_engine.py \
+  &gt;&gt; cron.log 2&gt;&amp;1</pre>
         </div>
       </div>
     </div>
@@ -466,13 +495,20 @@ Arguments: tennis_card_engine.py</pre>
         <table>
           <thead><tr><th class="mono">File</th><th>Holds</th></tr></thead>
           <tbody>
-            <tr><td class="mono">tennis_cards_verified.xlsx</td><td>Every qualifying card found, one row each, with a live link to the listing.</td></tr>
-            <tr><td class="mono">new_matches.json</td><td>Just the most recent run's finds — what this page shows and what the digest email sends.</td></tr>
-            <tr><td class="mono">seen_items.json</td><td>Item IDs already recorded, so the same card is never added twice.</td></tr>
-            <tr><td class="mono">engine_run.log</td><td>Every accepted and rejected listing, with the reason for each rejection.</td></tr>
+            <tr><td class="mono">tennis_cards_verified.xlsx</td><td>Every qualifying card found, one row each, with a live link to the listing. Nothing is ever removed from it.</td></tr>
+            <tr><td class="mono">new_matches.json</td><td>Just the most recent run's finds — what the Matches panel shows and what the digest email sends.</td></tr>
+            <tr><td class="mono">board.json</td><td>The recent cards this page puts on the board. Rules added later are applied here, so a card the engine would no longer keep drops off the page while its spreadsheet row stays.</td></tr>
+            <tr><td class="mono">status.json</td><td>Active, sold or ended for every recorded listing, so a saved card can be filtered without a server.</td></tr>
+            <tr><td class="mono">config.json</td><td>The settings this page reads — the sets, the ceiling, the allow-list — and the time of the last scan.</td></tr>
+            <tr><td class="mono">seen_items.json</td><td>Item IDs already judged, so the same listing is never fetched from eBay twice. Deleting it makes the next scan pay for everything again.</td></tr>
+            <tr><td class="mono">engine_run.log</td><td>Every accepted and rejected listing, with the reason for each rejection. Stays on the machine that ran the scan.</td></tr>
           </tbody>
         </table>
       </div>
+      <p class="hint" style="margin-top:12px">
+        On the scheduled run these land in the repository's <span class="inline-code">results/</span>
+        folder and are published with the page, which is where this site reads them from.
+      </p>
     </div>
 
     <div class="ref-block" id="limits">
@@ -490,9 +526,9 @@ Arguments: tennis_card_engine.py</pre>
   <footer class="site">
     <div class="wrap">
       <p>
-        Runs on your own machine. Your eBay credentials are read from the environment or
-        the <span class="inline-code">.env</span> file beside the server and are never sent
-        to the browser.
+        Your eBay credentials are never sent to the browser. Running locally they are read
+        from the environment or the <span class="inline-code">.env</span> file beside the
+        server; on the scheduled run they are GitHub secrets, used only by the scan itself.
       </p>
       <p>Listing data and prices come from eBay and are shown as returned. Always confirm the card on the listing page before buying.</p>
     </div>
