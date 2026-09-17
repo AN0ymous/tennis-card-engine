@@ -305,6 +305,13 @@ logging.basicConfig(
 log = logging.getLogger("tennis_engine")
 
 
+def say(message):
+    """A warning worth seeing. log.warning alone goes to engine_run.log, which
+    on the hosted run lives only on the runner and is thrown away with it."""
+    log.warning(message)
+    print(f"WARNING: {message}", file=sys.stderr)
+
+
 # ============================================================================
 # eBay OAuth + search
 # ============================================================================
@@ -847,6 +854,25 @@ def get_item_details(token, item_ids, workers=None, require="localizedAspects"):
     return details
 
 
+def save_outputs(wb, xlsx_path, seen, state_path, cursors, cursor_path,
+                 records, matches_path):
+    """Put on disk everything a run earned, whether or not it finished.
+
+    Each piece is written on its own so one failure cannot take the others
+    with it, and a failure is said out loud rather than buried in a log file
+    the hosted run throws away."""
+    for what, write in (
+            ("spreadsheet", lambda: wb.save(xlsx_path)),
+            ("record of listings already judged", lambda: save_state(state_path, seen)),
+            ("scan cursors", lambda: save_state(cursor_path, cursors)),
+            ("list of new matches", lambda: write_json_atomically(matches_path, records)),
+    ):
+        try:
+            write()
+        except Exception as exc:                          # noqa: BLE001
+            say(f"could not save the {what}: {exc}")
+
+
 def _windows(items, size):
     """Consecutive slices of an iterable, the last one short."""
     window = []
@@ -1305,20 +1331,50 @@ def append_row(ws, player, manufacturer, set_name, title, card_number, print_run
 # State (dedup across runs)
 # ============================================================================
 
+def write_json_atomically(path, data):
+    """Write beside the file, then swap it in.
+
+    Writing straight to the path truncates it first, so a kill in that moment
+    -- the workflow's 60-minute timeout, a runner going away, Ctrl-C -- leaves
+    half a document where the real one was. Writing a neighbour and replacing
+    it means the old file survives intact instead. os.replace is atomic on
+    Windows as well, which os.rename is not."""
+    tmp = f"{path}.writing"
+    with open(tmp, "w") as f:
+        json.dump(data, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+
+
 def load_state(path):
-    """Listings already judged. Older string/list formats remain supported."""
-    if os.path.exists(path):
+    """Listings already judged. Older string/list formats remain supported.
+
+    A file that will not parse is treated as no memory at all rather than as a
+    reason to stop. It used to raise, and since main() catches only EngineError
+    that killed the run -- and every run after it, because nothing repaired the
+    file. The unreadable copy is kept beside it, since a truncated file is
+    mostly good data and the next save would otherwise overwrite it."""
+    if not os.path.exists(path):
+        return {}
+    try:
         with open(path) as f:
             data = json.load(f)
-        if isinstance(data, list):
-            return {i: "match" for i in data}
-        return dict(data)
-    return {}
+    except (ValueError, OSError) as exc:
+        say(f"{os.path.basename(path)} could not be read ({exc}). Starting without it, "
+            "so this scan will cost more eBay calls than usual.")
+        try:
+            os.replace(path, f"{path}.unreadable")
+        except OSError:
+            pass
+        return {}
+    if isinstance(data, list):
+        return {i: "match" for i in data}
+    return dict(data) if isinstance(data, dict) else {}
 
 
 def save_state(path, seen):
-    with open(path, "w") as f:
-        json.dump(dict(sorted(seen.items())), f, indent=2)
+    write_json_atomically(path, dict(sorted(seen.items())))
 
 
 def state_verdict(entry):
@@ -1473,12 +1529,18 @@ def send_digest_email(matches):
     msg["To"] = to_email
     msg.attach(MIMEText(html_body, "html"))
 
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:
-        server.starttls()
-        server.login(from_email, app_password)
-        server.sendmail(from_email, to_email, msg.as_string())
-
-    print(f"Digest sent to {to_email}.")
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(from_email, app_password)
+            server.sendmail(from_email, to_email, msg.as_string())
+        print(f"Digest sent to {to_email}.")
+    except (smtplib.SMTPException, OSError) as exc:
+        # This runs after the scan has already succeeded and saved. Letting it
+        # out would exit non-zero, which on GitHub stops the steps that publish
+        # and commit the results -- throwing away a good scan over an email.
+        say(f"the digest email could not be sent ({exc}). The scan's results were "
+            "saved and published as usual.")
 
 
 # ============================================================================
@@ -1855,139 +1917,142 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
     emit("start", players=len(players) or "all", brands=len(brand_keywords),
          queries=total_queries, perBrand=MAX_RESULTS_PER_BRAND)
 
-    for player in targets:
-        for brand_kw in brand_keywords:
-            if should_stop and should_stop():
-                cancelled = True
-                break
-
-            query_index += 1
-            label = player or "All players"
-            # The player belongs in the fingerprint: "not a Federer card" is a
-            # verdict about the search, not about the card, so it must not
-            # carry over to a scan that asked for somebody else or for everyone.
-            rule_key = rules_fingerprint(dict(rules, player=player))
-            emit("query", player=label, brand=brand_kw,
-                 index=query_index, total=total_queries)
-
-            cursor_key = scan_cursor_key(player, brand_kw, min_price, max_price, listing_types)
-            high_water = (cursor_high_water(cursors.get(cursor_key), rule_key)
-                          if write_outputs and player is None else "")
-            next_high_water = {"value": ""}
-            failed_before_query = failed
-
-            def remember_cursor(_query, newest):
-                if newest:
-                    next_high_water["value"] = max(next_high_water["value"], newest)
-
-            listings = iter_listings(
-                token, player, brand_kw, should_stop=should_stop,
-                min_price=min_price, max_price=max_price, listing_types=listing_types,
-                high_water=high_water, on_complete=remember_cursor,
-                on_error=lambda message: emit("error", message=message),
-                on_page=lambda count, offset, total, query="": emit(
-                    "results", player=label, brand=brand_kw, query=query,
-                    count=count, offset=offset, total=total))
-
-            # Listings are judged a windowful at a time so their details can be
-            # fetched in batches, several batches at once, rather than one round
-            # trip per listing. The window is still walked in the order eBay
-            # returned it, so the live log reads exactly as it did before.
-            for window in _windows(listings, DETAIL_WINDOW):
+    # Whatever happens in here -- an eBay response the judge cannot read, the
+    # workflow's 60-minute timeout, a runner going away -- the run keeps what it
+    # has already earned. Before this it was all held in memory until the last
+    # line, so a stumble threw away the matches found AND the record of every
+    # listing judged, which the next scan then paid eBay to judge again.
+    try:
+        for player in targets:
+            for brand_kw in brand_keywords:
                 if should_stop and should_stop():
                     cancelled = True
                     break
 
-                triage = [(item, seen.get(item.get("itemId")))
-                          for item in window if item.get("itemId")]
-                checked += len(triage)
-                details = get_item_details(
-                    token, [item["itemId"] for item, earlier in triage
-                            if state_verdict(earlier) not in ("match", "reject")
-                            and not filtered_for_rules(earlier, rule_key)])
+                query_index += 1
+                label = player or "All players"
+                # The player belongs in the fingerprint: "not a Federer card" is a
+                # verdict about the search, not about the card, so it must not
+                # carry over to a scan that asked for somebody else or for everyone.
+                rule_key = rules_fingerprint(dict(rules, player=player))
+                emit("query", player=label, brand=brand_kw,
+                     index=query_index, total=total_queries)
 
-                for item, earlier in triage:
-                    item_id = item["itemId"]
-                    title = item.get("title", "")
-                    earlier_verdict = state_verdict(earlier)
-                    if earlier_verdict == "match":
-                        # recorded on an earlier run: say so instead of vanishing
-                        known += 1
-                        emit("known", title=title, link=item.get("itemWebUrl", ""))
-                        continue
-                    if earlier_verdict == "reject" or filtered_for_rules(earlier, rule_key):
-                        judged += 1             # turned down before for good; no call to eBay
-                        continue
+                cursor_key = scan_cursor_key(player, brand_kw, min_price, max_price, listing_types)
+                high_water = (cursor_high_water(cursors.get(cursor_key), rule_key)
+                              if write_outputs and player is None else "")
+                next_high_water = {"value": ""}
+                failed_before_query = failed
 
-                    detail = details.get(item_id)
-                    if not detail:
-                        failed += 1
-                        emit("reject", title=title, reason="eBay would not return the item details")
-                        continue
+                def remember_cursor(_query, newest):
+                    if newest:
+                        next_high_water["value"] = max(next_high_water["value"], newest)
 
-                    verdict, reason, f = judge_listing(item, detail, player, rules)
-                    if verdict != "match":
-                        log.info("REJECT (%s): %s", reason, title)
-                        emit("reject", title=title, reason=reason)
-                        if verdict == "reject":
-                            seen[item_id] = "reject"
-                        else:
-                            seen[item_id] = {"verdict": "filtered", "rules": rule_key,
-                                             "reason": reason}
-                        continue
+                listings = iter_listings(
+                    token, player, brand_kw, should_stop=should_stop,
+                    min_price=min_price, max_price=max_price, listing_types=listing_types,
+                    high_water=high_water, on_complete=remember_cursor,
+                    on_error=lambda message: emit("error", message=message),
+                    on_page=lambda count, offset, total, query="": emit(
+                        "results", player=label, brand=brand_kw, query=query,
+                        count=count, offset=offset, total=total))
 
-                    bookend_label = append_row(ws, f["player"], f["manufacturer"], f["set_name"], title,
-                                               f["card_number"], f["print_run"], f["price"], f["link"],
-                                               f["image"], f["listed"], f["listing"],
-                                               CARD_TYPES[f["cardType"]], f["grading"], f["images"],
-                                               f["parallel"], f["outfit"], f["colourMatch"], f["caution"],
-                                               f["sport"])
-                    seen[item_id] = "match"
-                    record = {
-                        "player": f["player"],
-                        "manufacturer": f["manufacturer"],
-                        "set_name": f["set_name"],
-                        "brand": brand_of(f["manufacturer"], f["set_name"], title),
-                        "title": title,
-                        "serial": f"{f['card_number']}/{f['print_run']}",
-                        "bookend": bookend_label,
-                        "price": f["price"],
-                        "link": f["link"],
-                        "image": f["image"],
-                        "images": f["images"],
-                        "listed": f["listed"],
-                        "listing": f["listing"],
-                        "bids": f["bids"],
-                        "itemId": item_id,
-                        "cardType": f["cardType"],
-                        "grading": f["grading"],
-                        "parallel": f["parallel"],
-                        "outfit": f["outfit"],
-                        "colourMatch": f["colourMatch"],
-                        "sport": f["sport"],
-                        "caution": f["caution"],
-                        "found": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
-                    }
-                    new_match_records.append(record)
-                    log.info("MATCH: %s | %s | %s/%s | %s", f["player"], title, f["card_number"], f["print_run"], f["link"])
-                    emit("match", **record)
+                # Listings are judged a windowful at a time so their details can be
+                # fetched in batches, several batches at once, rather than one round
+                # trip per listing. The window is still walked in the order eBay
+                # returned it, so the live log reads exactly as it did before.
+                for window in _windows(listings, DETAIL_WINDOW):
+                    if should_stop and should_stop():
+                        cancelled = True
+                        break
 
-            # Retry a query next run if even one listing detail was missing;
-            # otherwise persist its newest successfully processed timestamp.
-            if (write_outputs and not cancelled and next_high_water["value"]
-                    and failed == failed_before_query):
-                cursors[cursor_key] = {"newest": next_high_water["value"],
-                                       "rules": rule_key}
+                    triage = [(item, seen.get(item.get("itemId")))
+                              for item in window if item.get("itemId")]
+                    checked += len(triage)
+                    details = get_item_details(
+                        token, [item["itemId"] for item, earlier in triage
+                                if state_verdict(earlier) not in ("match", "reject")
+                                and not filtered_for_rules(earlier, rule_key)])
 
-        if cancelled:
-            break
+                    for item, earlier in triage:
+                        item_id = item["itemId"]
+                        title = item.get("title", "")
+                        earlier_verdict = state_verdict(earlier)
+                        if earlier_verdict == "match":
+                            # recorded on an earlier run: say so instead of vanishing
+                            known += 1
+                            emit("known", title=title, link=item.get("itemWebUrl", ""))
+                            continue
+                        if earlier_verdict == "reject" or filtered_for_rules(earlier, rule_key):
+                            judged += 1             # turned down before for good; no call to eBay
+                            continue
 
-    if write_outputs:
-        wb.save(xlsx_path)
-        save_state(state_path, seen)
-        save_state(cursor_path, cursors)
-        with open(new_matches_path, "w") as f:
-            json.dump(new_match_records, f, indent=2)
+                        detail = details.get(item_id)
+                        if not detail:
+                            failed += 1
+                            emit("reject", title=title, reason="eBay would not return the item details")
+                            continue
+
+                        verdict, reason, f = judge_listing(item, detail, player, rules)
+                        if verdict != "match":
+                            log.info("REJECT (%s): %s", reason, title)
+                            emit("reject", title=title, reason=reason)
+                            if verdict == "reject":
+                                seen[item_id] = "reject"
+                            else:
+                                seen[item_id] = {"verdict": "filtered", "rules": rule_key,
+                                                 "reason": reason}
+                            continue
+
+                        bookend_label = append_row(ws, f["player"], f["manufacturer"], f["set_name"], title,
+                                                   f["card_number"], f["print_run"], f["price"], f["link"],
+                                                   f["image"], f["listed"], f["listing"],
+                                                   CARD_TYPES[f["cardType"]], f["grading"], f["images"],
+                                                   f["parallel"], f["outfit"], f["colourMatch"], f["caution"],
+                                                   f["sport"])
+                        seen[item_id] = "match"
+                        record = {
+                            "player": f["player"],
+                            "manufacturer": f["manufacturer"],
+                            "set_name": f["set_name"],
+                            "brand": brand_of(f["manufacturer"], f["set_name"], title),
+                            "title": title,
+                            "serial": f"{f['card_number']}/{f['print_run']}",
+                            "bookend": bookend_label,
+                            "price": f["price"],
+                            "link": f["link"],
+                            "image": f["image"],
+                            "images": f["images"],
+                            "listed": f["listed"],
+                            "listing": f["listing"],
+                            "bids": f["bids"],
+                            "itemId": item_id,
+                            "cardType": f["cardType"],
+                            "grading": f["grading"],
+                            "parallel": f["parallel"],
+                            "outfit": f["outfit"],
+                            "colourMatch": f["colourMatch"],
+                            "sport": f["sport"],
+                            "caution": f["caution"],
+                            "found": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+                        }
+                        new_match_records.append(record)
+                        log.info("MATCH: %s | %s | %s/%s | %s", f["player"], title, f["card_number"], f["print_run"], f["link"])
+                        emit("match", **record)
+
+                # Retry a query next run if even one listing detail was missing;
+                # otherwise persist its newest successfully processed timestamp.
+                if (write_outputs and not cancelled and next_high_water["value"]
+                        and failed == failed_before_query):
+                    cursors[cursor_key] = {"newest": next_high_water["value"],
+                                           "rules": rule_key}
+
+            if cancelled:
+                break
+    finally:
+        if write_outputs:
+            save_outputs(wb, xlsx_path, seen, state_path, cursors, cursor_path,
+                         new_match_records, new_matches_path)
 
     emit("done", checked=checked, matches=len(new_match_records), known=known,
          judged=judged, failed=failed, cancelled=cancelled)

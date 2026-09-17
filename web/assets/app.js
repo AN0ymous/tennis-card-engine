@@ -447,6 +447,89 @@ function toggleSaved(card) {
   if (state.saved[key] && !HOSTED) refreshStatuses([key]);
 }
 
+/* Cards the most recent scan turned up. state.matches is exactly that list --
+   new_matches.json on the hosted page, the live event stream on a local one --
+   so this is derived from it at render time rather than kept in step by hand.
+
+   A card stops being new an hour after the scan recorded it, whichever device
+   is looking and whether or not another scan has run since: the clock is the
+   "Date Found" the scan wrote, so every device agrees and nothing has to be
+   remembered per browser. A card whose date cannot be read keeps its flag
+   until the next scan replaces the list, the same as before. */
+const NEW_FOR_MS = 60 * 60 * 1000;
+const newlyFound = new Set();
+let newFlagTimer = null;
+
+function foundAt(card) {
+  const d = new Date(String(card.found || "").replace(/ UTC$/, "Z").replace(" ", "T"));
+  return isNaN(d) ? null : d;
+}
+
+/* when this card's flag goes, or null when it has no readable date */
+function newFlagGoesAt(card) {
+  const at = foundAt(card);
+  return at ? at.getTime() + NEW_FOR_MS : null;
+}
+
+function markNewlyFound() {
+  newlyFound.clear();
+  const now = Date.now();
+  state.matches.forEach((m) => {
+    if (!m.link) return;
+    const goes = newFlagGoesAt(m);
+    if (goes === null || goes > now) newlyFound.add(m.link);
+  });
+  scheduleNewFlagSweep();
+}
+
+/* Take the flags off by themselves, without waiting for a reload. Timers in a
+   hidden tab are throttled or stopped, so coming back to the tab sweeps too --
+   see initWakeChecks. */
+function scheduleNewFlagSweep() {
+  clearTimeout(newFlagTimer);
+  newFlagTimer = null;
+  const now = Date.now();
+  let soonest = Infinity;
+  state.matches.forEach((m) => {
+    const goes = m.link ? newFlagGoesAt(m) : null;
+    if (goes !== null && goes > now && goes < soonest) soonest = goes;
+  });
+  if (soonest === Infinity) return;
+  newFlagTimer = setTimeout(sweepNewFlags, Math.max(soonest - now, 1000));
+}
+
+function sweepNewFlags() {
+  markNewlyFound();
+  renderBoard();
+  renderMatches();
+}
+
+function isNewCard(card) {
+  return !!card.link && newlyFound.has(card.link);
+}
+
+function isSoldCard(card) {
+  return statusOf(card).status === "sold";
+}
+
+function flagTag(className, words, title) {
+  const tag = el("span", className, words);
+  tag.title = title;
+  tag.setAttribute("aria-label", title);
+  return tag;
+}
+
+/* One flag rides beside the star, and sold outranks new: a card that cannot
+   be bought is the more useful thing to know at a glance, and both in the same
+   corner would be a scrum. Sold comes from results/status.json on the hosted
+   page, or from whatever the saved page last checked locally -- and from the
+   owner's own mark ahead of either, since statusOf honours that first. */
+function flagFor(card) {
+  if (isSoldCard(card)) return flagTag("sold-tag", "Sold", "This listing has sold");
+  if (isNewCard(card)) return flagTag("new-tag", "New", "Found in the last hour");
+  return null;
+}
+
 /* the little star on lots and match cards; a span, since they are buttons */
 function starFor(card) {
   const star = el("span", "star" + (isSaved(card) ? " is-on" : ""), isSaved(card) ? "\u2605" : "\u2606");
@@ -488,6 +571,27 @@ function ago(iso) {
   const h = Math.round(mins / 60);
   if (h < 48) return `${h} h ago`;
   return `${Math.round(h / 24)} days ago`;
+}
+
+/* The board and the matches need statuses too, not just the saved page, so
+   the published file is read once at startup. Hosted only on purpose: the file
+   is static and free, while the local path asks eBay per listing and every one
+   of those comes out of the same daily allowance a scan spends. Locally the
+   board uses whatever the saved page last checked, kept in this browser. */
+async function loadStatuses() {
+  if (!HOSTED) return;
+  try {
+    const data = await (await fetch("results/status.json", { cache: "no-store" })).json();
+    if (!data || !data.statuses) return;
+    Object.assign(state.statuses, data.statuses);
+    state.statusCheckedAt = data.checkedAt || state.statusCheckedAt;
+    try {
+      localStorage.setItem(SAVED.statusKey,
+        JSON.stringify({ at: state.statusCheckedAt, statuses: state.statuses }));
+    } catch { /* private mode: this page still has them in memory */ }
+    renderBoard();
+    renderMatches();
+  } catch { /* no status file yet; cards simply carry no sold flag */ }
 }
 
 async function refreshStatuses(keys) {
@@ -1040,6 +1144,7 @@ function noteLine(text, padding = "16px 20px") {
    needed. */
 function renderMatches() {
   const area = $("results-area");
+  markNewlyFound();
   const fresh = sortCards(state.matches.filter(passesFilters));
   const everything = sortCards(state.board.filter(passesFilters));
   state.showingExamples = !state.matches.length && !state.board.length;
@@ -1104,6 +1209,8 @@ function buildCard(match, index) {
       photo.append(el("span", "mc-crest", initials(match.player)));
       photo.append(serialTag);
       photo.append(starFor(match));
+      const again = flagFor(match);
+      if (again) photo.append(again);
     });
     photo.append(img);
   } else {
@@ -1112,6 +1219,13 @@ function buildCard(match, index) {
   const serialTag = el("span", "mc-serial-tag", match.serial);
   photo.append(serialTag);
   photo.append(starFor(match));
+  const flag = flagFor(match);
+  if (flag) {
+    // the serial shares that corner with the star; the class steps it clear
+    // so the three do not stack
+    photo.classList.add("has-flag");
+    photo.append(flag);
+  }
   card.append(photo);
 
   const body = el("div", "mc-body");
@@ -1203,6 +1317,8 @@ function buildLot(card, rank) {
   if (card.colourMatch === "yes") photo.append(el("span", "cm-tag", "Colour match"));
   if (card.caution) { const t = el("span", "caution-tag", "Check by eye"); t.title = card.caution; photo.append(t); }
   photo.append(starFor(card));
+  const flag = flagFor(card);
+  if (flag) photo.append(flag);
   lot.append(photo);
 
   const body = el("div", "lot-body");
@@ -1230,6 +1346,7 @@ function buildLot(card, rank) {
 
 function renderBoard() {
   const railEl = $("rail");
+  markNewlyFound();
   const all = state.board.length ? state.board : EXAMPLES;
   const cards = sortCards(all.filter(passesFilters));
   const examples = !state.board.length;
@@ -2307,6 +2424,7 @@ async function resumeLocalScan() {
 function initWakeChecks() {
   const wake = () => {
     if (document.visibilityState === "hidden") return;
+    sweepNewFlags();            // an hour may have passed with our timers stopped
     if (HOSTED) {
       const watching = savedWatch();
       if (!watching) return;
@@ -2418,7 +2536,8 @@ async function stopScan() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initSaved();
-  loadConfig().then(loadSavedMatches).then(loadBoard).then(resumeLocalScan).then(loadAllowance);
+  loadConfig().then(loadSavedMatches).then(loadBoard).then(loadStatuses)
+    .then(resumeLocalScan).then(loadAllowance);
   initRail();
   initWakeChecks();
 

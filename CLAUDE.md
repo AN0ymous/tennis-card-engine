@@ -155,6 +155,31 @@ as `known`, not as a new match. The engine is working when it says "Added 0
 new qualifying listing(s)". Judge a scan by the "Checked N listings" line and
 by the lower section of the Matches panel, not by whether anything was new.
 
+6. **A "New" or "Sold" flag beside the star.** Cards the latest scan turned up carry a
+   green NEW pill next to the star, on the board rail and on match cards. It is
+   derived from `state.matches` (that is `new_matches.json` hosted, the live
+   event stream locally) at render time, so nothing extra is stored. Cards
+   found earlier never carry it, and an empty `new_matches.json` means no flags
+   at all. **A flag comes off an hour after the scan recorded the card**
+   (`NEW_FOR_MS`), measured from the "Date Found" the scan wrote, so every
+   device agrees without remembering anything per browser. It goes by itself:
+   `scheduleNewFlagSweep()` sets one timer for the next card due, and
+   `initWakeChecks` sweeps on the way back to a tab whose timers were throttled
+   while hidden. A card whose date will not parse keeps its flag until the next
+   scan replaces the list. **A sold card shows a red SOLD flag instead**, since
+   sold outranks new -- one flag rides in that corner, never two. Sold comes
+   from `statusOf()`, so the owner's own mark wins over eBay's reading, the
+   same as on the saved page. `loadStatuses()` reads `results/status.json` once
+   at startup so the board knows before the saved page is ever opened; it is
+   **hosted only on purpose**, because the local path asks eBay per listing and
+   those calls come out of the same daily allowance a scan spends. Locally the
+   board uses whatever the saved page last checked, kept in this browser. The
+   saved page keeps its SOLD band across the photo and suppresses the pill, so
+   a card there is not marked twice. `.mc-serial-tag` moved from `right: 10px`
+   to `44px` while doing this: the star sits at `right: 8px` and is 30 wide, so
+   at 10px it covered the serial and clipped it. With a flag present the serial
+   steps left again (`.mc-photo.has-flag`).
+
 ## Open items
 
 - How often eBay states the sport at all is still unknown: the new `Sport`
@@ -177,6 +202,33 @@ by the lower section of the Matches panel, not by whether anything was new.
 Done since these notes were written: `app.js` confirmed on `main` (the Matches
 fallback works), `scan.yml`'s six-hourly comment corrected, and `test_engine.py`
 added -- run `py test_engine.py` before pushing engine changes.
+
+## Durability
+
+- **A run keeps what it earned, however it ends.** `run_scan` writes the
+  spreadsheet, `seen_items.json`, the cursors and `new_matches.json` from a
+  `finally`, each one separately, so one failure cannot take the others with
+  it. Before this everything was held in memory until the last line, and a
+  stumble -- a bad eBay response, the workflow's 60-minute timeout -- threw
+  away both the matches found and the record of every listing judged, which
+  the next scan then paid eBay to judge again.
+- **`scan.yml` exports and commits with `if: always()`.** Those saved files
+  live on the runner; skipping the later steps on a failure would throw them
+  away, which is what the saving was for. The run still shows red.
+- **State files are written beside themselves and swapped in**
+  (`write_json_atomically`, using `os.replace`, which is atomic on Windows
+  too). A kill mid-write used to leave half a document where the real file
+  was. `load_state` now treats a file it cannot parse as no memory at all and
+  keeps the bad copy as `.unreadable`; it used to raise, and since `main()`
+  catches only `EngineError` that killed every later run until the file was
+  deleted by hand.
+- **A digest email that will not send is a warning, not a failed scan.** It is
+  sent after the scan has already saved, so raising there exited non-zero and
+  stopped the steps that publish and commit -- losing a good scan over an
+  email. Dormant until the `DIGEST_*` secrets are set, which is why it went
+  unnoticed.
+- `say()` prints warnings to stderr as well as the log, because
+  `engine_run.log` lives only on the runner and goes away with it.
 
 ## Things to keep in mind
 

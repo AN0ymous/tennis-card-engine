@@ -511,6 +511,26 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
 .star:hover { transform: scale(1.1); color: var(--gold); }
 .star.is-on { color: var(--gold); background: #FFFFFF; }
 .lot-photo .star { top: auto; bottom: 8px; right: 8px; }
+
+/* The flag beside the star: "New" for a card the latest scan turned up, "Sold"
+   for one that has gone. One or the other, never both -- sold wins. Green and
+   red are theirs alone; optic yellow is a colour match and amber is
+   check-by-eye. */
+.new-tag, .sold-tag {
+  position: absolute; z-index: 3;
+  top: 13px; right: 44px;
+  padding: 3px 9px; border-radius: 999px;
+  background: #1F7A4D; color: #FFFFFF;
+  font: 700 10px/1.4 var(--ui); letter-spacing: .1em; text-transform: uppercase;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, .3);
+  pointer-events: none;
+}
+.sold-tag { background: #B3261E; }
+.lot-photo .new-tag, .lot-photo .sold-tag { top: auto; bottom: 13px; right: 44px; }
+/* with a flag between them, the serial steps left again */
+.mc-photo.has-flag .mc-serial-tag { right: 96px; }
+/* the saved page draws sold as a band across the photo already */
+.saved-item .sold-tag { display: none; }
 .holo-star {
   display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 10px 14px;
   border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink);
@@ -688,7 +708,9 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
   font-family: var(--display); font-size: 40px; color: var(--line-2); letter-spacing: .04em;
 }
 .mc-serial-tag {
-  position: absolute; top: 10px; right: 10px;
+  /* right of 44px keeps it clear of the star, which sits at right 8 and is
+     30 wide -- at 10px the star landed on top of it and clipped the serial */
+  position: absolute; top: 10px; right: 44px;
   font-family: var(--mono); font-size: 11px; font-weight: 500;
   padding: 4px 8px; border-radius: 2px;
   background: var(--glass); backdrop-filter: blur(8px);
