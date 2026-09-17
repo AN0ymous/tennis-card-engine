@@ -628,6 +628,50 @@ class QuotaControls(unittest.TestCase):
             with open(os.path.join(folder, engine.API_USAGE_FILE)) as f:
                 self.assertEqual(json.load(f)["browse"], 1)
 
+    def test_the_bypass_toggle_lifts_the_ceiling_and_keeps_counting(self):
+        """The "Bypass ceiling" toggle beside the eBay calls meter: hosted it
+        arrives as SCAN_BYPASS_BUDGET, locally server.py sets the flag for one
+        scan. Either way the count goes on, so the meter stays true."""
+        saved = os.environ.pop("SCAN_BYPASS_BUDGET", None)
+        try:
+            with tempfile.TemporaryDirectory() as folder, \
+                    patch.object(engine, "_BASE_DIR", folder), \
+                    patch.object(engine, "API_DAILY_BUDGET", 1):
+                os.environ["SCAN_BYPASS_BUDGET"] = "true"
+                self.assertTrue(engine.budget_bypassed())
+                for _ in range(3):
+                    engine.consume_api_call("browse")
+                os.environ.pop("SCAN_BYPASS_BUDGET")
+                self.assertFalse(engine.budget_bypassed())
+                with self.assertRaises(engine.EngineError):
+                    engine.consume_api_call("browse")
+                with patch.object(engine, "API_BUDGET_BYPASSED", True):
+                    engine.consume_api_call("browse")
+                with open(os.path.join(folder, engine.API_USAGE_FILE)) as f:
+                    self.assertEqual(json.load(f)["browse"], 4)
+                os.environ["SCAN_BYPASS_BUDGET"] = "false"
+                self.assertFalse(engine.budget_bypassed(), "only a true-ish value bypasses")
+        finally:
+            os.environ.pop("SCAN_BYPASS_BUDGET", None)
+            if saved is not None:
+                os.environ["SCAN_BYPASS_BUDGET"] = saved
+
+    def test_the_bypass_toggle_sits_beside_the_meter_and_reaches_both_paths(self):
+        with open(os.path.join(HERE, "web", "index.html")) as f:
+            html = f.read()
+        box = html[html.index('id="allowance"'):html.index('</aside>')]
+        self.assertIn('id="bypass-budget"', box, "the toggle is not beside the eBay calls meter")
+        self.assertIn('id="bypass-note"', box)
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            js = f.read()
+        self.assertIn("tce.bypassBudget", js, "the toggle is not remembered per device")
+        self.assertIn("bypassBudget: bypassBudget()", js, "the local scan request does not carry it")
+        self.assertIn("inputs.bypass_budget = !!s.bypassBudget", js, "the hosted dispatch does not carry it")
+        with open(os.path.join(HERE, "server.py")) as f:
+            py = f.read()
+        self.assertIn('options.get("bypassBudget")', py, "server.py ignores the toggle")
+        self.assertIn("engine.API_BUDGET_BYPASSED = False", py, "the bypass would outlive the scan")
+
     def test_scan_persists_filtered_result_and_cursor(self):
         item = {"itemId": "v1|1|0", "title": "card"}
 
@@ -884,7 +928,7 @@ class ScanSettingsReachTheEngine(unittest.TestCase):
 
     ENV = ("SCAN_PLAYERS", "SCAN_BRANDS", "SCAN_MAX_PRINT_RUN", "SCAN_PRINT_RUN_INCLUSIVE",
            "SCAN_MIN_PRICE", "SCAN_MAX_PRICE", "SCAN_LISTING_TYPES", "SCAN_CARD_TYPES",
-           "SCAN_CONDITIONS")
+           "SCAN_CONDITIONS", "SCAN_BYPASS_BUDGET")
 
     def setUp(self):
         self._saved = {k: os.environ.pop(k, None) for k in self.ENV}

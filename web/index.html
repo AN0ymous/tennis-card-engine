@@ -316,13 +316,21 @@
         </div>
 
         <div class="allowance" id="allowance" hidden>
-          <div class="field-head"><span class="label">eBay calls today</span></div>
+          <div class="field-head">
+            <span class="label">eBay calls today</span>
+            <label class="bypass" for="bypass-budget" title="Turn off the local daily ceiling for scans started from this device">
+              <input type="checkbox" id="bypass-budget"><span>Bypass ceiling</span>
+            </label>
+          </div>
           <div class="allowance-track"><div class="allowance-bar" id="allowance-bar"></div></div>
           <div class="progress-meta">
             <span id="allowance-used">&mdash;</span>
             <span id="allowance-left">&mdash;</span>
           </div>
           <p class="hint" id="allowance-note"></p>
+          <p class="hint warn" id="bypass-note" hidden>Safety ceiling off: scans started from this
+             device keep spending until eBay itself refuses. eBay's own daily limit still applies
+             and is shared with every other scan.</p>
         </div>
 
       </div>

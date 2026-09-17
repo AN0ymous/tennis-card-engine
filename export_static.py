@@ -74,6 +74,8 @@ if os.path.exists(status_path):
         previous = {}
 statuses = previous
 report = {}
+if engine.budget_bypassed():
+    print("The safety ceiling is bypassed for this run's status checks too.")
 try:
     ids = engine.item_ids_in_spreadsheet(xlsx)
     if ids:

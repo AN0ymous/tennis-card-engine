@@ -397,6 +397,34 @@ function restoreScanSetup() {
   syncPlayerChips();
 }
 
+/* The "Bypass ceiling" toggle beside the eBay calls meter. On, a scan started
+   from this device runs without the engine's local daily ceiling: hosted, as
+   the bypass_budget workflow input; locally, as bypassBudget in the request.
+   Remembered per device (tce.bypassBudget) like the rest of the setup, since a
+   finished hosted scan reloads the page. The scheduled run never bypasses. */
+const BYPASS_KEY = "tce.bypassBudget";
+
+function bypassBudget() {
+  return $("bypass-budget").checked;
+}
+
+function renderBypass() {
+  const on = bypassBudget();
+  $("allowance").classList.toggle("is-bypassed", on);
+  $("bypass-note").hidden = !on;
+}
+
+function wireBypass() {
+  let saved = false;
+  try { saved = localStorage.getItem(BYPASS_KEY) === "1"; } catch { /* ignore */ }
+  $("bypass-budget").checked = saved;
+  renderBypass();
+  $("bypass-budget").addEventListener("change", () => {
+    try { localStorage.setItem(BYPASS_KEY, bypassBudget() ? "1" : "0"); } catch { /* ignore */ }
+    renderBypass();
+  });
+}
+
 /* every change to the setup: remember it, and narrow what is shown right away */
 function scanSetupChanged() {
   saveScanSetup();
@@ -1734,13 +1762,16 @@ function renderAllowance(usage) {
   const box = $("allowance");
   if (!usage || !usage.limit) {
     // no figures: eBay reports none until a keyset has been used, and says
-    // nothing at all about one not enabled for its Analytics API
-    box.hidden = !usage || !usage.error;
-    if (usage && usage.error) {
+    // nothing at all about one not enabled for its Analytics API. Hosted the
+    // box goes; locally it stays, since the bypass toggle lives in it and a
+    // local scan can run whether or not eBay will say what it has cost.
+    box.hidden = HOSTED && !(usage && usage.error);
+    if (!box.hidden) {
       $("allowance-used").textContent = "Not available";
       $("allowance-left").textContent = "";
       $("allowance-bar").style.width = "0%";
-      $("allowance-note").textContent = usage.error;
+      $("allowance-note").textContent = (usage && usage.error)
+        || "eBay has not reported today's figures for this keyset yet.";
     }
     return;
   }
@@ -1761,7 +1792,10 @@ async function loadAllowance() {
     const url = HOSTED ? `results/usage.json?t=${Date.now()}` : "api/usage";
     renderAllowance(await (await fetch(url, { cache: "no-store" })).json());
   } catch {
-    $("allowance").hidden = true;          // no file yet, or no server: say nothing
+    // hosted: no file yet, say nothing. local: no server or no figures, but
+    // the box also carries the bypass toggle, so it stays.
+    if (HOSTED) $("allowance").hidden = true;
+    else renderAllowance(null);
   }
 }
 
@@ -2507,6 +2541,7 @@ function scanSettings() {
     listingTypes: state.listing === "all" ? undefined : [state.listing],
     cardTypes: state.cardtype === "all" ? undefined : [state.cardtype],
     conditions: state.condition === "all" ? undefined : [state.condition],
+    bypassBudget: bypassBudget(),
   };
 }
 
@@ -2535,6 +2570,7 @@ function workflowInputs(s) {
   put("card_types", s.cardTypes);
   put("conditions", s.conditions);
   inputs.print_run_inclusive = !!s.printRunInclusive;   // declared as a boolean
+  inputs.bypass_budget = !!s.bypassBudget;              // declared as a boolean
   return inputs;
 }
 
@@ -2586,7 +2622,11 @@ async function stopScan() {
 document.addEventListener("DOMContentLoaded", () => {
   initSaved();
   loadConfig().then(loadSavedMatches).then(loadBoard).then(loadStatuses)
-    .then(resumeLocalScan).then(loadAllowance);
+    .then(resumeLocalScan)
+    // a startup step that fails must not take the meter, and the bypass
+    // toggle that lives in it, down with it
+    .catch((e) => console.warn("a startup step failed:", e))
+    .then(loadAllowance);
   initRail();
   initWakeChecks();
 
@@ -2611,6 +2651,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
   wireScanSetup();
+  wireBypass();
 
   $("holo-close").addEventListener("click", closeHologram);
   $("holo").addEventListener("click", (e) => {

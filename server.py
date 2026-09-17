@@ -200,6 +200,12 @@ class ScanJob:
         return True
 
     def _run(self, options):
+        # the "Bypass ceiling" toggle beside the eBay calls meter, for this scan only
+        engine.API_BUDGET_BYPASSED = bool(options.get("bypassBudget"))
+        if engine.API_BUDGET_BYPASSED:
+            self.add("info", {"message": f"Safety ceiling of {engine.API_DAILY_BUDGET} calls "
+                                         "bypassed for this scan: it will spend eBay calls "
+                                         "until eBay itself refuses them."})
         try:
             matches, checked = engine.run_scan(
                 players=options.get("players") or None,
@@ -225,6 +231,7 @@ class ScanJob:
                 self.error = message
             self.add("error", {"message": message})
         finally:
+            engine.API_BUDGET_BYPASSED = False
             with self.lock:
                 self.running = False
                 self.finished_at = time.time()

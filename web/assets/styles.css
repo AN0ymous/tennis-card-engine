@@ -677,8 +677,18 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
   background: linear-gradient(90deg, var(--navy), var(--navy-2));
   transition: width .6s var(--ease-out);
 }
-.allowance-bar.is-low { background: linear-gradient(90deg, #B4341F, #E0642C); }
+.allowance-bar.is-low,
+.allowance.is-bypassed .allowance-bar { background: linear-gradient(90deg, #B4341F, #E0642C); }
 .allowance .hint { margin-top: 8px; }
+/* the bypass toggle beside the meter's heading: a control, not a heading */
+.field-head label.bypass {
+  display: inline-flex; align-items: center; gap: 6px; margin: 0 0 0 auto;
+  font-size: 11px; font-weight: 500; letter-spacing: 0; text-transform: none;
+  color: var(--muted); cursor: pointer;
+}
+.field-head label.bypass input { margin: 0; accent-color: #B4341F; }
+.allowance.is-bypassed .bypass { color: #B4341F; font-weight: 600; }
+.hint.warn { color: #B4341F; }
 
 /* ---------- a heading inside the results panel ---------- */
 .section-head {
