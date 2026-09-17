@@ -214,5 +214,13 @@ added -- run `py test_engine.py` before pushing engine changes.
   listing on its own -- slower, same results. The batching tests in
   `test_engine.py` cover both paths and need no keys.
 - Never commit `.env` or put any key or token in the code.
-- The scan commits to `main`, so always `git pull --rebase` before `git push`,
-  and avoid pushing while a scan is running.
+- The scan commits to `main`, so always `git pull --rebase` before `git push`
+  from your PC. Merging a pull request while a scan runs is now safe: run 31
+  scanned for 100 seconds, had its bare `git push` refused because PR #16 had
+  been merged in the meantime, and lost the lot -- the cards it found and the
+  state files that stop the next scan re-paying for the same listings. The
+  "Keep the results in the repo" step now keeps its results aside, rebuilds the
+  commit on top of whatever `main` has become and tries again, up to five
+  times. If what landed first was another scan's results it stands down and
+  keeps theirs, since those are newer than its own: re-running a scan costs
+  calls, overwriting theirs would lose recorded cards.

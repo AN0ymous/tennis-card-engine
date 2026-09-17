@@ -106,13 +106,52 @@ jobs:
         run: |
           git config user.name  "tennis-card-engine"
           git config user.email "tennis-card-engine@users.noreply.github.com"
-          git add results
-          if git diff --cached --quiet; then
-            echo "Nothing new this run."
-          else
-            git commit -m "Scan results, $(date -u +'%Y-%m-%d %H:%M UTC')"
-            git push
-          fi
+
+          # main can move while a scan is running -- a pull request merged, or
+          # another scan finishing. A bare push is refused then, and the whole
+          # run is thrown away: the spreadsheet rows it found, and the state
+          # files that stop the next scan paying for the same listings again.
+          # So keep this run's results aside and rebuild the commit on top of
+          # whatever main has become.
+          base="$(git rev-parse HEAD)"
+          keep="$(mktemp -d)"
+          cp -a results "$keep/results"
+
+          for attempt in 1 2 3 4 5; do
+            rm -rf results
+            cp -a "$keep/results" results
+            git add results
+            if git diff --cached --quiet; then
+              echo "Nothing new this run."
+              exit 0
+            fi
+            git commit -q -m "Scan results, $(date -u +'%Y-%m-%d %H:%M UTC')"
+
+            if git push; then
+              echo "Results published on attempt $attempt."
+              exit 0
+            fi
+
+            echo "main moved while this scan ran; catching up (attempt $attempt)."
+            git reset --hard -q "$base"
+            sleep $(( attempt * 5 ))
+            git fetch -q origin main
+
+            # If whatever landed first was itself a scan, its results are newer
+            # than this run's, which were worked out from an older base. Keep
+            # theirs: running this scan again only costs calls, while
+            # overwriting theirs would lose cards they recorded.
+            if ! git diff --quiet "$base" origin/main -- results; then
+              echo "Another run published its results first, so this run stands down."
+              echo "Nothing is lost from the spreadsheet; the next scan picks up the rest."
+              exit 0
+            fi
+            git reset --hard -q origin/main
+            base="$(git rev-parse HEAD)"
+          done
+
+          echo "::error::Could not publish the results after 5 attempts."
+          exit 1
 
       - name: Offer the spreadsheet as a download too
         if: always()
