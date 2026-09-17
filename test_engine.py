@@ -951,5 +951,41 @@ class ThePanelAnswersBothQuestions(unittest.TestCase):
         self.assertIn("already", js)
 
 
+class PublishingSurvivesAMovingMain(unittest.TestCase):
+    """Run 31 scanned for 100 seconds, then threw the lot away.
+
+    A pull request was merged while it ran, so its bare `git push` was
+    refused: the cards it found and the state files that stop the next scan
+    re-paying for the same listings all went in the bin. The step has to catch
+    up and try again rather than fail.
+    """
+
+    def step(self):
+        with open(os.path.join(HERE, ".github", "workflows", "scan.yml")) as f:
+            yml = f.read()
+        start = yml.index("Keep the results in the repo")
+        end = yml.index("Offer the spreadsheet", start)
+        return yml[start:end]
+
+    def test_the_push_is_retried_rather_than_given_up_on(self):
+        step = self.step()
+        self.assertIn("for attempt in", step)
+        self.assertIn("git fetch", step, "it never looks at what main became")
+        self.assertIn("git reset --hard -q origin/main", step)
+
+    def test_this_run_s_results_are_kept_aside_before_catching_up(self):
+        """Resetting onto the new main would wipe the working tree, so the
+        results have to survive it."""
+        step = self.step()
+        self.assertIn("mktemp -d", step)
+        self.assertIn('cp -a "$keep/results" results', step)
+
+    def test_it_stands_down_rather_than_overwrite_another_run(self):
+        """Another scan's results are newer than this run's, which were worked
+        out from an older base. Re-running costs calls; overwriting loses
+        recorded cards."""
+        self.assertIn('git diff --quiet "$base" origin/main -- results', self.step())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
