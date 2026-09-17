@@ -900,47 +900,80 @@ function selected(name) {
 
 /* ---------------------------------------------------------------- results */
 
+/* A heading inside the results panel, with the count beside it. */
+function sectionHead(title, count) {
+  const head = el("div", "section-head");
+  head.append(el("h3", null, title));
+  if (count) head.append(el("span", "pill", count));
+  return head;
+}
+
+function cardGrid(cards, offset = 0) {
+  const grid = el("div", "matchgrid");
+  cards.forEach((card, i) => grid.append(buildCard(card, offset + i)));
+  return grid;
+}
+
+function noteLine(text, padding = "16px 20px") {
+  const note = el("div", "empty");
+  note.style.padding = padding;
+  note.append(el("p", null, text));
+  return note;
+}
+
+/* Two sections, because they answer two different questions.
+
+   "New this scan" is what the last scan added, and it is empty most of the
+   time -- once a listing has been judged it is never a new find again, so a
+   scan minutes after the last one correctly adds nothing. That used to be the
+   only thing this panel showed, which made every scan look like a failure and
+   made the filters look broken: they cannot put a card here that was already
+   found.
+
+   "Everything found so far" is the whole record, filtered. That is the section
+   the filters act on, and it responds the moment one is changed, with no scan
+   needed. */
 function renderMatches() {
   const area = $("results-area");
-  // The latest scan's finds; when it found nothing new, the most recent cards
-  // recorded so far; examples only when nothing has ever been found.
-  const fromBoard = !state.matches.length && state.board.length > 0;
-  const all = state.matches.length ? state.matches : fromBoard ? state.board : EXAMPLES;
-  const list = sortCards(all.filter(passesFilters));
-  state.showingExamples = !state.matches.length && !fromBoard;
-
-  $("match-count").textContent = state.showingExamples
-    ? "example cards"
-    : list.length === all.length ? `${all.length} found` : `${list.length} of ${all.length} match the filters`;
+  const fresh = sortCards(state.matches.filter(passesFilters));
+  const everything = sortCards(state.board.filter(passesFilters));
+  state.showingExamples = !state.matches.length && !state.board.length;
 
   area.innerHTML = "";
 
-  if (fromBoard) {
-    const note = el("div", "empty");
-    note.style.padding = "16px 16px 0";
-    note.append(el("p", null,
-      "The latest scan found no new cards. These are the most recent cards found so far; " +
-      "the full list is in the spreadsheet."));
-    area.append(note);
-  } else if (state.showingExamples) {
-    const note = el("div", "empty");
-    note.style.padding = "16px 16px 0";
-    note.append(el("p", null,
+  if (state.showingExamples) {
+    const shown = sortCards(EXAMPLES.filter(passesFilters));
+    $("match-count").textContent = "example cards";
+    area.append(noteLine(
       "No cards found yet. These three are examples of what a match looks like, " +
-      "not real listings. Tap one to open the card."));
-    area.append(note);
-  }
-
-  if (!list.length) {
-    const note = el("div", "empty");
-    note.style.padding = "16px";
-    note.append(el("p", null, "Nothing matches the filters in the scan setup. Widen the card type, graded or raw, price, listing type, bookend or listed-within choice."));
-    area.append(note);
+      "not real listings. Tap one to open the card.", "16px 20px 0"));
+    area.append(shown.length ? cardGrid(shown)
+      : noteLine("Nothing matches the filters in the scan setup."));
     return;
   }
-  const grid = el("div", "matchgrid");
-  list.forEach((match, i) => grid.append(buildCard(match, i)));
-  area.append(grid);
+
+  $("match-count").textContent = everything.length === state.board.length
+    ? `${state.board.length} found`
+    : `${everything.length} of ${state.board.length} match the filters`;
+
+  area.append(sectionHead("New this scan", fresh.length ? `${fresh.length}` : ""));
+  if (fresh.length) {
+    area.append(cardGrid(fresh));
+  } else if (state.matches.length) {
+    area.append(noteLine("The last scan found "
+      + `${state.matches.length} new card${state.matches.length === 1 ? "" : "s"}, `
+      + "but none of them match the filters below."));
+  } else {
+    area.append(noteLine("Nothing new. Every listing on eBay right now has already "
+      + "been judged on an earlier scan, so there was nothing left to add \u2014 which is "
+      + "normal, and not the filters. Everything found so far is below."));
+  }
+
+  area.append(sectionHead("Everything found so far",
+    `${everything.length}${everything.length === state.board.length ? "" : ` of ${state.board.length}`}`));
+  area.append(everything.length ? cardGrid(everything, fresh.length)
+    : noteLine("Nothing matches the filters in the scan setup. Widen the card type, "
+      + "graded or raw, price, listing type, bookend or listed-within choice."));
 }
 
 function initials(name) {

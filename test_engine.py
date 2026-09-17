@@ -543,6 +543,34 @@ class QuotaControls(unittest.TestCase):
         self.assertEqual(search.call_count, 1)
         self.assertEqual(completed[0][1], "2026-09-16T02:00:00.000Z")
 
+    def test_a_default_sent_explicitly_matches_one_left_out(self):
+        """The website always fills the print-run box, so pressing "Run a scan"
+        without touching anything sends 500 where a scheduled run sends
+        nothing. They are the same scan and must fingerprint the same, or no
+        page-started scan ever matches the cursor the scheduled one left."""
+        base = {"min_price": 0.0, "max_price": None, "card_types": set(),
+                "conditions": set(), "player": None,
+                "wanted_options": set(engine.buying_options([]))}
+        scheduled = engine.rules_fingerprint(
+            dict(base, max_print_run=None, print_run_inclusive=None))
+        from_page = engine.rules_fingerprint(
+            dict(base, max_print_run=engine.MAX_PRINT_RUN, print_run_inclusive=False))
+        self.assertEqual(scheduled, from_page)
+        # and a real change must still register
+        self.assertNotEqual(scheduled, engine.rules_fingerprint(
+            dict(base, max_print_run=1000, print_run_inclusive=False)))
+        self.assertNotEqual(scheduled, engine.rules_fingerprint(
+            dict(base, max_print_run=None, print_run_inclusive=True)))
+
+    def test_a_price_floor_of_zero_is_no_floor(self):
+        base = {"max_print_run": None, "print_run_inclusive": None, "max_price": None,
+                "card_types": set(), "conditions": set(), "player": None,
+                "wanted_options": set(engine.buying_options([]))}
+        self.assertEqual(engine.rules_fingerprint(dict(base, min_price=0.0)),
+                         engine.rules_fingerprint(dict(base, min_price=None)))
+        self.assertNotEqual(engine.rules_fingerprint(dict(base, min_price=0.0)),
+                            engine.rules_fingerprint(dict(base, min_price=25.0)))
+
     def test_filtered_cache_is_scoped_to_rules(self):
         first = engine.rules_fingerprint({"max": 100, "types": {"base"}})
         second = engine.rules_fingerprint({"max": 200, "types": {"base"}})
@@ -880,6 +908,47 @@ class ScanSettingsReachTheEngine(unittest.TestCase):
             declared = name[len("SCAN_"):].lower()
             self.assertTrue(f'"{declared}"' in js or f"inputs.{declared}" in js,
                             f"app.js never sends {declared}")
+
+
+class ThePanelAnswersBothQuestions(unittest.TestCase):
+    """The page shows "what's new" and "what matches my filters" separately.
+
+    Showing only new finds made every scan look like a failure and made the
+    filters look broken: once a listing is judged it is never a new find
+    again, so no filter setting can put an already-recorded card there.
+    """
+
+    def js(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            return f.read()
+
+    def test_the_board_carries_the_whole_record(self):
+        """The lower section is the whole spreadsheet, filtered, so the board
+        must not stop at the newest handful."""
+        self.assertGreaterEqual(engine.BOARD_LIMIT, 500)
+        xlsx = os.path.join(HERE, "results", engine.OUTPUT_XLSX)
+        if os.path.exists(xlsx):
+            rows = engine.item_ids_in_spreadsheet(xlsx)
+            board = engine.build_board(xlsx)
+            self.assertGreaterEqual(len(board) + 2, min(len(rows), engine.BOARD_LIMIT),
+                                    "the board is dropping recorded cards")
+
+    def test_both_sections_are_rendered(self):
+        js = self.js()
+        self.assertIn('sectionHead("New this scan"', js)
+        self.assertIn('sectionHead("Everything found so far"', js)
+
+    def test_the_lower_section_reads_the_whole_board(self):
+        js = self.js()
+        self.assertIn("state.board.filter(passesFilters)", js)
+        self.assertIn("state.matches.filter(passesFilters)", js)
+
+    def test_no_new_cards_is_no_longer_reported_as_a_dead_end(self):
+        """The old wording read as a failed scan. It has to say why nothing is
+        new, and that the filters are not the reason."""
+        js = self.js()
+        self.assertNotIn("The latest scan found no new cards", js)
+        self.assertIn("already", js)
 
 
 if __name__ == "__main__":
