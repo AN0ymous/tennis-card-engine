@@ -398,6 +398,20 @@ and the one-time full re-walk after the cursor format changed happened at run
   the search, not the card, so the player is part of the rules fingerprint. As
   a permanent reject it would have hidden that card from every later scan,
   including the all-players scan that would have matched it.
+- **The "Bypass ceiling" toggle beside the eBay calls meter turns the local
+  4,500-call ceiling off for scans started from that device.** Hosted it goes
+  as the `bypass_budget` workflow input (the tenth and last input GitHub
+  allows) to `SCAN_BYPASS_BUDGET` on the engine and export steps; locally as
+  `bypassBudget` in the scan request, which `server.py` turns into
+  `engine.API_BUDGET_BYPASSED` for that one scan. `consume_api_call` still
+  counts, so the meter stays true; it just does not raise. The run log says
+  the ceiling is bypassed. eBay's own ~5,000 limit cannot be bypassed: past
+  it eBay refuses, refused searches are said out loud and refused fetches
+  keep their readings and hold the set's mark back. The toggle is remembered
+  per device (`tce.bypassBudget`) like the rest of the setup, because a
+  finished hosted scan reloads the page; the scheduled run sends no inputs
+  and never bypasses. Asked for by the owner on 17 Sep after run 44 stopped
+  at the ceiling mid-walk.
 - **A refused eBay search is said out loud, and a run that could check
   nothing fails.** Runs 32 to 35 on 17 Sep each checked 0 listings with the
   day's allowance used up (5,000 of 5,000), and every one went green -- the

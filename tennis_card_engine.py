@@ -274,6 +274,20 @@ API_USAGE_FILE = "ebay_api_usage.json"  # persistent daily safety counter (Pacif
 API_DAILY_BUDGET = int(os.environ.get("EBAY_DAILY_CALL_BUDGET") or "4500")
 _API_USAGE_LOCK = threading.Lock()
 
+# The "Bypass ceiling" toggle beside the eBay calls meter. With it on, the
+# ceiling above is not enforced and a scan spends calls until eBay itself
+# refuses them (a refusal is handled: readings are kept, the set's mark is
+# held back). A hosted run gets it as SCAN_BYPASS_BUDGET from the workflow
+# input; server.py sets API_BUDGET_BYPASSED for one local scan. The counter
+# still counts, so the figure the page shows stays true. The scheduled run
+# sends no inputs, so it never bypasses.
+API_BUDGET_BYPASSED = False
+
+
+def budget_bypassed():
+    flag = (os.environ.get("SCAN_BYPASS_BUDGET") or "").strip().lower()
+    return API_BUDGET_BYPASSED or flag in ("true", "1", "yes")
+
 HEADERS = ["Player", "Manufacturer / Set", "Card Description", "Serial #",
            "Bookend Type", "Price", "eBay Item Link", "Date Found (UTC)", "Image",
            "Listed (UTC)", "Listing Type", "Card Type", "Grading", "Extra Images",
@@ -423,7 +437,7 @@ def consume_api_call(bucket="browse"):
             except (OSError, ValueError, AttributeError):
                 pass
         used = int(usage.get(bucket, 0) or 0)
-        if used >= API_DAILY_BUDGET:
+        if used >= API_DAILY_BUDGET and not budget_bypassed():
             raise EngineError(
                 f"Stopped before eBay's daily limit: local {bucket} safety budget "
                 f"of {API_DAILY_BUDGET} calls is exhausted for {today} Pacific time."
@@ -2510,6 +2524,9 @@ def main():
     # loud, and a run that could check nothing at all fails, so it shows red.
     refusals = []
     summary = {}
+    if budget_bypassed():
+        say(f"The safety ceiling of {API_DAILY_BUDGET} calls is bypassed for this run: it "
+            "will spend eBay calls until eBay itself refuses them")
 
     def on_event(kind, payload):
         if kind == "error":

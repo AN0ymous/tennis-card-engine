@@ -39,6 +39,11 @@ on:
       conditions:
         description: 'graded and/or raw (blank = both)'
         required: false
+      bypass_budget:
+        description: 'Bypass the local daily call ceiling (eBay''s own limit still applies)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write              # to commit the results back
@@ -92,6 +97,7 @@ jobs:
           SCAN_LISTING_TYPES: ${{ inputs.listing_types }}
           SCAN_CARD_TYPES: ${{ inputs.card_types }}
           SCAN_CONDITIONS: ${{ inputs.conditions }}
+          SCAN_BYPASS_BUDGET: ${{ inputs.bypass_budget }}
         run: python tennis_card_engine.py
 
       - name: Export what the hosted site reads
@@ -111,6 +117,7 @@ jobs:
           # saved are not thrown away. The page needs to know that a failed
           # run is what it is looking at, or it reads as a quiet day.
           SCAN_OUTCOME: ${{ steps.engine.outcome }}
+          SCAN_BYPASS_BUDGET: ${{ inputs.bypass_budget }}
         run: python export_static.py results
 
       - name: Keep the results in the repo
