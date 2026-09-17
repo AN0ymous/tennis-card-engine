@@ -1043,12 +1043,34 @@ class ThePanelAnswersBothQuestions(unittest.TestCase):
         self.assertGreaterEqual(engine.BOARD_LIMIT, 500)
         xlsx = os.path.join(HERE, "results", engine.OUTPUT_XLSX)
         if os.path.exists(xlsx):
-            rows = engine.item_ids_in_spreadsheet(xlsx)
             board = engine.build_board(xlsx)
-            # a handful of rows are left off on purpose: customs, and a card
-            # whose title names another sport (the 17 Sep UFC row)
-            dropped = min(len(rows), engine.BOARD_LIMIT) - len(board)
-            self.assertLessEqual(dropped, 5, "the board is dropping recorded cards")
+            # Rows are left off on purpose by exactly three rules -- customs, a
+            # title naming another sport, and a serial that is really a grade
+            # pair -- so the allowance is counted from those same rules rather
+            # than a number that goes stale as the record grows. Anything the
+            # board drops beyond what the rules account for is a lost card.
+            from openpyxl import load_workbook
+            ws = load_workbook(xlsx, read_only=True, data_only=True)[engine.SHEET_NAME]
+            rows = ws.iter_rows(values_only=True)
+            header = [str(h or "").strip() for h in next(rows, ())]
+            col = {name: k for k, name in enumerate(header)}
+
+            def cell(row, name):
+                k = col.get(name)
+                return "" if k is None or k >= len(row) or row[k] is None else str(row[k]).strip()
+
+            recorded = [r for r in rows if any(r)]
+            left_off_by_rule = 0
+            for r in recorded:
+                title = cell(r, "Card Description")
+                set_name = cell(r, "Manufacturer / Set").partition(" / ")[2]
+                if (engine.looks_custom(title, set_name)
+                        or cell(r, "Serial #") in engine.grade_pairs_in(title)
+                        or engine.other_sport_in_title(title)):
+                    left_off_by_rule += 1
+            dropped = min(len(recorded), engine.BOARD_LIMIT) - len(board)
+            self.assertEqual(dropped, left_off_by_rule,
+                             "the board drops cards no rule accounts for")
 
     def test_both_sections_are_rendered(self):
         js = self.js()
@@ -1776,6 +1798,54 @@ class EveryCallEarnsItsKeep(unittest.TestCase):
         self.assertIn("turned away:", text)
         self.assertIn("neither the first nor the last", text)
         self.assertIn("no serial number", text)
+
+
+
+class GradesAreNotSerials(unittest.TestCase):
+    """A card grade over an autograph grade looks exactly like N/M."""
+
+    def serial(self, title):
+        return engine.extract_serial(title, {})
+
+    def test_the_three_recorded_psa_nines_carry_no_serial(self):
+        """Real titles from the record, each kept as the last of a run of 9."""
+        for title in (
+                "Coco Gauff Signed 2021 Topps Chrome Purple Wave Rookie Auto /199 Psa MINT 9/9 RC",
+                "Coco Gauff Signed 2021 Topps Chrome #100 Refractor Rookie Card Auto Psa MINT 9/9"):
+            with self.subTest(title=title):
+                self.assertEqual(self.serial(title), (None, None))
+
+    def test_a_grader_right_before_the_pair_makes_it_a_grade(self):
+        self.assertEqual(self.serial("Sinner 2024 Topps Chrome PSA 10/10 Auto"), (None, None))
+        self.assertEqual(self.serial("Gauff Refractor BGS 9.5/10 Gem"), (None, None))
+
+    def test_a_serial_after_a_stated_grade_is_still_a_serial(self):
+        """The Seles card from the record: PSA 10, and then the real 1/10.
+        The word before 1/10 is "10", not a grade word."""
+        self.assertEqual(self.serial(
+            "Monica Seles On Card Auto PSA 10 1/10 SSP 2024 Topps Graphite #GS-MSS"), (1, 10))
+        self.assertEqual(self.serial("2025 Topps Chrome Sinner Gold 10/10 PSA 10"), (10, 10))
+        self.assertEqual(self.serial("Alcaraz Refractor PSA 10 10/10"), (10, 10))
+
+    def test_a_grade_is_stepped_over_to_reach_the_serial_behind_it(self):
+        self.assertEqual(self.serial("Gauff BGS 9.5/10 Purple Refractor 1/25"), (1, 25))
+
+    def test_a_decimal_grade_never_yields_its_tail(self):
+        """9.5/10 used to read as 5/10."""
+        self.assertEqual(self.serial("BGS 9.5/10 Sinner"), (None, None))
+
+    def test_auto_is_not_grade_context(self):
+        """"Rookie Auto 5/5" is a real serial after the word auto."""
+        self.assertEqual(self.serial("2025 Topps Chrome Rookie Auto 5/5"), (5, 5))
+
+    def test_big_numbers_are_never_a_grade(self):
+        self.assertEqual(self.serial("PSA 25/50"), (25, 50))
+
+    def test_the_board_drops_a_recorded_grade_pair(self):
+        self.assertEqual(engine.grade_pairs_in(
+            "Coco Gauff Signed 2021 Topps Chrome Rookie Auto Psa MINT 9/9"), {"9/9"})
+        self.assertEqual(engine.grade_pairs_in(
+            "Monica Seles On Card Auto PSA 10 1/10 SSP"), set())
 
 
 if __name__ == "__main__":

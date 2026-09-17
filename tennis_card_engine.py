@@ -1160,7 +1160,37 @@ def item_ids_in_spreadsheet(xlsx_path, limit=300):
 # Filtering logic
 # ============================================================================
 
-SERIAL_RE = re.compile(r"\b(\d{1,5})\s*/\s*(\d{1,5})\b")
+# (?<!\.) so "BGS 9.5/10" does not yield 5/10 -- the numerator must not be the
+# tail of a decimal grade.
+SERIAL_RE = re.compile(r"(?<!\.)\b(\d{1,5})\s*/\s*(\d{1,5})\b")
+
+# The word right before an N/M that marks it as a grade, not a serial. A
+# grader's name, or the grade words sellers put between the grader and the
+# numbers ("Psa MINT 9/9"). Deliberately not "auto": "Rookie Auto 5/5" is a
+# real serial after the word auto, and 5/5 is exactly the bookend wanted.
+GRADE_CONTEXT_RE = re.compile(
+    r"\b(psa|bgs|sgc|cgc|csg|hga|isa|gma|ksa|beckett|tag|mint|gem|mt|nm|grade|graded)\s*$", re.I)
+
+
+def is_grade_pair(title, match):
+    """Whether this N/M is a card grade over an autograph grade -- "PSA 9/9",
+    "Psa MINT 9/9", "BGS 9.5/10" -- rather than a serial position.
+
+    Both numbers are grades (10 or under) and the word immediately before is
+    grade context. Only the word immediately before: in "PSA 10 1/10" that
+    word is "10", a number, so the 1/10 is read as the serial it is, with the
+    grade stated separately in front of it. Three recorded matches were PSA 9
+    autos written "Psa MINT 9/9", each kept as the last of a run of nine."""
+    n, run = int(match.group(1)), int(match.group(2))
+    if n > 10 or run > 10:
+        return False
+    return bool(GRADE_CONTEXT_RE.search(title[:match.start()]))
+
+
+def grade_pairs_in(title):
+    """The N/M strings in a title that read as grades, as "9/9" text."""
+    return {f"{int(m.group(1))}/{int(m.group(2))}"
+            for m in SERIAL_RE.finditer(title) if is_grade_pair(title, m)}
 
 
 def extract_serial(title, aspects):
@@ -1170,8 +1200,9 @@ def extract_serial(title, aspects):
     number (the 162 on a Bublik back), not the serial position, so it must
     never be paired with "Print Run" to fake a serial. Specifics are used
     only when they themselves carry an N/M."""
-    m = SERIAL_RE.search(title)
-    if m:
+    for m in SERIAL_RE.finditer(title):
+        if is_grade_pair(title, m):
+            continue                        # a grade; the serial may still follow
         return int(m.group(1)), int(m.group(2))
 
     for key in ("Serial Number", "Serial Numbered", "Card Number", "card number"):
@@ -1866,6 +1897,10 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
         # is what the page shows, and a custom card should not be on it. The
         # spreadsheet keeps the row, so nothing found is ever lost.
         if looks_custom(cell(row, "Card Description"), set_name):
+            continue
+        # A serial the reader now knows to be a grade pair -- recorded before
+        # it could tell "Psa MINT 9/9" from a run of nine. Off the page, row kept.
+        if cell(row, "Serial #") in grade_pairs_in(cell(row, "Card Description")):
             continue
         if other_sport_in_title(cell(row, "Card Description")):
             continue

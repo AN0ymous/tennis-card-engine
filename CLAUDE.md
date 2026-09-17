@@ -94,6 +94,19 @@ on a website.
   specific names another sport is rejected outright, and a listing that states
   nothing is kept with a "check by eye" caution. A wrong card is one glance to
   dismiss; a missed one is gone for good.
+- **A card grade over an autograph grade is not a serial.** "PSA 9/9",
+  "Psa MINT 9/9" and "BGS 9.5/10" read exactly like N/M, and three PSA 9
+  autos were recorded as the last of a run of nine. `is_grade_pair` steps
+  over an N/M when both numbers are 10 or under and the word immediately
+  before it is grade context (a grader's name, or MINT/GEM/MT/NM/GRADE/
+  GRADED); `extract_serial` then reads on for a real serial behind it, so
+  "BGS 9.5/10 ... 1/25" still yields 1/25. Only the word immediately before
+  counts: in "PSA 10 1/10" that word is "10", so the 1/10 is the serial it is
+  (the Seles card). "auto" is deliberately not grade context -- "Rookie Auto
+  5/5" is a real bookend. `SERIAL_RE` also refuses a numerator that is the
+  tail of a decimal, so 9.5/10 can no longer read as 5/10. `build_board`
+  applies the same rule, so the three recorded 9/9s drop off the page while
+  their rows stay -- the same treatment as customs.
 - **Custom cards are rejected before the serial is read.** A card somebody
   made themselves carries a real maker in the Manufacturer field and is nearly
   always called a 1/1, because only one exists, so neither the allow-list nor
