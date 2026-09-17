@@ -30,8 +30,14 @@ on a website.
 - **1/0 serials are deliberate.** Cards listed as "-1/0" are real; the minus
   sign can't be shown, so they are kept as 1/0 and treated as bookends. Do not
   add validation that rejects print run 0 or card number > print run.
-- The scan covers all players, all 7 sets, all card types, graded and raw,
-  both listing types, any price. Website filters only narrow what is shown.
+- **The scheduled scan covers everything; a scan you start yourself obeys the
+  settings.** The daily GitHub run sends no settings at all, so it still covers
+  all players, all 7 sets, all card types, graded and raw, both listing types,
+  any price -- that is what keeps the spreadsheet comprehensive. Pressing "Run
+  a scan" sends whatever the scan setup is set to, on the hosted site exactly
+  as on the PC. Until 17 Sep the hosted button sent nothing but `{"ref":
+  "main"}` and `scan.yml` declared no inputs, so every phone-started scan
+  quietly ran the defaults however the controls were set.
 - eBay's account deletion notifications: opted out ("not persisting eBay data").
 - **A card of another sport is turned away; a card that says nothing is kept
   and marked.** The scan searches category 212, which is every sport, and with
@@ -113,6 +119,11 @@ on a website.
   reads" step for "status refresh skipped: ...".
 - Whether batching actually saves calls is unconfirmed -- see the note on the
   420 figure under "Things to keep in mind".
+- The seven cursors in `results/scan_cursors.json` are in the old bare-timestamp
+  format, which says nothing about the rules behind it, so the next run ignores
+  them and walks each set in full once before the new format takes over. Expect
+  roughly 200 calls on that run rather than the usual handful; it settles by
+  itself on the run after.
 - `README.md` is not a real readme (it contains pasted engine code).
 
 Done since these notes were written: `app.js` confirmed on `main` (the Matches
@@ -131,13 +142,30 @@ added -- run `py test_engine.py` before pushing engine changes.
   `results/` by `scan.yml` before the engine starts: `seen_items.json` (what
   each listing was judged, with filtered verdicts keyed to a fingerprint of
   the rules that produced them, so changing a filter re-judges only what that
-  filter touches), `scan_cursors.json` (the newest listing each exact search
-  has already reached, so a scheduled scan does not walk the same window
-  again), and `ebay_api_usage.json` (a local daily counter enforcing a 4,500
+  filter touches), `scan_cursors.json` (the newest listing each exact search has
+  already reached **together with a fingerprint of the rules that reached it**,
+  so a scheduled scan does not walk the same window again but a changed setting
+  does -- see below), and `ebay_api_usage.json` (a local daily counter enforcing a 4,500
   call ceiling per Pacific day, below eBay's own ~5,000, set with
   `EBAY_DAILY_CALL_BUDGET`). Deleting any of them makes the next scan pay for
   work already done. A card turned away for its sport is a permanent `reject`,
   so it costs one detail call ever, not one per run.
+- **A cursor is only trusted while the rules behind it are unchanged.** It
+  means "everything older than this is already judged", which is true only of
+  the settings that judged it. Before 17 Sep the key covered the search scope
+  alone (player, set, price, listing type), so raising the print-run ceiling or
+  picking a card type left the mark in place, the search stopped one page in,
+  and every scan reported "no new cards" whatever the filter said. Measured
+  against a 1,200-listing set: with the mark wrongly kept, 1 call and 0 cards;
+  with it correctly dropped, 44 calls and 665 cards. Re-walking is cheap
+  because `seen_items.json` still answers for every listing already settled as
+  a match or a reject, so only the search pages are paid for again -- about 42
+  calls across all 7 sets, against a 4,500 budget. Keeping the cursor for an
+  unchanged repeat saves 35 of those; that is all it was ever worth.
+- **"Not a Federer card" is a filtered verdict, not a reject.** It describes
+  the search, not the card, so the player is part of the rules fingerprint. As
+  a permanent reject it would have hidden that card from every later scan,
+  including the all-players scan that would have matched it.
 - **The 420 figure is not yet confirmed against live eBay.** It holds only if
   `getItems` returns `localizedAspects` (the manufacturer, set and serial the
   judge reads). If it does not, every listing needs its own call anyway, and

@@ -656,5 +656,231 @@ class SportGate(unittest.TestCase):
         self.assertIn("Sport", engine.HEADERS)
 
 
+class CursorFollowsTheRules(unittest.TestCase):
+    """A scan must not skip what a changed setting would now let through.
+
+    The cursor says "everything older than this is already judged", which is
+    only true of the rules that judged it. These fix the bug where changing the
+    ceiling, a card type or a condition left the cursor in place, so the search
+    stopped one page in and every scan reported nothing new.
+    """
+
+    SETS = ["Topps Chrome"]
+
+    class Dated(FakeEbay):
+        """Every listing a bookend 1/N, N cycling 100..900, each with its own
+        creation time so a high-water mark actually cuts the walk short."""
+
+        def summary(self, n):
+            item = dict(super().summary(n))
+            item["title"] = (f"2024 Topps Chrome Player{n} Refractor "
+                             f"1/{100 + (n % 9) * 100} tennis card")
+            item["itemCreationDate"] = f"2026-09-10T{23 - n // 60:02d}:{59 - n % 60:02d}:00.000Z"
+            return item
+
+    def setUp(self):
+        self._get, self._token = requests.get, engine.get_ebay_token
+        self._consume, self._per_brand = engine.consume_api_call, engine.MAX_RESULTS_PER_BRAND
+        self._base = engine._BASE_DIR
+        engine.get_ebay_token = lambda: "fake-token"
+        engine.consume_api_call = lambda _bucket="browse": None
+        engine.MAX_RESULTS_PER_BRAND = 54
+        self.folder = tempfile.mkdtemp()
+        engine._BASE_DIR = self.folder
+
+    def tearDown(self):
+        requests.get, engine.get_ebay_token = self._get, self._token
+        engine.consume_api_call, engine.MAX_RESULTS_PER_BRAND = self._consume, self._per_brand
+        engine._BASE_DIR = self._base
+
+    def scan(self, **kwargs):
+        fake = self.Dated(listings=54)
+        requests.get = fake.get
+        matches, checked = engine.run_scan(None, self.SETS, **kwargs)
+        return matches, checked, fake.calls["search"]
+
+    def cursors(self):
+        with open(os.path.join(self.folder, engine.SCAN_CURSOR_FILE)) as f:
+            return json.load(f)
+
+    def test_an_unchanged_repeat_still_stops_at_the_mark(self):
+        """The saving that matters is kept: the daily run sends the same
+        settings every day, so it walks only what was listed since."""
+        first, _, _ = self.scan()
+        self.assertTrue(first)
+        _, checked, searches = self.scan()
+        self.assertEqual(searches, 1)
+        self.assertLess(checked, 54)
+
+    def test_widening_the_ceiling_walks_the_lot_again(self):
+        """The bug: these cards were filtered out under the 500 ceiling, so
+        raising it has to reach them, and the cursor must not stop the search."""
+        self.scan()
+        matches, checked, _ = self.scan(max_print_run=1000)
+        self.assertEqual(checked, 54)
+        self.assertTrue(matches, "raising the ceiling found nothing")
+        self.assertTrue(all(int(m["serial"].split("/")[1]) >= 500 for m in matches))
+
+    def test_a_narrower_card_type_also_rewalks(self):
+        """Card type and condition are not in the cursor key at all, so before
+        this they silently reused the last run's mark."""
+        self.scan()
+        _, checked, _ = self.scan(card_types=["base"])
+        self.assertEqual(checked, 54)
+
+    def test_the_mark_is_stored_with_the_rules_that_made_it(self):
+        self.scan()
+        entry = next(iter(self.cursors().values()))
+        self.assertIn("newest", entry)
+        self.assertIn("rules", entry)
+
+    def test_a_cursor_from_the_old_format_is_ignored(self):
+        """A bare timestamp says nothing about the rules behind it, so it is
+        not trusted -- one full walk, then the new format takes over."""
+        self.assertEqual(engine.cursor_high_water("2026-09-10T00:00:00.000Z", "abc"), "")
+        self.assertEqual(engine.cursor_high_water({"newest": "t", "rules": "abc"}, "abc"), "t")
+        self.assertEqual(engine.cursor_high_water({"newest": "t", "rules": "abc"}, "xyz"), "")
+        self.assertEqual(engine.cursor_high_water(None, "abc"), "")
+
+    def test_a_re_walk_only_pays_for_what_the_change_reopened(self):
+        """Why walking it all again is affordable. seen_items.json still
+        answers for every listing settled as match or reject, so a re-walk
+        re-fetches only the few a changed filter genuinely reopens -- the
+        search pages are the whole extra cost."""
+        self.scan()
+        with open(os.path.join(self.folder, engine.STATE_FILE)) as f:
+            seen = json.load(f)
+        settled = {k for k, v in seen.items() if isinstance(v, str)}
+        reopened = {k for k, v in seen.items()
+                    if isinstance(v, dict) and v.get("verdict") == "filtered"}
+        self.assertTrue(settled and reopened, "the fixture proves nothing")
+
+        asked = []
+        real = engine.get_item_details
+        fake = self.Dated(listings=54)
+        requests.get = fake.get
+
+        def spy(token, item_ids):
+            asked.extend(item_ids)
+            return real(token, item_ids)
+
+        with patch.object(engine, "get_item_details", side_effect=spy):
+            engine.run_scan(None, self.SETS, conditions=["raw"])
+
+        self.assertFalse(set(asked) & settled, "a settled listing was paid for twice")
+        self.assertLessEqual(set(asked), reopened)
+
+
+class PlayerTurnDownsAreNotPermanent(unittest.TestCase):
+    """"Not a Federer card" describes the search, not the card."""
+
+    ITEM = {"itemId": "v1|1|0", "title": "2024 Topps Chrome Alcaraz 1/25 tennis card",
+            "buyingOptions": ["FIXED_PRICE"]}
+    DETAIL = {"localizedAspects": [{"name": "Manufacturer", "value": "Topps"},
+                                   {"name": "Set", "value": "2024 Topps Chrome"},
+                                   {"name": "Sport", "value": "Tennis"}],
+              "price": {"value": "50.00", "currency": "USD"},
+              "seller": {"username": "someseller"},
+              "buyingOptions": ["FIXED_PRICE"]}
+
+    def test_the_wrong_player_is_filtered_not_rejected(self):
+        verdict, reason, _ = engine.judge_listing(self.ITEM, self.DETAIL, "Roger Federer")
+        self.assertEqual(verdict, "filtered")
+        self.assertIn("Federer", reason)
+
+    def test_the_same_card_matches_when_nobody_was_named(self):
+        verdict, _, fields = engine.judge_listing(self.ITEM, self.DETAIL)
+        self.assertEqual(verdict, "match")
+        self.assertEqual((fields["card_number"], fields["print_run"]), (1, 25))
+
+    def test_the_player_is_part_of_the_rules_fingerprint(self):
+        """Otherwise a scan for one player would poison the next one for
+        everybody, since a reject is never looked at again."""
+        rules = {"max_print_run": None}
+        self.assertNotEqual(engine.rules_fingerprint(dict(rules, player="Roger Federer")),
+                            engine.rules_fingerprint(dict(rules, player=None)))
+
+
+class ScanSettingsReachTheEngine(unittest.TestCase):
+    """The website's settings have to survive the trip to GitHub.
+
+    Before this, the hosted page posted only {"ref": "main"} and scan.yml
+    declared no inputs, so every hosted scan ran engine defaults however the
+    controls were set.
+    """
+
+    ENV = ("SCAN_PLAYERS", "SCAN_BRANDS", "SCAN_MAX_PRINT_RUN", "SCAN_PRINT_RUN_INCLUSIVE",
+           "SCAN_MIN_PRICE", "SCAN_MAX_PRICE", "SCAN_LISTING_TYPES", "SCAN_CARD_TYPES",
+           "SCAN_CONDITIONS")
+
+    def setUp(self):
+        self._saved = {k: os.environ.pop(k, None) for k in self.ENV}
+
+    def tearDown(self):
+        for key, value in self._saved.items():
+            os.environ.pop(key, None)
+            if value is not None:
+                os.environ[key] = value
+
+    def test_nothing_set_leaves_every_default_alone(self):
+        """A scheduled run sends no inputs and must scan exactly as before."""
+        options = engine.scan_options_from_env()
+        self.assertIsNone(options["players"])
+        self.assertEqual(options["brand_keywords"], list(engine.DEFAULT_BRAND_KEYWORDS))
+        self.assertIsNone(options["max_print_run"])
+        self.assertIsNone(options["print_run_inclusive"])
+        self.assertIsNone(options["min_price"])
+        self.assertEqual(options["card_types"], [])
+
+    def test_the_settings_are_read_back(self):
+        os.environ.update(SCAN_MAX_PRINT_RUN="1000", SCAN_PRINT_RUN_INCLUSIVE="true",
+                          SCAN_MIN_PRICE="25", SCAN_CARD_TYPES="auto",
+                          SCAN_CONDITIONS="raw", SCAN_LISTING_TYPES="auction",
+                          SCAN_BRANDS="Topps Chrome")
+        options = engine.scan_options_from_env()
+        self.assertEqual(options["max_print_run"], 1000)
+        self.assertIs(options["print_run_inclusive"], True)
+        self.assertEqual(options["min_price"], 25.0)
+        self.assertEqual(options["card_types"], ["auto"])
+        self.assertEqual(options["conditions"], ["raw"])
+        self.assertEqual(options["listing_types"], ["auction"])
+        self.assertEqual(options["brand_keywords"], ["Topps Chrome"])
+
+    def test_rubbish_is_dropped_rather_than_scanned_on(self):
+        os.environ.update(SCAN_BRANDS="Topps Chrome,Pokemon", SCAN_CARD_TYPES="auto,hologram",
+                          SCAN_MAX_PRINT_RUN="not a number")
+        options = engine.scan_options_from_env()
+        self.assertEqual(options["brand_keywords"], ["Topps Chrome"])
+        self.assertEqual(options["card_types"], ["auto"])
+        self.assertIsNone(options["max_print_run"])
+
+    def test_every_option_is_one_run_scan_accepts(self):
+        import inspect
+        accepted = set(inspect.signature(engine.run_scan).parameters)
+        self.assertLessEqual(set(engine.scan_options_from_env()), accepted)
+
+    def test_the_workflow_declares_and_passes_each_one(self):
+        """scan.yml is where the settings would silently go missing."""
+        with open(os.path.join(HERE, ".github", "workflows", "scan.yml")) as f:
+            yml = f.read()
+        for name in self.ENV:
+            self.assertIn(f"{name}:", yml, f"{name} is never passed to the engine")
+            declared = name[len("SCAN_"):].lower()
+            self.assertIn(f"inputs.{declared}", yml, f"{declared} is not read from the inputs")
+            self.assertIn(f"      {declared}:", yml, f"{declared} is not declared as an input")
+        # GitHub's own ceiling for workflow_dispatch
+        self.assertLessEqual(len(self.ENV), 10)
+
+    def test_the_page_sends_every_input_the_workflow_declares(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            js = f.read()
+        self.assertIn("inputs: workflowInputs(settings)", js,
+                      "the hosted scan still dispatches without its settings")
+        for name in self.ENV:
+            declared = name[len("SCAN_"):].lower()
+            self.assertTrue(f'"{declared}"' in js or f"inputs.{declared}" in js,
+                            f"app.js never sends {declared}")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

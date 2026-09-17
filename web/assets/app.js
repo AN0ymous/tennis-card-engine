@@ -1270,6 +1270,13 @@ async function onHostedRun(c) {
     return;
   }
 
+  const settings = scanSettings();
+  const problem = settingsProblem(settings);
+  if (problem) {
+    renderHostedNote(c, problem + " ");
+    return;
+  }
+
   const run = $("run-btn");
   run.disabled = true;
   run.textContent = "Starting scan…";
@@ -1280,7 +1287,7 @@ async function onHostedRun(c) {
       {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" },
-        body: JSON.stringify({ ref: "main" }),
+        body: JSON.stringify({ ref: "main", inputs: workflowInputs(settings) }),
       });
   } catch {
     renderHostedNote(c, "Couldn't reach GitHub. Check your connection and try again. ");
@@ -1303,6 +1310,11 @@ async function onHostedRun(c) {
   } else if (r.status === 403 || r.status === 404) {
     renderHostedNote(c, `This key can't start scans for ${c.repo}. `
       + "Check it has access to this repo with Actions set to Read and write. ");
+  } else if (r.status === 422) {
+    // GitHub reads the input list from the workflow file on the default
+    // branch, so this is what a page newer than main looks like.
+    renderHostedNote(c, "GitHub wouldn't accept the scan settings. The copy of "
+      + "scan.yml on main may be older than this page. ");
   } else {
     renderHostedNote(c, `GitHub didn't start the scan (HTTP ${r.status}). Try again in a minute. `);
   }
@@ -2171,23 +2183,16 @@ function initWakeChecks() {
   window.addEventListener("focus", wake);
 }
 
-async function runScan() {
-  if (HOSTED) return;
+/* The scan settings, read straight off the controls. Both paths start here:
+   the local server takes this as JSON, GitHub as workflow inputs. Before, only
+   the local path read them at all, so every hosted scan ran engine defaults
+   however the controls were set. */
+function scanSettings() {
   const everyone = $("all-players").checked;
-  const players = everyone ? [] : selected("player");
-  const brands = selected("brand");
-  if ((!everyone && !players.length) || !brands.length) {
-    logLine("error", "Pick at least one set, and either every player or some names.");
-    return;
-  }
-
-  $("logbox").innerHTML = "";
-  state.since = 0;
-  setRunning(true);
-  updateProgress();
-
-  const body = {
-    players, brands,
+  return {
+    everyone,
+    players: everyone ? [] : selected("player"),
+    brands: selected("brand"),
     maxPrintRun: Number($("max-print-run").value) || undefined,
     printRunInclusive: $("inclusive").checked,
     writeOutputs: $("write-outputs").checked,
@@ -2197,6 +2202,51 @@ async function runScan() {
     cardTypes: state.cardtype === "all" ? undefined : [state.cardtype],
     conditions: state.condition === "all" ? undefined : [state.condition],
   };
+}
+
+/* Nothing to scan: no sets ticked, or named players wanted but none named. */
+function settingsProblem(s) {
+  if (!s.brands.length) return "Pick at least one set.";
+  if (!s.everyone && !s.players.length) return "Pick some players, or choose every player.";
+  return "";
+}
+
+/* The same settings as the workflow_dispatch inputs scan.yml declares. Only
+   what was actually chosen is sent; anything left out keeps the engine
+   default, so a scheduled run and an untouched page scan alike. */
+function workflowInputs(s) {
+  const inputs = {};
+  const put = (key, value) => {
+    const text = Array.isArray(value) ? value.join(",") : value;
+    if (text !== undefined && text !== null && text !== "") inputs[key] = String(text);
+  };
+  put("players", s.players);
+  put("brands", s.brands);
+  put("max_print_run", s.maxPrintRun);
+  put("min_price", s.minPrice);
+  put("max_price", s.maxPrice);
+  put("listing_types", s.listingTypes);
+  put("card_types", s.cardTypes);
+  put("conditions", s.conditions);
+  inputs.print_run_inclusive = !!s.printRunInclusive;   // declared as a boolean
+  return inputs;
+}
+
+async function runScan() {
+  if (HOSTED) return;
+  const settings = scanSettings();
+  const problem = settingsProblem(settings);
+  if (problem) {
+    logLine("error", problem);
+    return;
+  }
+
+  $("logbox").innerHTML = "";
+  state.since = 0;
+  setRunning(true);
+  updateProgress();
+
+  const { everyone, ...body } = settings;
 
   let res;
   try {

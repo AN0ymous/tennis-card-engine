@@ -5,7 +5,40 @@ name: Scan eBay for bookend cards
 on:
   schedule:
     - cron: "17 23 * * *"      # 23:17 UTC = 7:17am Singapore
-  workflow_dispatch:           # and the "Run workflow" button
+  # ...and the "Run workflow" button, or the website's "Run a scan", which
+  # sends whatever the scan settings were set to. Every input is optional: a
+  # scheduled run sends none of them and the engine keeps its own defaults.
+  workflow_dispatch:
+    inputs:
+      players:
+        description: 'Players, comma separated (blank = everyone)'
+        required: false
+      brands:
+        description: 'Sets, comma separated (blank = all 7)'
+        required: false
+      max_print_run:
+        description: 'Print-run ceiling (blank = 500)'
+        required: false
+      print_run_inclusive:
+        description: 'Allow a print run equal to the ceiling'
+        required: false
+        type: boolean
+        default: false
+      min_price:
+        description: 'Lowest price (blank = any)'
+        required: false
+      max_price:
+        description: 'Highest price (blank = any)'
+        required: false
+      listing_types:
+        description: 'buy_now and/or auction (blank = both)'
+        required: false
+      card_types:
+        description: 'base, patch, auto, patch_auto (blank = all)'
+        required: false
+      conditions:
+        description: 'graded and/or raw (blank = both)'
+        required: false
 
 permissions:
   contents: write              # to commit the results back
@@ -47,6 +80,17 @@ jobs:
           EBAY_ENV: ${{ vars.EBAY_ENV }}      # leave unset; "sandbox" only to test keys
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional: outfit colours from photos
           VISION_MODEL: ${{ vars.VISION_MODEL }}               # optional; default claude-opus-5
+          # The scan settings, as the website sent them. Empty on a scheduled
+          # run, which leaves every engine default in place.
+          SCAN_PLAYERS: ${{ inputs.players }}
+          SCAN_BRANDS: ${{ inputs.brands }}
+          SCAN_MAX_PRINT_RUN: ${{ inputs.max_print_run }}
+          SCAN_PRINT_RUN_INCLUSIVE: ${{ inputs.print_run_inclusive }}
+          SCAN_MIN_PRICE: ${{ inputs.min_price }}
+          SCAN_MAX_PRICE: ${{ inputs.max_price }}
+          SCAN_LISTING_TYPES: ${{ inputs.listing_types }}
+          SCAN_CARD_TYPES: ${{ inputs.card_types }}
+          SCAN_CONDITIONS: ${{ inputs.conditions }}
         run: python tennis_card_engine.py
 
       - name: Export what the hosted site reads
