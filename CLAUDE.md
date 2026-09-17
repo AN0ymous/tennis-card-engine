@@ -40,6 +40,43 @@ on a website.
   "main"}` and `scan.yml` declared no inputs, so every phone-started scan
   quietly ran the defaults however the controls were set.
 - eBay's account deletion notifications: opted out ("not persisting eBay data").
+- **The wide search says "tennis" for lines printed for every sport and never
+  says "card".** The wide query used to be `"{set} tennis card"`. eBay matches
+  every word, and most listings do not say "card": on 17 Sep two player scans
+  found 17 bookends the wide scan had never seen in any of its 4,800-listing
+  walks, and 15 of them lacked that word. `wide_query()` is now `"{set}
+  tennis"` for Topps Chrome, Topps Now and Panini Instant, and the bare set
+  name for NetPro, Ace Authentic, Topps Graphite and Topps Royalty -- Royalty
+  is mostly tennis, its tennis titles rarely say so (4 of the 5 Royalty
+  bookends found that day did not), and its UFC line names its sport in the
+  title, which `settled_by_title` turns away for no call. A Topps Chrome title
+  that says neither "tennis" nor a player's name stays out of the wide scan's
+  reach; that line is printed for every sport, and bare "Topps Chrome" would
+  be tens of thousands of listings of which eBay hands over the newest 1,200. The query
+  text is part of the cursor key, so changing it walks every set in full once.
+  **What the wide scan still cannot do:** eBay returns the newest 1,200 per
+  query, so the wide scan covers the newest 1,200 listings of each set and
+  everything listed after that; older listings surface only through a player
+  scan, whose result set is small enough to reach the back of.
+- **A player is searched by full name and surname, never first name alone.**
+  "Denis Topps Chrome" brought every Denis in every sport: 1,083 of the 2,077
+  listings the 17 Sep Shapovalov scan paid for were not his. The judge no
+  longer accepts a first name alone either -- that is how "2025 Topps Royalty
+  UFC Benoit Saint Denis" was recorded as Denis Shapovalov. A card titled with
+  a first name only is not attributed in a player scan; the wide scan still
+  records it under whatever player the specifics name.
+- **Topps Royalty is not only tennis** (2025 Topps Royalty UFC exists), so it
+  is out of `TENNIS_ONLY_SETS`, and a title that names another sport
+  (`OTHER_SPORT_WORDS`: UFC, MMA, baseball, football and so on, as whole
+  words, never when the title also says tennis) is as good as a Sport specific
+  that does. `build_board` drops such a row as it drops customs; the UFC
+  "Shapovalov" row stays in the spreadsheet, so delete it there by hand.
+- **A maker the specifics leave blank, or spell as the line, is read off the
+  title.** `resolve_manufacturer`: "Topps Chrome" in the Manufacturer field is
+  Topps; a blank field on "2024 Topps Chrome Tennis Denis Shapovalov ... 77/77"
+  is Topps. Before this both were "manufacturer not in allow-list", which is
+  the likeliest reason that exact card was passed over on 17 Sep. A maker the
+  allow-list does not know is still turned away by name.
 - **A card of another sport is turned away; a card that says nothing is kept
   and marked.** The scan searches category 212, which is every sport, and with
   `SCAN_ALL_PLAYERS` True nothing else checks what sport a card is. Measured
@@ -294,11 +331,23 @@ and the one-time full re-walk after the cursor format changed happened at run
   put `if: always()` on the export and commit steps, the run still publishes
   what it has; it just shows red instead of pretending it was a quiet day. A
   partly refused run stays green with a warning that it covered less.
-- **The 420 figure is not yet confirmed against live eBay.** It holds only if
-  `getItems` returns `localizedAspects` (the manufacturer, set and serial the
-  judge reads). If it does not, every listing needs its own call anyway, and
-  the engine notices on the first window and stops batching those, so a scan
-  costs about 8,400 again rather than more.
+- **Measured 17 Sep: a never-seen listing costs about one call, whatever the
+  batching does.** The Shapovalov scan judged 2,077 listings for 1,873 single
+  detail calls plus 96 batch calls. eBay's `getItems` hands back item
+  specifics for only a few listings per batch, so nearly every one is fetched
+  again singly; the guard that would stop batching trips only when *none*
+  carry them, so it never trips. The 420 figure above was wrong. What does
+  save calls: `seen_items.json` (a judged listing is never fetched again), the
+  cursor (a repeat wide scan fetches only what was listed since), and
+  `settled_by_title` (a custom, another sport, or a serial that is not a
+  bookend is rejected from the title with no call at all; a title with no
+  serial is still fetched, because the specifics may carry one). A first-time
+  player scan still costs roughly one call per listing eBay returns for the
+  name, so a common surname is expensive.
+- **A reject keeps its reason** in `seen_items.json` (`{"verdict": "reject",
+  "reason": ...}`; older entries are the bare string). To see why a listing
+  was passed over, take the number from its eBay URL (`/itm/336797712136`)
+  and look up `v1|336797712136|0` in `results/seen_items.json`.
 - **Those two warnings do not appear in the Actions log.** `logging.basicConfig`
   sends every `log.warning` to `engine_run.log`, a file on whichever machine
   ran the scan, and that file is gitignored -- so "Bulk item details carry no

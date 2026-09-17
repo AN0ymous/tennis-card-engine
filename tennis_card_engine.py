@@ -676,13 +676,12 @@ def iter_listings(token, player, brand_kw, on_page=None, should_stop=None,
     """Yield listings for one brand search: a single page when a player is
     named, or up to MAX_RESULTS_PER_BRAND newest-first when scanning everyone."""
     price = {"min_price": min_price, "max_price": max_price, "listing_types": listing_types}
-    # A named player is searched three ways -- full name, surname, first name
-    # -- so a listing titled just "Federer" or just "Serena" is still fetched;
-    # the judge decides afterwards whether it really is that player. Every
-    # player needs "tennis card" to stay inside tennis. All page through
-    # everything, newest first.
+    # A named player is searched by full name and by surname, so a listing
+    # titled just "Federer" is still fetched; the judge decides afterwards
+    # whether it really is that player. Everyone else goes through
+    # wide_query(). All page through everything, newest first.
     queries = ([f"{v} {brand_kw}" for v in name_variants(player)]
-               if player else [f"{brand_kw} tennis card"])
+               if player else [wide_query(brand_kw)])
     cap = limit or MAX_RESULTS_PER_BRAND
     seen_here = set()
     for query in queries:
@@ -873,6 +872,26 @@ def save_outputs(wb, xlsx_path, seen, state_path, cursors, cursor_path,
             say(f"could not save the {what}: {exc}")
 
 
+def settled_by_title(title):
+    """A reject the title proves on its own, so the listing costs no detail
+    call: a custom, another sport, or a serial that is not a bookend. The
+    serial is read exactly as the judge reads it (the title first), so this
+    never turns away a card the judge would have kept. A title with no serial
+    is not settled -- the specifics may carry one -- and is fetched as before.
+    Measured on 17 Sep: a never-seen listing costs about one call whatever the
+    batching does, so every listing settled here is a call kept."""
+    custom = looks_custom(title, "")
+    if custom:
+        return f"custom or novelty card: says {custom!r}"
+    sport = other_sport_in_title(title)
+    if sport:
+        return f"title says {sport}, not tennis"
+    card_number, print_run = extract_serial(title, {})
+    if card_number is not None and print_run is not None and card_number not in (1, print_run):
+        return f"{card_number}/{print_run} is neither the first nor the last of its run"
+    return ""
+
+
 def _windows(items, size):
     """Consecutive slices of an iterable, the last one short."""
     window = []
@@ -1014,6 +1033,29 @@ def get_manufacturer_and_set(aspects):
             break
     set_name = aspects.get("Set", [""])[0]
     return (manu or "").strip(), (set_name or "").strip()
+
+
+def resolve_manufacturer(manufacturer, set_name="", title=""):
+    """The allow-list name for a maker the specifics leave blank or spell as
+    the product line. "Topps Chrome" in the Manufacturer field is Topps;
+    a blank field on a card whose title says "2024 Topps Chrome Tennis" is
+    Topps too -- the same evidence the set check reads a line off. A maker
+    the allow-list does not know is returned as given, so it is still turned
+    away by name."""
+    manu = manufacturer.strip()
+    lower = manu.lower()
+    if lower in ALLOWED_MANUFACTURERS:
+        return manu
+    for key in ALLOWED_MANUFACTURERS:
+        if lower.startswith(key + " "):
+            return key.title() if key != "netpro" else "NetPro"
+    if not lower:
+        text = f"{set_name} {title}".lower()
+        for key, name in (("netpro", "NetPro"), ("ace authentic", "Ace Authentic"),
+                          ("panini", "Panini"), ("topps", "Topps")):
+            if re.search(rf"\b{re.escape(key)}\b", text):
+                return name
+    return manu
 
 
 def netpro_buyback_reading(image_urls):
@@ -1179,19 +1221,38 @@ TENNIS_ONLY_MAKERS = ("netpro", "ace authentic")
 # it out -- 16 of the 21 recorded matches that say "tennis" nowhere are in these
 # two. Topps Chrome, Topps Now and Panini Instant are printed for every sport,
 # so those do have to say so. Matched against the title and the Set specific.
-TENNIS_ONLY_SETS = ("topps graphite", "topps royalty", "graphite royalty")
+# Topps Royalty is not here: 2025 Topps Royalty UFC exists, and one of its
+# cards reached the spreadsheet on 17 Sep as a tennis match.
+TENNIS_ONLY_SETS = ("topps graphite", "graphite royalty")
+
+
+# Lines Topps and Panini print for every sport in volume, so the wide search
+# has to say "tennis" to stay in bounds. NetPro and Ace Authentic only ever
+# printed tennis and Topps Graphite is a tennis set, so their name alone is the
+# search. Topps Royalty is searched bare too: it is mostly tennis, its tennis
+# titles rarely say so (4 of the 5 Royalty bookends found on 17 Sep did not),
+# and the UFC line it also has names its sport in the title, where
+# settled_by_title() turns it away for no call. Never "card": all 17 bookends
+# the two player scans found that day had been invisible to the wide scan,
+# and 15 of them lacked that word.
+MULTI_SPORT_LINES = ("Topps Chrome", "Topps Now", "Panini Instant")
+
+
+def wide_query(brand_kw):
+    return f"{brand_kw} tennis" if brand_kw in MULTI_SPORT_LINES else brand_kw
 
 
 def name_variants(player):
     """The searches run for one player: the full name, then the surname alone,
-    then the first name alone, so a listing titled just "Federer" or just
-    "Serena" is still fetched. Single-word names give one search."""
+    so a listing titled just "Federer" is still fetched. Not the first name
+    alone: "Denis Topps Chrome" brought in every Denis in every sport -- 1,083
+    of the 2,077 listings a Shapovalov scan paid for on 17 Sep were not his --
+    and a card titled with a first name only is vanishingly rare. Single-word
+    names give one search."""
     tokens = [t for t in player.split() if t]
     variants = [" ".join(tokens)]
-    if len(tokens) > 1:
-        for part in (tokens[-1], tokens[0]):
-            if len(part) >= 3 and part.lower() not in (v.lower() for v in variants):
-                variants.append(part)
+    if len(tokens) > 1 and len(tokens[-1]) >= 3 and tokens[-1].lower() != variants[0].lower():
+        variants.append(tokens[-1])
     return variants
 
 
@@ -1202,6 +1263,26 @@ def sport_named(aspects):
         values = [str(v).strip() for v in (aspects or {}).get(key) or [] if str(v).strip()]
         if values:
             return values[0]
+    return ""
+
+
+# Words that put a card in another sport when the title says them and not
+# "tennis". Whole words, so "golf" cannot hit "Golfo".
+OTHER_SPORT_WORDS = ("ufc", "mma", "baseball", "mlb", "basketball", "nba", "wnba",
+                     "football", "nfl", "soccer", "hockey", "nhl", "golf", "pga",
+                     "wrestling", "wwe", "nascar", "f1", "formula 1", "boxing",
+                     "cricket", "rugby", "olympics")
+
+
+def other_sport_in_title(title):
+    """The other sport a title names, or "" -- and never when it says tennis
+    too, since "tennis / golf lot" is not a verdict."""
+    text = title.lower()
+    if "tennis" in text:
+        return ""
+    for word in OTHER_SPORT_WORDS:
+        if re.search(rf"\b{re.escape(word)}\b", text):
+            return word.upper() if len(word) <= 4 else word
     return ""
 
 
@@ -1223,9 +1304,8 @@ def matches_player(title, player, aspects=None):
     """True when the listing is about this player.
 
     The full name in the title or in the Player/Athlete specific is enough on
-    its own. The surname alone, or the first name alone (how sellers often
-    title a Federer or a Serena), counts only when the listing also says
-    tennis somewhere -- a bare "Williams" could be any sport."""
+    its own. The surname alone counts only when the listing also says tennis
+    somewhere -- a bare "Williams" could be any sport."""
     tokens = player.lower().split()
     if not tokens:
         return False
@@ -1237,10 +1317,13 @@ def matches_player(title, player, aspects=None):
             v = str(value).lower()
             if all(tok in v for tok in tokens):
                 return True
+    # The surname alone counts when the listing also says tennis. The first
+    # name alone never does: "2025 Topps Royalty UFC Benoit Saint Denis" was
+    # recorded as Denis Shapovalov on 17 Sep that way.
     if len(tokens) > 1:
-        for part in (tokens[-1], tokens[0]):
-            if len(part) >= 3 and re.search(rf"\b{re.escape(part)}\b", title_lower):
-                return is_tennis_listing(title, aspects)
+        part = tokens[-1]
+        if len(part) >= 3 and re.search(rf"\b{re.escape(part)}\b", title_lower):
+            return is_tennis_listing(title, aspects)
     return False
 
 
@@ -1431,6 +1514,8 @@ def cursor_high_water(entry, fingerprint):
 def scan_cursor_key(player, brand_kw, min_price, max_price, listing_types):
     scope = {
         "player": player or "*", "brand": brand_kw,
+        # the search text itself: change it and every mark is stale
+        "query": wide_query(brand_kw) if player is None else "",
         "minPrice": min_price, "maxPrice": max_price,
         "listingTypes": sorted(listing_types or []),
         "marketplace": MARKETPLACE_ID, "category": EBAY_CATEGORY_ID,
@@ -1611,6 +1696,8 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
         # spreadsheet keeps the row, so nothing found is ever lost.
         if looks_custom(cell(row, "Card Description"), set_name):
             continue
+        if other_sport_in_title(cell(row, "Card Description")):
+            continue
         price = cell(row, "Price")
         number = re.search(r"\d[\d,]*(?:\.\d+)?", price)
         cards.append({
@@ -1706,6 +1793,7 @@ def judge_listing(item, detail, player=None, rules=None):
         return "filtered", f"not a {player} card", None
 
     manufacturer, set_name = get_manufacturer_and_set(aspects)
+    manufacturer = resolve_manufacturer(manufacturer, set_name, title)
     photos = [(detail.get("image") or {}).get("imageUrl") or (item.get("image") or {}).get("imageUrl") or ""]
     photos += [img.get("imageUrl") for img in (detail.get("additionalImages") or []) if img.get("imageUrl")]
     ok, reason = is_licensed_and_allowed_brand(title, manufacturer, set_name, aspects)
@@ -1726,7 +1814,7 @@ def judge_listing(item, detail, player=None, rules=None):
     # marks rather than rejects -- a wrong card is one glance to dismiss, a
     # missed one is gone for good. Recording the sport is what will settle
     # whether this can ever become a rejection.
-    sport = sport_named(aspects)
+    sport = sport_named(aspects) or other_sport_in_title(title)
     if not is_tennis_listing(title, aspects):
         if sport:
             # The listing was asked and answered: this is somebody else's
@@ -1969,6 +2057,13 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                     triage = [(item, seen.get(item.get("itemId")))
                               for item in window if item.get("itemId")]
                     checked += len(triage)
+                    for item, earlier in triage:
+                        if earlier is None:
+                            reason = settled_by_title(item.get("title", ""))
+                            if reason:
+                                seen[item["itemId"]] = {"verdict": "reject", "reason": reason}
+                                emit("reject", title=item.get("title", ""), reason=reason)
+                    triage = [(item, seen.get(item["itemId"])) for item, _ in triage]
                     details = get_item_details(
                         token, [item["itemId"] for item, earlier in triage
                                 if state_verdict(earlier) not in ("match", "reject")
@@ -1998,7 +2093,9 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                             log.info("REJECT (%s): %s", reason, title)
                             emit("reject", title=title, reason=reason)
                             if verdict == "reject":
-                                seen[item_id] = "reject"
+                                # the reason is kept, so "why was my card
+                                # passed over?" can be answered from the file
+                                seen[item_id] = {"verdict": "reject", "reason": reason}
                             else:
                                 seen[item_id] = {"verdict": "filtered", "rules": rule_key,
                                                  "reason": reason}
@@ -2042,8 +2139,8 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
 
                 # Retry a query next run if even one listing detail was missing;
                 # otherwise persist its newest successfully processed timestamp.
-                if (write_outputs and not cancelled and next_high_water["value"]
-                        and failed == failed_before_query):
+                if (write_outputs and player is None and not cancelled
+                        and next_high_water["value"] and failed == failed_before_query):
                     cursors[cursor_key] = {"newest": next_high_water["value"],
                                            "rules": rule_key}
 
