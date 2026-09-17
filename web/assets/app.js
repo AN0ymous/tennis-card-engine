@@ -1203,6 +1203,10 @@ function renderMatches() {
     area.append(noteLine("The last scan found "
       + `${state.matches.length} new card${state.matches.length === 1 ? "" : "s"}, `
       + "but none of them match the filters below."));
+  } else if (state.config && state.config.lastRunOk === false) {
+    area.append(noteLine("Nothing new, because the last scan failed before it could look: "
+      + "eBay refused its calls, or the run was cut short. The GitHub Actions run says "
+      + "which. Everything found so far is below."));
   } else {
     area.append(noteLine("Nothing new. Every listing on eBay right now has already "
       + "been judged on an earlier scan, so there was nothing left to add \u2014 which is "
@@ -1484,12 +1488,17 @@ function setGithubToken(token) {
 
 function enterHostedMode(c) {
   const pill = $("status-pill");
-  pill.textContent = c.lastRun ? `Last scan ${c.lastRun}` : "Hosted";
-  pill.className = "pill is-ok";
+  // #18 publishes the results of a run that failed, so lastRun alone would
+  // dress a burnt allowance or a cut-short run as a quiet day
+  const failed = c.lastRunOk === false;
+  pill.textContent = c.lastRun ? `${failed ? "Last scan failed" : "Last scan"} ${c.lastRun}` : "Hosted";
+  pill.className = failed ? "pill is-warn" : "pill is-ok";
   document.body.classList.add("is-hosted");
   $("stop-btn").hidden = true;
   $("download-btn").hidden = !c.spreadsheetExists;
-  stopHostedProgress(c.lastRun ? `Last scan finished ${c.lastRun}.` : "Idle.");
+  stopHostedProgress(!c.lastRun ? "Idle."
+    : failed ? `The last scan, ${c.lastRun}, failed on GitHub; the run there says why.`
+    : `Last scan finished ${c.lastRun}.`);
 
   const run = $("run-btn");
   run.onclick = (e) => { e.stopImmediatePropagation(); onHostedRun(c); };

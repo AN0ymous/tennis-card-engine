@@ -32,6 +32,9 @@ config.update({
     "credentials": True,                     # the run on GitHub has them
     "spreadsheetExists": os.path.exists(xlsx),
     "lastRun": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+    # scan.yml passes the engine step's outcome; unset when run by hand, which
+    # means the scan just finished in front of you and you already know
+    "lastRunOk": os.environ.get("SCAN_OUTCOME", "success") == "success",
     "repo": os.environ.get("GITHUB_REPOSITORY", ""),
     "workflow": "scan.yml",
 })

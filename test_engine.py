@@ -1252,5 +1252,47 @@ class AnAddedChipCanBeTakenOut(unittest.TestCase):
         self.assertIn("SEARCHES[group].key", body)
 
 
+class AFailedRunIsNotDressedAsAQuietDay(unittest.TestCase):
+    """#18 exports and commits even when the engine failed, so the results
+    it saved survive; #20 makes a run that could check nothing fail. Between
+    them, a burnt allowance published a fresh lastRun and the page reloaded
+    into "Nothing new ... which is normal". The export now records the
+    outcome and the page says so."""
+
+    def export(self, outcome):
+        import subprocess, sys
+        with tempfile.TemporaryDirectory() as folder:
+            for name in ("tennis_card_engine.py", "export_static.py"):
+                with open(os.path.join(HERE, name)) as src, open(os.path.join(folder, name), "w") as dst:
+                    dst.write(src.read())
+            env = {k: v for k, v in os.environ.items()
+                   if k not in ("EBAY_CLIENT_ID", "EBAY_CLIENT_SECRET", "ANTHROPIC_API_KEY")}
+            if outcome is not None:
+                env["SCAN_OUTCOME"] = outcome
+            subprocess.run([sys.executable, "export_static.py", "out"], cwd=folder, env=env,
+                           capture_output=True, text=True, timeout=60)
+            with open(os.path.join(folder, "out", "config.json")) as f:
+                return json.load(f)
+
+    def test_the_export_records_the_engine_outcome(self):
+        self.assertIs(self.export("failure")["lastRunOk"], False)
+        self.assertIs(self.export("cancelled")["lastRunOk"], False)
+        self.assertIs(self.export("success")["lastRunOk"], True)
+        self.assertIs(self.export(None)["lastRunOk"], True, "run by hand: no outcome means fine")
+
+    def test_the_workflow_hands_the_outcome_over(self):
+        with open(os.path.join(HERE, ".github", "workflows", "scan.yml")) as f:
+            yml = f.read()
+        self.assertIn("        id: engine\n", yml)
+        self.assertIn("SCAN_OUTCOME: ${{ steps.engine.outcome }}", yml)
+
+    def test_the_page_says_failed_rather_than_quiet(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            js = f.read()
+        self.assertIn('c.lastRunOk === false', js.split("function enterHostedMode")[1].split("\nfunction ")[0])
+        self.assertIn("state.config.lastRunOk === false", js.split("function renderMatches")[1].split("\nfunction ")[0])
+        self.assertIn("Last scan failed", js)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
