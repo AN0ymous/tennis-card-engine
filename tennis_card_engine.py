@@ -787,8 +787,23 @@ def get_item_detail(token, item_id):
 
 
 # Set False for the rest of the process the first time eBay says it has no
-# bulk item endpoint, so a scan stops paying for a call that cannot work.
+# bulk item endpoint, or does not offer it to this keyset, so a scan stops
+# paying for a call that cannot work. Run 42 on 17 Sep: three batch status
+# calls, all turned away, and not one of the 55 wrongly "ended" statuses
+# repaired -- the old code fell back to single calls without a word, and
+# every batch call ever made may have been the same wasted call.
 _bulk_details_supported = True
+_bulk_refusal_said = False
+
+
+def _say_bulk_refused(what):
+    """Once per process: a refused batch is worth one line in the run log,
+    not one per batch."""
+    global _bulk_refusal_said
+    if not _bulk_refusal_said:
+        _bulk_refusal_said = True
+        say(f"eBay refused a bulk item call ({what}); the listings in it keep "
+            "their last reading and are asked about again next run")
 
 # Judging never batches. Measured 17 Sep: eBay's getItems hands back the item
 # specifics the judge reads for about 4 listings in 100, so a batch of 20
@@ -819,20 +834,25 @@ def _bulk_item_details(token, item_ids):
             timeout=30,
         )
     except requests.RequestException as exc:
-        log.warning("Bulk item details failed for %d id(s): %s", len(item_ids), exc)
+        _say_bulk_refused(f"the call failed: {exc}")
         return REFUSED
-    if resp.status_code in (400, 404, 405):
-        # not there, or not there in this form: stop asking for this process
+    if resp.status_code in (400, 403, 404, 405):
+        # not there, not there in this form, or not offered to this keyset
+        # (eBay lists getItems as a limited release): stop asking for this
+        # process and let the single calls, which do work, take over. Said
+        # out loud, with eBay's own words, so the run log settles which it is.
         _bulk_details_supported = False
-        log.warning("Bulk item details unavailable (HTTP %s); falling back to one call per "
-                    "listing for the rest of this run: %s", resp.status_code, resp.text[:200])
+        say(f"eBay does not answer the bulk item call for this keyset (HTTP "
+            f"{resp.status_code}: {resp.text[:200]}); checking listings one at a "
+            "time for the rest of this run")
         return {}
     if resp.status_code != 200:
-        log.warning("Bulk item details failed: %s %s", resp.status_code, resp.text[:200])
+        _say_bulk_refused(f"HTTP {resp.status_code}: {resp.text[:200]}")
         return REFUSED
     try:
         items = resp.json().get("items") or []
     except ValueError:
+        _say_bulk_refused("the answer was not JSON")
         return REFUSED
     return {entry["itemId"]: entry for entry in items if entry.get("itemId")}
 
@@ -1088,11 +1108,15 @@ def status_fresh(entry, now, within=None):
     return (now - checked.replace(tzinfo=timezone.utc)).total_seconds() < within
 
 
-def refresh_statuses(token, item_ids, previous=None, fresh_within=None):
+def refresh_statuses(token, item_ids, previous=None, fresh_within=None, report=None):
     """Check the listings named; settled ones keep their reading, fresh ones
     are not asked about again, and a listing eBay refused to answer for
-    keeps its last reading rather than being called ended."""
+    keeps its last reading rather than being called ended. `report`, when a
+    dict is given, is filled with how many were asked about, refused and
+    found gone, so the export can say what happened."""
     statuses = dict(previous or {})
+    if report is not None:
+        report.update(asked=0, refused=0, gone=0)
     now = datetime.now(timezone.utc)
     stale = [i for i in dict.fromkeys(item_ids)
              if i and not status_settled(statuses.get(i))
@@ -1104,13 +1128,17 @@ def refresh_statuses(token, item_ids, previous=None, fresh_within=None):
     refused = set()
     details = get_item_details(token, stale, require=None, failures=refused)
     stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    gone = 0
     for item_id in stale:
         if item_id in refused:
             statuses[item_id] = statuses.get(item_id) or {"status": "unknown", "checkedAt": stamp}
         elif item_id not in details:
             statuses[item_id] = {"status": "ended", "gone": True, "checkedAt": stamp}
+            gone += 1
         else:
             statuses[item_id] = status_from_detail(details[item_id])
+    if report is not None:
+        report.update(asked=len(stale), refused=len(refused), gone=gone)
     return statuses
 
 
@@ -2417,9 +2445,13 @@ def main():
     if summary:
         # where the calls went, so the next saving can be decided on numbers
         print(f"Detail calls: {summary.get('fetched', 0)}; settled from the search result "
-              f"with no call: {summary.get('settled', 0)}; already judged: {summary.get('judged', 0)}.")
+              f"with no call: {summary.get('settled', 0)}; already judged: {summary.get('judged', 0)}; "
+              f"already recorded: {summary.get('known', 0)}.")
         for reason, n in summary.get("reasons") or []:
             print(f"  turned away: {n:>5}  {reason}")
+        if summary.get("failed"):
+            say(f"eBay refused {summary['failed']} detail call(s); those listings are tried "
+                "again next run, and the mark of each set they sit in was held back")
     print(f"Added {len(new_match_records)} new qualifying listing(s) to {OUTPUT_XLSX}.")
     if not new_match_records:
         print("No new matches this run -- that's normal, keep it scheduled and it'll catch new listings as they post.")
