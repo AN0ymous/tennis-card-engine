@@ -1340,6 +1340,22 @@ def filtered_for_rules(entry, fingerprint):
             and entry.get("rules") == fingerprint)
 
 
+def cursor_high_water(entry, fingerprint):
+    """The timestamp a search may safely resume from, or "" to walk the lot.
+
+    A cursor means "everything older than this has already been judged" -- but
+    that is only true of the rules in force when it was written. Widen the
+    print-run ceiling, or ask for a card type that was turned down before, and
+    every listing below the mark needs judging again. So the fingerprint is
+    stored with the mark and the mark is trusted only while it matches.
+    Re-walking costs search pages alone: seen_items.json still answers for
+    every listing already judged, so no detail call is paid twice.
+    """
+    if isinstance(entry, dict) and entry.get("rules") == fingerprint:
+        return entry.get("newest") or ""
+    return ""                     # changed rules, or a cursor from an older format
+
+
 def scan_cursor_key(player, brand_kw, min_price, max_price, listing_types):
     scope = {
         "player": player or "*", "brand": brand_kw,
@@ -1567,14 +1583,17 @@ def judge_listing(item, detail, player=None, rules=None):
     """Every rule in one place. Returns (verdict, reason, fields): verdict is
     'match', 'reject' (for a reason that cannot change, so the listing need
     never be fetched again) or 'filtered' (turned down by an adjustable
-    filter: ceiling, price, type, grading, listing type). fields carry what a
-    match needs recorded."""
+    filter: which player was asked for, ceiling, price, type, grading, listing
+    type). fields carry what a match needs recorded."""
     rules = rules or {}
     title = item.get("title", "")
     aspects = aspects_of(detail)
 
     if player and not matches_player(title, player, aspects):
-        return "reject", f"not a {player} card", None
+        # Not a permanent verdict: it says this card is not the player *this
+        # search asked for*. Recorded against the player in the fingerprint, so
+        # a later scan for somebody else, or for everyone, judges it afresh.
+        return "filtered", f"not a {player} card", None
 
     manufacturer, set_name = get_manufacturer_and_set(aspects)
     photos = [(detail.get("image") or {}).get("imageUrl") or (item.get("image") or {}).get("imageUrl") or ""]
@@ -1774,7 +1793,6 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
     token = get_ebay_token()
     seen = load_state(state_path)
     cursors = load_state(cursor_path)
-    rule_key = rules_fingerprint(rules)
     wb, ws = load_or_create_sheet(xlsx_path)
 
     total_queries = len(targets) * len(brand_keywords)
@@ -1797,11 +1815,16 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
 
             query_index += 1
             label = player or "All players"
+            # The player belongs in the fingerprint: "not a Federer card" is a
+            # verdict about the search, not about the card, so it must not
+            # carry over to a scan that asked for somebody else or for everyone.
+            rule_key = rules_fingerprint(dict(rules, player=player))
             emit("query", player=label, brand=brand_kw,
                  index=query_index, total=total_queries)
 
             cursor_key = scan_cursor_key(player, brand_kw, min_price, max_price, listing_types)
-            high_water = cursors.get(cursor_key, "") if write_outputs and player is None else ""
+            high_water = (cursor_high_water(cursors.get(cursor_key), rule_key)
+                          if write_outputs and player is None else "")
             next_high_water = {"value": ""}
             failed_before_query = failed
 
@@ -1904,7 +1927,8 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
             # otherwise persist its newest successfully processed timestamp.
             if (write_outputs and not cancelled and next_high_water["value"]
                     and failed == failed_before_query):
-                cursors[cursor_key] = next_high_water["value"]
+                cursors[cursor_key] = {"newest": next_high_water["value"],
+                                       "rules": rule_key}
 
         if cancelled:
             break
@@ -1921,15 +1945,49 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
     return new_match_records, checked
 
 
-def main():
-    brand_keywords = list(DEFAULT_BRAND_KEYWORDS)
+def _env_list(name):
+    """A comma-separated workflow input as a list; empty means "no preference"."""
+    return [part.strip() for part in (os.environ.get(name) or "").split(",") if part.strip()]
+
+
+def _env_number(name):
+    """A numeric workflow input, or None when it is unset or not a number."""
     try:
-        new_match_records, checked = run_scan(None if SCAN_ALL_PLAYERS else PLAYERS,
-                                              brand_keywords)
+        return float((os.environ.get(name) or "").strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def scan_options_from_env():
+    """Settings for one run, as the website sends them when it starts a scan on
+    GitHub. Everything is optional: an unset input leaves the engine default,
+    so the scheduled scan behaves exactly as it always has."""
+    players = _env_list("SCAN_PLAYERS")
+    brands = [b for b in _env_list("SCAN_BRANDS") if b in DEFAULT_BRAND_KEYWORDS]
+    inclusive = (os.environ.get("SCAN_PRINT_RUN_INCLUSIVE") or "").strip().lower()
+    return {
+        "players": players or (None if SCAN_ALL_PLAYERS else PLAYERS),
+        "brand_keywords": brands or list(DEFAULT_BRAND_KEYWORDS),
+        "max_print_run": int(_env_number("SCAN_MAX_PRINT_RUN") or 0) or None,
+        "print_run_inclusive": True if inclusive in ("true", "1", "yes") else None,
+        "min_price": _env_number("SCAN_MIN_PRICE"),
+        "max_price": _env_number("SCAN_MAX_PRICE"),
+        "listing_types": [t for t in _env_list("SCAN_LISTING_TYPES") if t in LISTING_TYPES],
+        "card_types": [t for t in _env_list("SCAN_CARD_TYPES") if t in CARD_TYPES],
+        "conditions": [c for c in _env_list("SCAN_CONDITIONS") if c in CONDITIONS],
+    }
+
+
+def main():
+    options = scan_options_from_env()
+    brand_keywords = options["brand_keywords"]
+    players = options["players"]
+    try:
+        new_match_records, checked = run_scan(**options)
     except EngineError as e:
         sys.exit(f"ERROR: {e}")
 
-    scope = "all players" if SCAN_ALL_PLAYERS else f"{len(PLAYERS)} players"
+    scope = "all players" if not players else f"{len(players)} players"
     print(f"Checked {checked} listings across {scope} x {len(brand_keywords)} sets.")
     print(f"Added {len(new_match_records)} new qualifying listing(s) to {OUTPUT_XLSX}.")
     if not new_match_records:
