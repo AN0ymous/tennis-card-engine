@@ -910,5 +910,46 @@ class ScanSettingsReachTheEngine(unittest.TestCase):
                             f"app.js never sends {declared}")
 
 
+class ThePanelAnswersBothQuestions(unittest.TestCase):
+    """The page shows "what's new" and "what matches my filters" separately.
+
+    Showing only new finds made every scan look like a failure and made the
+    filters look broken: once a listing is judged it is never a new find
+    again, so no filter setting can put an already-recorded card there.
+    """
+
+    def js(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            return f.read()
+
+    def test_the_board_carries_the_whole_record(self):
+        """The lower section is the whole spreadsheet, filtered, so the board
+        must not stop at the newest handful."""
+        self.assertGreaterEqual(engine.BOARD_LIMIT, 500)
+        xlsx = os.path.join(HERE, "results", engine.OUTPUT_XLSX)
+        if os.path.exists(xlsx):
+            rows = engine.item_ids_in_spreadsheet(xlsx)
+            board = engine.build_board(xlsx)
+            self.assertGreaterEqual(len(board) + 2, min(len(rows), engine.BOARD_LIMIT),
+                                    "the board is dropping recorded cards")
+
+    def test_both_sections_are_rendered(self):
+        js = self.js()
+        self.assertIn('sectionHead("New this scan"', js)
+        self.assertIn('sectionHead("Everything found so far"', js)
+
+    def test_the_lower_section_reads_the_whole_board(self):
+        js = self.js()
+        self.assertIn("state.board.filter(passesFilters)", js)
+        self.assertIn("state.matches.filter(passesFilters)", js)
+
+    def test_no_new_cards_is_no_longer_reported_as_a_dead_end(self):
+        """The old wording read as a failed scan. It has to say why nothing is
+        new, and that the filters are not the reason."""
+        js = self.js()
+        self.assertNotIn("The latest scan found no new cards", js)
+        self.assertIn("already", js)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

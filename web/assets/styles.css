@@ -643,6 +643,18 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
 .allowance-bar.is-low { background: linear-gradient(90deg, #B4341F, #E0642C); }
 .allowance .hint { margin-top: 8px; }
 
+/* ---------- a heading inside the results panel ---------- */
+.section-head {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 18px 20px 0;
+}
+.section-head h3 {
+  font-size: 11px; letter-spacing: .2em; text-transform: uppercase;
+  margin: 0 auto 0 0; color: var(--ink-2); font-weight: 600;
+}
+.section-head + .matchgrid { padding-top: 14px; }
+.section-head + .empty p { text-align: left; margin-left: 0; }
+
 /* ---------- match grid ---------- */
 .matchgrid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));

@@ -385,11 +385,12 @@ class Handler(SimpleHTTPRequestHandler):
         except (json.JSONDecodeError, OSError):
             return []
 
-    def _board(self, limit=24):
+    def _board(self, limit=None):
         if engine is None:
             return []
         return engine.build_board(self._data_path(engine.OUTPUT_XLSX),
-                                  self._data_path(engine.NEW_MATCHES_FILE), limit)
+                                  self._data_path(engine.NEW_MATCHES_FILE),
+                                  limit or engine.BOARD_LIMIT)
 
     def _spreadsheet(self):
         name = engine.OUTPUT_XLSX if engine else "tennis_cards_verified.xlsx"

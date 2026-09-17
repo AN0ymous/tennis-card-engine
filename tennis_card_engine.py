@@ -1487,7 +1487,13 @@ def send_digest_email(matches):
 # the static export the scheduled run publishes.
 # ============================================================================
 
-def build_board(xlsx_path, matches_path=None, limit=24):
+# The page shows the whole record, filtered, not just the newest handful, so
+# the board carries every recorded card. At roughly 780 bytes a card that is
+# about 390KB at the ceiling; revisit if the spreadsheet ever approaches it.
+BOARD_LIMIT = 500
+
+
+def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
     if not os.path.exists(xlsx_path):
         return []
     images = {}

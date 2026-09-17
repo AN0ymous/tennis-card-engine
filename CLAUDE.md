@@ -94,9 +94,20 @@ on a website.
    visible in hosted mode whether or not a scan is running; when idle it says
    when the last scan finished. The activity log stays hidden there, since
    GitHub sends no per-listing events.
-4. **Matches section fallback:** when the latest scan's `new_matches.json` is
-   empty, show the board's recent cards with "The latest scan found no new
-   cards"; show example cards only when nothing has ever been found.
+4. **The Matches panel is two sections, because there are two questions.**
+   "New this scan" is what the last scan added, and it is empty most of the
+   time: once a listing is judged it is never a new find again, so a scan
+   minutes after the last one correctly adds nothing. "Everything found so
+   far" is the whole record, filtered, and it responds the moment a filter
+   changes with no scan needed. Until 17 Sep the panel showed only new finds,
+   which made every scan read as a failure and made the filters look broken --
+   no filter setting can put an already-recorded card in a list of new ones.
+   The empty state now says why nothing is new and that the filters are not
+   the reason. Example cards show only when nothing has ever been found.
+   `BOARD_LIMIT` (500) is what the lower section can show; the board was
+   capped at 24 while the spreadsheet held 54, so most of the record never
+   reached the page. At roughly 780 bytes a card that ceiling is about 390KB
+   -- revisit if the spreadsheet approaches it.
 5. **eBay calls today.** A small meter under the progress bar, from eBay's own
    Developer Analytics figures. The eBay keys never reach the browser: the
    scheduled run writes `results/usage.json` after each scan, and `py
@@ -106,6 +117,16 @@ on a website.
    is drawn, not a secret kept** -- the repo is public, so `results/usage.json`
    is published with the page and anyone who looks can read it. It holds
    counts only, never a key. Locally it is always shown.
+
+## Why a scan usually adds nothing, and why that is right
+
+`seen_items.json` held 5,635 judged listings on 17 Sep -- 5,577 permanent
+rejects, 56 matches, 2 filtered -- against roughly 4,840 listings live across
+the seven sets. So nearly everything on eBay has already been judged, and a
+scan started now correctly adds nothing: a card already recorded is reported
+as `known`, not as a new match. The engine is working when it says "Added 0
+new qualifying listing(s)". Judge a scan by the "Checked N listings" line and
+by the lower section of the Matches panel, not by whether anything was new.
 
 ## Open items
 
