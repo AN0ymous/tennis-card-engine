@@ -344,6 +344,19 @@ and the one-time full re-walk after the cursor format changed happened at run
   serial is still fetched, because the specifics may carry one). A first-time
   player scan still costs roughly one call per listing eBay returns for the
   name, so a common surname is expensive.
+- **A reject is only as permanent as its rule.** A reject carries the
+  `JUDGE_VERSION` it was made under. When a permanent rule changes in a way
+  that could reverse old rejects, bump the version and name the old reason's
+  opening words in `RECONSIDER_REASONS`; those rejects, and only those, are
+  judged again when a walk next reaches them -- free where the title settles
+  it, one call otherwise. Version 2 reconsiders "manufacturer not in
+  allow-list" (a blank or line-named maker now reads off the title). A reject
+  from before 17 Sep is a bare string with no reason: it is reconsidered only
+  when the title in front of the scan carries a bookend serial, the one case
+  that could be a match; a bare reject whose title has no serial stays, and
+  that slice of the backlog (specifics-only serials, 1 of 71 recorded
+  matches) is the price of not re-fetching thousands. Old rejects are only
+  reached by the forced full walk after a query change and by player scans.
 - **A reject keeps its reason** in `seen_items.json` (`{"verdict": "reject",
   "reason": ...}`; older entries are the bare string). To see why a listing
   was passed over, take the number from its eBay URL (`/itm/336797712136`)
