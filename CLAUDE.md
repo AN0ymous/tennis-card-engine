@@ -203,6 +203,33 @@ Done since these notes were written: `app.js` confirmed on `main` (the Matches
 fallback works), `scan.yml`'s six-hourly comment corrected, and `test_engine.py`
 added -- run `py test_engine.py` before pushing engine changes.
 
+## Durability
+
+- **A run keeps what it earned, however it ends.** `run_scan` writes the
+  spreadsheet, `seen_items.json`, the cursors and `new_matches.json` from a
+  `finally`, each one separately, so one failure cannot take the others with
+  it. Before this everything was held in memory until the last line, and a
+  stumble -- a bad eBay response, the workflow's 60-minute timeout -- threw
+  away both the matches found and the record of every listing judged, which
+  the next scan then paid eBay to judge again.
+- **`scan.yml` exports and commits with `if: always()`.** Those saved files
+  live on the runner; skipping the later steps on a failure would throw them
+  away, which is what the saving was for. The run still shows red.
+- **State files are written beside themselves and swapped in**
+  (`write_json_atomically`, using `os.replace`, which is atomic on Windows
+  too). A kill mid-write used to leave half a document where the real file
+  was. `load_state` now treats a file it cannot parse as no memory at all and
+  keeps the bad copy as `.unreadable`; it used to raise, and since `main()`
+  catches only `EngineError` that killed every later run until the file was
+  deleted by hand.
+- **A digest email that will not send is a warning, not a failed scan.** It is
+  sent after the scan has already saved, so raising there exited non-zero and
+  stopped the steps that publish and commit -- losing a good scan over an
+  email. Dormant until the `DIGEST_*` secrets are set, which is why it went
+  unnoticed.
+- `say()` prints warnings to stderr as well as the log, because
+  `engine_run.log` lives only on the runner and goes away with it.
+
 ## Things to keep in mind
 
 - eBay Browse API default limit is about 5,000 calls a day, shared by GitHub

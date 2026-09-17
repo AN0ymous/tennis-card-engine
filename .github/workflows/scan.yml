@@ -94,6 +94,12 @@ jobs:
         run: python tennis_card_engine.py
 
       - name: Export what the hosted site reads
+        # always(): the engine now saves what it earned even when it stumbles,
+        # but those files live on the runner. If this step were skipped on a
+        # failure they would be thrown away with it, which is exactly what the
+        # saving was for. A part-finished scan is worth keeping; the run still
+        # shows red so the failure is not hidden.
+        if: always()
         env:
           EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
           EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
@@ -103,6 +109,7 @@ jobs:
         run: python export_static.py results
 
       - name: Keep the results in the repo
+        if: always()
         run: |
           git config user.name  "tennis-card-engine"
           git config user.email "tennis-card-engine@users.noreply.github.com"

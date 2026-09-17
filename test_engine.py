@@ -14,6 +14,8 @@ tests below run against those too.
 
 import os
 import json
+import shutil
+import smtplib
 import tempfile
 import unittest
 import urllib.parse
@@ -1063,6 +1065,114 @@ class TheScanSetupIsTheFilter(unittest.TestCase):
             yml = f.read()
         self.assertIn("assets/app.js?v=", yml)
         self.assertIn("assets/styles.css?v=", yml)
+
+
+
+class SurvivesABadDay(unittest.TestCase):
+    """What a run keeps when something goes wrong partway through."""
+
+    def setUp(self):
+        self.work = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.work, True)
+
+    def test_a_half_written_memory_file_does_not_stop_the_engine(self):
+        """A kill mid-write used to leave invalid JSON, and load_state raised
+        on it -- which main() does not catch, so every later run died too."""
+        path = os.path.join(self.work, "seen_items.json")
+        whole = json.dumps({f"v1|{i}|0": "reject" for i in range(200)}, indent=2)
+        with open(path, "w") as f:
+            f.write(whole[:len(whole) // 2])
+        self.assertEqual(engine.load_state(path), {})
+        self.assertTrue(os.path.exists(path + ".unreadable"),
+                        "the unreadable copy should be kept, not silently replaced")
+
+    def test_a_write_that_dies_partway_leaves_the_old_file(self):
+        path = os.path.join(self.work, "seen_items.json")
+        engine.save_state(path, {f"v1|{i}|0": "reject" for i in range(50)})
+        with open(path) as f:
+            before = f.read()
+
+        real_dump = json.dump
+
+        def dies_partway(data, fp, **kw):
+            fp.write(json.dumps(data, **kw)[:200])     # half a document, on disk
+            raise RuntimeError("killed mid-write")
+
+        json.dump = dies_partway
+        try:
+            with self.assertRaises(RuntimeError):
+                engine.save_state(path, {f"v1|{i}|0": "match" for i in range(50)})
+        finally:
+            json.dump = real_dump
+        with open(path) as f:
+            self.assertEqual(f.read(), before, "the real file was damaged")
+        self.assertEqual(len(engine.load_state(path)), 50)
+
+    def test_a_scan_that_dies_partway_still_saves_what_it_found(self):
+        """Everything used to be held in memory until the last line, so a
+        stumble threw away the matches AND the record of listings judged --
+        which the next scan then paid eBay to judge all over again."""
+        fake = FakeEbay(200)
+        real_get, real_token = requests.get, engine.get_ebay_token
+        real_base, real_cap = engine._BASE_DIR, engine.MAX_RESULTS_PER_BRAND
+        calls = {"n": 0}
+
+        # 200 listings arrive in one search call, then go through the judge a
+        # windowful at a time: 8 batch calls for the first 160, 2 for the rest.
+        # Blowing up on call 10 lands after the first window has been judged
+        # and recorded, which is the work this test is about keeping.
+        def blows_up_partway(*a, **kw):
+            calls["n"] += 1
+            if calls["n"] > 9:
+                raise RuntimeError("eBay said something unexpected")
+            return fake.get(*a, **kw)
+
+        requests.get = blows_up_partway
+        engine.get_ebay_token = lambda: "tok"
+        engine._BASE_DIR = self.work
+        engine.MAX_RESULTS_PER_BRAND = 200
+        try:
+            with self.assertRaises(RuntimeError):
+                engine.run_scan(players=None, brand_keywords=["Topps Chrome"],
+                                write_outputs=True)
+        finally:
+            requests.get, engine.get_ebay_token = real_get, real_token
+            engine._BASE_DIR, engine.MAX_RESULTS_PER_BRAND = real_base, real_cap
+
+        for name in (engine.OUTPUT_XLSX, engine.STATE_FILE, engine.NEW_MATCHES_FILE):
+            with self.subTest(file=name):
+                self.assertTrue(os.path.exists(os.path.join(self.work, name)),
+                                f"{name} was thrown away")
+        self.assertGreater(len(engine.load_state(os.path.join(self.work, engine.STATE_FILE))), 0,
+                           "no listing verdicts were kept, so the next scan pays for them again")
+
+
+class DigestEmail(unittest.TestCase):
+    """The email is sent after the scan has already succeeded and saved."""
+
+    MATCH = [{"player": "T", "manufacturer": "Topps", "set_name": "Topps Graphite",
+              "title": "a card", "serial": "1/10", "bookend": "001 of 10",
+              "price": "10.00 USD", "link": "https://www.ebay.com/itm/1",
+              "image": "", "found": "now"}]
+
+    def test_a_send_that_fails_does_not_take_the_scan_down(self):
+        """Raising here exits non-zero, and on GitHub that stops the steps that
+        publish and commit the results -- losing a good scan over an email."""
+        real_smtp = smtplib.SMTP
+        os.environ.update(DIGEST_FROM_EMAIL="a@b.c", DIGEST_FROM_APP_PASSWORD="pw",
+                          DIGEST_TO_EMAIL="a@b.c")
+
+        class Dead:
+            def __init__(self, *a, **kw):
+                raise smtplib.SMTPAuthenticationError(535, b"auth failed")
+
+        smtplib.SMTP = Dead
+        try:
+            engine.send_digest_email(self.MATCH)      # must simply return
+        finally:
+            smtplib.SMTP = real_smtp
+            for k in ("DIGEST_FROM_EMAIL", "DIGEST_FROM_APP_PASSWORD", "DIGEST_TO_EMAIL"):
+                os.environ.pop(k, None)
 
 
 if __name__ == "__main__":
