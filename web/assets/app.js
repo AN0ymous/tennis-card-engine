@@ -1225,12 +1225,21 @@ function initials(name) {
   return name.split(/\s+/).map((w) => w[0] || "").join("").slice(0, 3).toUpperCase();
 }
 
+/* Rows recorded before the title was read for a name carry the literal
+   "Unknown player", and results/board.json keeps saying so until the next
+   scan rewrites it. Treat that as blank, so the quiet fallback shows now. */
+function namedPlayer(card) {
+  const p = (card.player || "").trim();
+  return p.toLowerCase() === "unknown player" ? "" : p;
+}
+
 function buildCard(match, index) {
+  match = { ...match, player: namedPlayer(match) };
   const card = el("button", "matchcard" + (match._example ? " is-example" : ""));
   card.type = "button";
   card.dataset.index = index;
   card.style.animationDelay = `${Math.min(index, 8) * 45}ms`;
-  card.setAttribute("aria-label", `${match.player}, ${match.serial}. Open card.`);
+  card.setAttribute("aria-label", `${match.player || "Card"}, ${match.serial}. Open card.`);
 
   const photo = el("div", "mc-photo");
   if (match.image) {
@@ -1263,7 +1272,7 @@ function buildCard(match, index) {
   card.append(photo);
 
   const body = el("div", "mc-body");
-  body.append(el("div", "mc-player", match.player));
+  body.append(el("div", "mc-player" + (match.player ? "" : " is-unnamed"), match.player || "Player not named"));
   body.append(el("div", "mc-bookend", match._example ? "Example card" : match.bookend));
   body.append(el("div", "mc-title", match.title));
   const typeLine = el("div", "mc-type", [grading(match), CARD_TYPE_LABELS[cardType(match)], listingLine(match)].filter(Boolean).join(" \u00b7 "));
@@ -1331,9 +1340,10 @@ function listedLabel(card) {
 }
 
 function buildLot(card, rank) {
+  card = { ...card, player: namedPlayer(card) };
   const lot = el("button", "lot" + (card._example ? " is-example" : ""));
   lot.type = "button";
-  lot.setAttribute("aria-label", `${rank}. ${card.player}, ${card.price}. Open card.`);
+  lot.setAttribute("aria-label", `${rank}. ${card.player || "Card"}, ${card.price}. Open card.`);
 
   const photo = el("div", "lot-photo");
   if (card.image) {
@@ -1370,7 +1380,7 @@ function buildLot(card, rank) {
     if (when) line.append(when);
     body.append(line);
   }
-  body.append(el("div", "lot-player", card.player));
+  body.append(el("div", "lot-player" + (card.player ? "" : " is-unnamed"), card.player || "Player not named"));
   body.append(el("div", "lot-set", brandLine(card)));
   lot.append(body);
 
@@ -2202,14 +2212,14 @@ function openHologram(match) {
   const isExample = !!match._example;
 
   $("holo-badge").textContent = isExample ? "Example" : "Bookend";
-  $("holo-name").textContent = match.player;
+  $("holo-name").textContent = namedPlayer(match) || "Player not named";
   $("holo-brand").textContent = brandLine(match);
   $("holo-serial").textContent = match.serial;
   $("holo-price").textContent = match.price || "\u2014";
   $("holo-monogram").textContent = initials(match.player);
 
   $("holo-back-crest").textContent = initials(match.player);
-  $("holo-back-name").textContent = match.player;
+  $("holo-back-name").textContent = namedPlayer(match) || "Player not named";
   $("holo-back-meta").textContent = brandLine(match);
   $("holo-back-serial").textContent = match.serial;
 

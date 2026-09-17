@@ -1119,15 +1119,158 @@ def extract_serial(title, aspects):
     return None, None
 
 
-PLAYER_ASPECTS = ("Player/Athlete", "Player", "Athlete", "Featured Person/Artist")
+# "Signed By" and "Autographed By" are the name eBay puts on an autograph
+# listing when the seller never fills in Player/Athlete -- 12 of 75 recorded
+# cards had a blank player, and 3 of those were signed Ace Authentic cards.
+PLAYER_ASPECTS = ("Player/Athlete", "Player", "Athlete", "Featured Person/Artist",
+                  "Signed By", "Autographed By")
+
+# Words that are never part of a player's name in a listing title: makers and
+# sets, card vocabulary, colours, graders and grades, the tournaments. Read
+# the name off a title by taking what is left standing two or three words
+# together. Reuses the engine's own lists where it has them.
+PLAYER_NOISE = set(PARALLEL_COLOURS) | set(GRADERS) | set("""
+    card cards rookie rc rcs auto autos autograph autographs autographed signed sign
+    signature signatures sig relic relics patch patches jumbo jersey memorabilia swatch
+    refractor refractors prizm sapphire base silver series edition insert parallel
+    variation variations sp ssp ssps numbered serial print run lot set sets tennis atp
+    wta tour grand slam open us french wimbledon australian champion champions winner
+    personal best career ranking national holder new mint gem mt nm grade graded slab
+    slabbed on in and the of with for from to a an logo wave crystalline shimmer active
+    metal superior museum platinum rainbow pattern style certified one only true first
+    last rare very hot hit case pack box break sealed sticker foil chrome image photo
+    picture pic plus bonus free shipping ship mens womens men women boys girls junior
+    juniors youth legend legends hof vintage modern retro throwback ltd limited
+    pair pairs dual duo trio triple combo anniv anniversary th st nd rd
+    fractor fractors superfractor xfractor frozen atomic prism mojo disco speckle
+    sparkle ray raywave lava magma aqua ice snow camo tiger zebra checker negative
+    mini diamond fireworks galaxy nebula cosmic stardust holo hologram holographic
+    sepia collection regalia decree royal prodigious ambassador influential grip
+    signings debut winners rookies stars star prospect prospects icon icons
+""".split())
+
+NAME_TOKEN_RE = re.compile(r"^[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F'\u2019-]*$")
+
+_brand_words_cache = None
 
 
-def get_player(aspects):
+def _brand_words():
+    """The makers' and sets' own words, from the lists that define them. Read
+    at call time rather than import time: DEFAULT_BRAND_KEYWORDS is defined
+    further down this file, so a module-level union would run before it exists."""
+    global _brand_words_cache
+    if _brand_words_cache is None:
+        _brand_words_cache = {w for kw in DEFAULT_BRAND_KEYWORDS + list(TENNIS_ONLY_SETS)
+                              for w in kw.lower().split()}
+    return _brand_words_cache
+
+
+def _name_like(tok, middle=False):
+    """A word that could be part of a name: letters only, not noise, not a
+    set code like GS-MKC or TRA-VJK, not RC / SSP / USA. A single letter is
+    allowed only as a middle initial (VICTORIA J KASINTSEVA)."""
+    if not NAME_TOKEN_RE.match(tok):
+        return False
+    if len(tok) == 1:
+        return middle
+    low = tok.lower()
+    if low in PLAYER_NOISE or low in _brand_words():
+        return False
+    if "-" in tok:
+        if tok.isupper():
+            return False                  # GS-MKC, TRA-VJK
+        # "Royalty-Prodigious": a set word glued to another is still the set
+        if any(part in PLAYER_NOISE or part in _brand_words() for part in low.split("-")):
+            return False
+    if len(tok) <= 3 and tok.isupper():
+        return False                      # RC, SSP, USA, UFC
+    return True
+
+
+def _as_written(tok):
+    """Keep McEnroe as McEnroe; only shouted or lower-cased words are recased."""
+    if tok.isupper() or tok.islower():
+        return tok[:1].upper() + tok[1:].lower()
+    return tok
+
+
+def player_from_title(title, known=()):
+    """The player a listing title names, or "" when it cannot be told.
+
+    A known name whose every word appears whole in the title wins outright.
+    Failing that, the title is walked for a run of two or three name-like
+    words -- letters only, none of them set, colour, grade or card vocabulary.
+    Twelve recorded cards read "Unknown player" with the name in plain sight:
+    "VINCE SPADEA \"SILVER BASE CARD 100 /100\" ACE SIGNATURE SERIES 2005",
+    "2024 Topps Graphite Tennis Daniel Rincon Rookie Blue On Card Auto 50/50".
+    A run longer than three is not trusted, since it means a noise word was
+    missed, and a title that yields nothing returns "" -- never a guess."""
+    if not title:
+        return ""
+    tl = title.lower()
+    hits = [n for n in known if n and n.strip().lower() != "unknown player"
+            and all(re.search(rf"\b{re.escape(t)}\b", tl) for t in n.lower().split())]
+    if hits:
+        return max(hits, key=len).strip()
+
+    # Whole words, with the punctuation sellers wrap them in peeled off:
+    # '"SILVER', 'Lot.', 'Relic,', 'Gauff,Jessica'. A comma splits a word so
+    # two named players stay two runs. Runs of dashes are separators, so
+    # "TENNIS----DANIIL MEDVEDEV---RELIC" yields the name; a single hyphen
+    # stays inside a word for Saint-Denis. "20th" stays one token and simply
+    # fails as a name, rather than shedding a "th" that could start one.
+    def _noise(word):
+        return word.lower() in PLAYER_NOISE or word.lower() in _brand_words()
+
+    tokens = []
+    for raw in re.sub(r"-{2,}", " ", title).split():
+        # A comma or slash between two names -- "Gauff,Jessica", "KEYS/BJORN" --
+        # is a wall between two players, so a break goes in between the pieces.
+        pieces = re.split(r"[,/]", raw)
+        for k, piece in enumerate(pieces):
+            if k:
+                tokens.append("")
+            piece = piece.strip("\"'\u2019\u201c\u201d.!?()[]{}#*:;")
+            # "Card-Elina": a card word hyphenated onto a name keeps the name and
+            # drops the word, instead of losing both. Saint-Denis has no noise
+            # part and stays whole; GS-MKC is caught later by being all caps.
+            if "-" in piece and not piece.isupper() and any(_noise(pt) for pt in piece.split("-")):
+                tokens.extend(pt for pt in piece.split("-") if pt and not _noise(pt))
+            else:
+                tokens.append(piece)
+    runs, run = [], []
+    for tok in tokens:
+        if not tok:
+            if run:
+                runs.append(run)
+            run = []
+            continue
+        if _name_like(tok) or (run and len(tok) == 1 and NAME_TOKEN_RE.match(tok)):
+            run.append(tok)
+        else:
+            if run:
+                runs.append(run)
+            run = []
+    if run:
+        runs.append(run)
+    for r in runs:
+        # a trailing lone initial is not a name ("Kayla Day J" would be odd)
+        while r and len(r[-1]) == 1:
+            r.pop()
+        if 2 <= len(r) <= 3:
+            return " ".join(_as_written(t) for t in r)
+    return ""
+
+
+def get_player(aspects, title="", known=PLAYERS):
+    """The player: eBay's own specifics first, then the title, then nothing.
+    "" rather than "Unknown player", so the page can choose how to show a
+    card whose player really is not stated instead of printing a shrug."""
     for key in PLAYER_ASPECTS:
-        values = aspects.get(key)
+        values = (aspects or {}).get(key)
         if values and str(values[0]).strip():
             return str(values[0]).strip()
-    return "Unknown player"
+    return player_from_title(title, known)
 
 
 def get_manufacturer_and_set(aspects):
@@ -1792,6 +1935,11 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
         i = col.get(name)
         return "" if i is None or i >= len(row) or row[i] is None else str(row[i]).strip()
 
+    rows = list(rows)
+    # Names already on record make the title reader surer of itself: a row
+    # whose player eBay left blank is read against every name the sheet knows.
+    known = set(PLAYERS) | {cell(r, "Player") for r in rows} - {"", "Unknown player"}
+
     cards = []
     for row in rows:
         link = cell(row, "eBay Item Link")
@@ -1812,7 +1960,10 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
         price = cell(row, "Price")
         number = re.search(r"\d[\d,]*(?:\.\d+)?", price)
         cards.append({
-            "player": cell(row, "Player") or "Unknown player",
+            # Recorded before the title was read for a name: fill it now, or
+            # leave it "" and let the page say so quietly rather than shrug.
+            "player": (cell(row, "Player") if cell(row, "Player") not in ("", "Unknown player")
+                       else player_from_title(cell(row, "Card Description"), known)),
             "manufacturer": manufacturer,
             "set_name": set_name,
             "brand": brand_of(manufacturer, set_name, cell(row, "Card Description")),
@@ -1976,7 +2127,7 @@ def judge_listing(item, detail, player=None, rules=None):
         return "filtered", f"price {price_str} outside {min_price:g}-{max_price if max_price is not None else 'open'}", None
 
     fields = {
-        "player": player or get_player(aspects),
+        "player": player or get_player(aspects, title),
         "manufacturer": manufacturer,
         "set_name": set_name,
         "card_number": card_number,

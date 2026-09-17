@@ -1778,5 +1778,103 @@ class GradesAreNotSerials(unittest.TestCase):
             "Monica Seles On Card Auto PSA 10 1/10 SSP"), set())
 
 
+
+class PlayersReadOffTheTitle(unittest.TestCase):
+    """When eBay's Player field is blank, the name is usually in the title."""
+
+    # the twelve recorded cards that read "Unknown player", and what they should say
+    RECORDED = {
+        "2013 Ace Personal Best Career Ranking Arvane Rezai 1/15 #1 Card signed auto": "Arvane Rezai",
+        'VINCE SPADEA "SILVER BASE CARD 100 /100" ACE SIGNATURE SERIES 2005': "Vince Spadea",
+        'NICOLAS MASSU "SILVER BASE CARD #001/100" ACE SIGNATURE SERIES 2005': "Nicolas Massu",
+        "2024 Topps Graphite Red Crystalline Refractor Stefanos Tsitsipas Relic Card 1/1!": "Stefanos Tsitsipas",
+        "topps graphite tennis 3 Card Kayla Day Lot. Relic, Relic Auto and 15/15": "Kayla Day",
+        "VICTORIA J KASINTSEVA 2024 TRA-VJK Topps Graphite Tour Relic autograph card 1/15": "Victoria J Kasintseva",
+        "MIOMIR KECMANOVIC 2024 GS-MKC Topps Graphite AUTOGRAPH card in new holder 1/15": "Miomir Kecmanovic",
+        "2024 Topps Graphite Tennis Daniel Rincon Rookie Blue On Card Auto 50/50 RC SP": "Daniel Rincon",
+        "2024 Topps Graphite Tennis Abdullah Shelbayh Blue On Card Rookie Auto 01/50 RC": "Abdullah Shelbayh",
+        "Mirra Andreeva 2024 Topps Royalty Tennis BASE CARD GOLD 01/10 #39 RC Russia /10": "Mirra Andreeva",
+        "2024 TOPPS ROYALTY TENNIS FERNANDA CONTRERAS ROOKIE ON CARD AUTOGRAPH GREEN 5/5": "Fernanda Contreras",
+        "2024 Topps Royalty Tennis Jamie Murray On Card Auto Relic /10 Superior Signature": "Jamie Murray",
+    }
+
+    def test_every_recorded_unknown_is_read_off_its_title(self):
+        for title, want in self.RECORDED.items():
+            with self.subTest(title=title[:50]):
+                self.assertEqual(engine.player_from_title(title), want)
+
+    def test_ebays_own_field_still_wins(self):
+        self.assertEqual(engine.get_player({"Player/Athlete": ["Iga Swiatek"]},
+                                           "2024 Topps Chrome Coco Gauff Auto 1/1"), "Iga Swiatek")
+
+    def test_signed_by_is_read_when_player_is_blank(self):
+        """The Ace Authentic autos: eBay had the name, under a different key."""
+        self.assertEqual(engine.get_player({"Signed By": ["Vince Spadea"]}, "some title"), "Vince Spadea")
+
+    def test_a_known_name_is_preferred_over_the_walk(self):
+        title = "Career Ranking Card Coco Gauff Auto 1/1"
+        self.assertEqual(engine.player_from_title(title, known=["Coco Gauff"]), "Coco Gauff")
+
+    def test_a_title_with_no_name_yields_nothing_not_a_shrug(self):
+        for title in ("2024 Topps Chrome Tennis Blue Refractor 1/25 RC",
+                      "TOPPS ROYALTY GOLD RELIC AUTO 5/5 SSP", ""):
+            with self.subTest(title=title):
+                self.assertEqual(engine.player_from_title(title), "")
+                self.assertEqual(engine.get_player({}, title), "")
+
+    def test_set_codes_and_abbreviations_are_not_names(self):
+        self.assertEqual(engine.player_from_title("GS-MKC TRA-VJK RC SSP USA 1/10"), "")
+
+    def test_an_ordinal_does_not_shed_a_false_name(self):
+        """'20th' used to split into '20' and 'th', and 'Th Anniv' came back."""
+        self.assertEqual(engine.player_from_title(
+            "NETPRO 20th Anniv 2003 Venus Williams Sealed Bag 1/1 Rookie Card With COA"),
+            "Venus Williams")
+
+    def test_a_pair_card_names_the_first_player(self):
+        """'Royalty-Prodigious Pair Coco Gauff,Jessica Pegula' once ran four words
+        together, tripped the too-long rule and fell through to Pegula."""
+        title = "2024 Topps Royalty-Prodigious Pair Coco Gauff,Jessica Pegula Dual Auto 1/25"
+        self.assertEqual(engine.player_from_title(title), "Coco Gauff")
+
+    def test_a_slash_between_two_players_names_the_first(self):
+        self.assertEqual(engine.player_from_title(
+            "2024 TOPPS ROYALTY MADISON KEYS/BJORN FRATANGELO DUAL ON CARD AUTO 1/25"), "Madison Keys")
+
+    def test_a_card_word_hyphenated_onto_a_name_keeps_the_name(self):
+        self.assertEqual(engine.player_from_title(
+            "2025 Topps Chrome Autograph Rookie Card-Elina Avanesyan #CA-EAN 1/75"), "Elina Avanesyan")
+
+    def test_two_players_with_nothing_between_them_is_no_guess(self):
+        """Four names in a row could be either player; the walk says nothing and
+        leaves it to the known-names pass, which reads the recorded name."""
+        title = "Coco Gauff Venus Williams 2025 Topps Chrome Tennis DUAL REFRACTOR 1/5"
+        self.assertEqual(engine.player_from_title(title), "")
+        self.assertEqual(engine.player_from_title(title, known=["Coco Gauff"]), "Coco Gauff")
+
+    def test_dash_runs_are_separators(self):
+        self.assertEqual(engine.player_from_title(
+            "2026 TOPPS GRAPHITE TENNIS----DANIIL MEDVEDEV---RELIC CARD---15/15"), "Daniil Medvedev")
+        self.assertEqual(engine.player_from_title(
+            "2024 Topps Royalty --DENIS SHAPOVALOV--REGALIA RELICS-10/10"), "Denis Shapovalov")
+
+    def test_insert_names_are_not_players(self):
+        self.assertEqual(engine.player_from_title(
+            "2025 Topps Chrome Yoshihito Nishioka Frozen Fractor Tennis Card 1/1"), "Yoshihito Nishioka")
+        self.assertEqual(engine.player_from_title(
+            "2024 Topps Royalty Collection MONICA SELES ROYAL DECREE ON CARD AUTO 1/10"), "Monica Seles")
+
+    def test_mixed_case_is_kept_as_written(self):
+        self.assertEqual(engine.player_from_title("2024 Topps Chrome John McEnroe Auto 1/5"), "John McEnroe")
+
+    def test_the_board_fills_the_blank_players(self):
+        xlsx = os.path.join(HERE, "results", engine.OUTPUT_XLSX)
+        if not os.path.exists(xlsx):
+            self.skipTest("no results/tennis_cards_verified.xlsx yet -- run a scan first")
+        board = engine.build_board(xlsx)
+        self.assertNotIn("Unknown player", {c["player"] for c in board},
+                         "the board still shows the old shrug")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

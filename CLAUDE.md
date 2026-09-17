@@ -94,6 +94,24 @@ on a website.
   specific names another sport is rejected outright, and a listing that states
   nothing is kept with a "check by eye" caution. A wrong card is one glance to
   dismiss; a missed one is gone for good.
+- **A card's player is read off the title when eBay's field is blank.**
+  12 of 75 recorded cards read "Unknown player" with the name in plain sight
+  ("VINCE SPADEA \"SILVER BASE CARD 100 /100\" ACE SIGNATURE SERIES 2005").
+  `get_player` now tries eBay's specifics (including `Signed By` and
+  `Autographed By`, the keys an autograph listing carries when Player/Athlete
+  is empty), then a known name whose every word appears whole in the title,
+  then `player_from_title`: a run of two or three name-like words once maker,
+  set, colour, grade, insert and card vocabulary (`PLAYER_NOISE`) is stripped.
+  A comma or slash between names is a wall, a run of dashes is a separator, a
+  single hyphen stays inside a word (Saint-Denis), and a card word hyphenated
+  onto a name keeps the name. A run of four or more is not trusted -- two
+  players with nothing between them -- and yields "", never a guess. Measured
+  on the 63 rows that had a recorded player: 62 agree, 1 deliberately blank,
+  0 wrong. `get_player` returns "" rather than "Unknown player"; the page shows
+  "Player not named" in muted type (`.is-unnamed`) and treats the literal
+  "Unknown player" as blank too, since `results/board.json` carries the old
+  string until the next scan rewrites it. `build_board` fills a blank from the
+  title using every name already on the sheet as the known list.
 - **A card grade over an autograph grade is not a serial.** "PSA 9/9",
   "Psa MINT 9/9" and "BGS 9.5/10" read exactly like N/M, and three PSA 9
   autos were recorded as the last of a run of nine. `is_grade_pair` steps
