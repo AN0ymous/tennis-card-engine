@@ -79,4 +79,16 @@ with open(status_path, "w") as f:
     json.dump({"checkedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                "statuses": statuses}, f)
 
+# How much of eBay's daily allowance this keyset has left, as eBay reports it.
+# Written after the scan, so it is the figure the run itself finished on.
+allowance = {}
+try:
+    allowance = engine.browse_allowance(engine.get_ebay_token())
+except Exception as exc:                                  # noqa: BLE001 -- never fail the run
+    print(f"allowance read skipped: {exc}")
+with open(os.path.join(out, "usage.json"), "w") as f:
+    json.dump(dict(allowance, checkedAt=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")), f)
+if allowance:
+    print(f"eBay allowance: {allowance['used']:,} of {allowance['limit']:,} calls used")
+
 print(f"exported {len(board)} board card(s), {len(statuses)} listing status(es) and config to {out}/")

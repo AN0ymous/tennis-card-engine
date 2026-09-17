@@ -235,6 +235,9 @@ JOB = ScanJob()
 STATUS_CACHE = {"at": 0.0, "token": None, "statuses": {}}
 STATUS_TTL = 600            # re-ask eBay about a listing after ten minutes
 
+USAGE_CACHE = {"at": 0.0, "value": {}}
+USAGE_TTL = 120             # the allowance barely moves; don't spend a call per page load
+
 
 def listing_statuses(item_ids):
     """Live active / sold / ended readings for the listings named, cached briefly."""
@@ -307,6 +310,8 @@ class Handler(SimpleHTTPRequestHandler):
             ids = [i for i in (parse_qs(route.query).get("ids") or [""])[0].split(",") if i][:100]
             payload, code = listing_statuses(ids)
             return self._json(payload, code)
+        if route.path == "/api/usage":
+            return self._json(self._usage())
         if route.path == "/api/portrait":
             player = (parse_qs(route.query).get("player") or [""])[0].strip()
             if not player:
@@ -352,6 +357,23 @@ class Handler(SimpleHTTPRequestHandler):
             return local
         committed = os.path.join(BASE_DIR, "results", name)
         return committed if os.path.exists(committed) else local
+
+    def _usage(self):
+        """eBay's own count of the day's calls. The keys stay here; the browser
+        is handed the numbers only. Cached briefly, since the page asks on every
+        load and this costs a call of its own."""
+        if engine is None:
+            return {}
+        now = time.time()
+        if USAGE_CACHE["at"] and now - USAGE_CACHE["at"] < USAGE_TTL:
+            return USAGE_CACHE["value"]
+        try:
+            value = engine.browse_allowance(engine.get_ebay_token())
+        except Exception as exc:                          # noqa: BLE001
+            return {"error": str(exc)}
+        value = dict(value, checkedAt=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)))
+        USAGE_CACHE.update(at=now, value=value)
+        return value
 
     def _saved_matches(self):
         path = self._data_path(engine.NEW_MATCHES_FILE if engine else "new_matches.json")

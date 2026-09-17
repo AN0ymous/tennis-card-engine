@@ -629,6 +629,20 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
 }
 .progress-now { font-size: 12.5px; color: var(--ink-2); margin-top: 10px; min-height: 1.5em; }
 
+/* how much of eBay's daily allowance is gone */
+.allowance { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 16px; }
+.allowance-track {
+  height: 4px; border-radius: 2px; overflow: hidden;
+  background: var(--line); margin-top: 10px;
+}
+.allowance-bar {
+  height: 100%; width: 0; border-radius: 2px;
+  background: linear-gradient(90deg, var(--navy), var(--navy-2));
+  transition: width .6s var(--ease-out);
+}
+.allowance-bar.is-low { background: linear-gradient(90deg, #B4341F, #E0642C); }
+.allowance .hint { margin-top: 8px; }
+
 /* ---------- match grid ---------- */
 .matchgrid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));

@@ -78,6 +78,15 @@ on a website.
 4. **Matches section fallback:** when the latest scan's `new_matches.json` is
    empty, show the board's recent cards with "The latest scan found no new
    cards"; show example cards only when nothing has ever been found.
+5. **eBay calls today.** A small meter under the progress bar, from eBay's own
+   Developer Analytics figures. The eBay keys never reach the browser: the
+   scheduled run writes `results/usage.json` after each scan, and `py
+   server.py` answers `/api/usage` from its `.env` (cached 2 minutes, since
+   reading it costs a call). Hosted, it appears only once a one-tap key is set
+   for the device, and disappears when the key is removed. **That gate is what
+   is drawn, not a secret kept** -- the repo is public, so `results/usage.json`
+   is published with the page and anyone who looks can read it. It holds
+   counts only, never a key. Locally it is always shown.
 
 ## Open items
 
@@ -113,9 +122,15 @@ added -- run `py test_engine.py` before pushing engine changes.
   `getItems` returns `localizedAspects` (the manufacturer, set and serial the
   judge reads). If it does not, every listing needs its own call anyway, and
   the engine notices on the first window and stops batching those, so a scan
-  costs about 8,400 again rather than more. The first real run settles it:
-  look in the "Run the engine" log for "Bulk item details carry no
-  localizedAspects" or "Bulk item details unavailable".
+  costs about 8,400 again rather than more.
+- **Those two warnings do not appear in the Actions log.** `logging.basicConfig`
+  sends every `log.warning` to `engine_run.log`, a file on whichever machine
+  ran the scan, and that file is gitignored -- so "Bulk item details carry no
+  localizedAspects" and "Bulk item details unavailable" never leave the
+  runner. An earlier note here said to look for them in the run's output; that
+  was wrong. To settle whether batching saves calls, read the allowance before
+  and after a scan (`py ebay_usage.py --raw`, or the "eBay calls today" panel
+  on the page) and compare -- the difference is the real call count.
 - Detail fetching is batched and concurrent, tuned by `DETAIL_BATCH_SIZE`
   (20, eBay's ceiling, do not raise) and `DETAIL_WORKERS` (8) at the top of
   `tennis_card_engine.py`. Lower `DETAIL_WORKERS` if eBay starts refusing
