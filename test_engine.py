@@ -169,9 +169,11 @@ class ItemIdFromLink(unittest.TestCase):
 
 
 class PlayerSearches(unittest.TestCase):
-    def test_a_full_name_is_searched_three_ways(self):
-        self.assertEqual(engine.name_variants("Roger Federer"),
-                         ["Roger Federer", "Federer", "Roger"])
+    def test_a_full_name_is_searched_two_ways(self):
+        """Full name and surname. Not the first name: "Roger Topps Chrome" is
+        every Roger in every sport, and a card titled with a first name only
+        is vanishingly rare."""
+        self.assertEqual(engine.name_variants("Roger Federer"), ["Roger Federer", "Federer"])
 
     def test_a_single_word_name_gives_one_search(self):
         self.assertEqual(engine.name_variants("Federer"), ["Federer"])
@@ -352,14 +354,22 @@ class BatchedDetails(unittest.TestCase):
         self.assertEqual(fast_events, slow_events, "different events, or a different order")
         self.assertEqual(len(fast_matches), self.LISTINGS // 10)
 
-    def test_batching_costs_one_call_per_twenty_listings(self):
+    def fetched_per_window(self):
+        """Nine in ten fixture titles carry 7/50, which the title alone settles,
+        so only the bookend-titled tenth is ever fetched: one batch per window."""
+        import math
+        return [math.ceil(sum(1 for n in range(a, min(a + engine.DETAIL_WINDOW, self.LISTINGS))
+                              if n % 10 == 0) / engine.DETAIL_BATCH_SIZE)
+                for a in range(0, self.LISTINGS, engine.DETAIL_WINDOW)]
+
+    def test_batching_costs_one_call_per_twenty_fetched_listings(self):
         fast, _, _, _ = self.scan(bulk=True)
-        self.assertEqual(fast.detail_calls, self.LISTINGS / engine.DETAIL_BATCH_SIZE)
+        self.assertEqual(fast.detail_calls, sum(self.fetched_per_window()))
         self.assertEqual(fast.calls["getItem"], 0, "fell back when it did not need to")
 
-    def test_without_getitems_every_listing_still_gets_judged(self):
+    def test_without_getitems_every_fetched_listing_still_gets_judged(self):
         slow, _, _, _ = self.scan(bulk=False)
-        self.assertEqual(slow.calls["getItem"], self.LISTINGS)
+        self.assertEqual(slow.calls["getItem"], sum(1 for n in range(self.LISTINGS) if n % 10 == 0))
 
 
 class StatusRefresh(unittest.TestCase):
@@ -630,16 +640,21 @@ class SportGate(unittest.TestCase):
     TOPPS = {"Manufacturer": ["Topps"]}
 
     def test_a_tennis_only_set_needs_no_tennis_word(self):
-        """Topps Graphite and Topps Royalty are tennis sets, so the set name is
-        the evidence. 16 of the 21 recorded matches that never say "tennis" are
-        these, and every one is a real tennis card."""
+        """Topps Graphite is a tennis set, so the set name is the evidence.
+        Topps Royalty was here too until 2025 Topps Royalty UFC put one of its
+        cards in the spreadsheet as a tennis match: a Royalty card that says
+        nothing is now kept with the "check by eye" caution, not believed."""
         for title, set_name in (
                 ("2024 Topps Graphite Mirra Andreeva Patch Auto 1/1 Rookie Card", "2024 Topps"),
-                ("2024 Topps Royalty Liv Hovde Auto Jumbo Relic Book Cards RC", ""),
                 ("MIOMIR KECMANOVIC 2024 GS-MKC Topps Graphite AUTOGRAPH 1/10", "2024 Topps Graphite")):
             with self.subTest(title=title):
                 self.assertTrue(engine.is_tennis_listing(
                     title, {**self.TOPPS, "Set": [set_name]}))
+        royalty = "2024 Topps Royalty Liv Hovde Auto Jumbo Relic 1/5"
+        self.assertFalse(engine.is_tennis_listing(royalty, {**self.TOPPS, "Set": ["2024 Topps Royalty"]}))
+        verdict, _, fields = self.judge(royalty, {**self.TOPPS, "Set": ["2024 Topps Royalty"]})
+        self.assertEqual(verdict, "match")
+        self.assertIn("check by eye", fields["caution"])
 
     def test_a_multi_sport_set_saying_nothing_is_kept_but_marked(self):
         """Topps Chrome is printed for every sport. Sellers leave the Sport
@@ -780,7 +795,7 @@ class CursorFollowsTheRules(unittest.TestCase):
         self.scan()
         with open(os.path.join(self.folder, engine.STATE_FILE)) as f:
             seen = json.load(f)
-        settled = {k for k, v in seen.items() if isinstance(v, str)}
+        settled = {k for k, v in seen.items() if engine.state_verdict(v) in ("match", "reject")}
         reopened = {k for k, v in seen.items()
                     if isinstance(v, dict) and v.get("verdict") == "filtered"}
         self.assertTrue(settled and reopened, "the fixture proves nothing")
@@ -932,8 +947,10 @@ class ThePanelAnswersBothQuestions(unittest.TestCase):
         if os.path.exists(xlsx):
             rows = engine.item_ids_in_spreadsheet(xlsx)
             board = engine.build_board(xlsx)
-            self.assertGreaterEqual(len(board) + 2, min(len(rows), engine.BOARD_LIMIT),
-                                    "the board is dropping recorded cards")
+            # a handful of rows are left off on purpose: customs, and a card
+            # whose title names another sport (the 17 Sep UFC row)
+            dropped = min(len(rows), engine.BOARD_LIMIT) - len(board)
+            self.assertLessEqual(dropped, 5, "the board is dropping recorded cards")
 
     def test_both_sections_are_rendered(self):
         js = self.js()
@@ -1113,6 +1130,10 @@ class SurvivesABadDay(unittest.TestCase):
         stumble threw away the matches AND the record of listings judged --
         which the next scan then paid eBay to judge all over again."""
         fake = FakeEbay(200)
+        # every fixture title a bookend, so every listing is fetched and the
+        # crash below lands on a fetch, as it did before titles settled anything
+        fake.summary = lambda n, _s=fake.summary: dict(
+            _s(n), title=f"2024 Topps Chrome Player{n} Refractor 1/50 tennis card")
         real_get, real_token = requests.get, engine.get_ebay_token
         real_base, real_cap = engine._BASE_DIR, engine.MAX_RESULTS_PER_BRAND
         calls = {"n": 0}
@@ -1292,6 +1313,118 @@ class AFailedRunIsNotDressedAsAQuietDay(unittest.TestCase):
         self.assertIn('c.lastRunOk === false', js.split("function enterHostedMode")[1].split("\nfunction ")[0])
         self.assertIn("state.config.lastRunOk === false", js.split("function renderMatches")[1].split("\nfunction ")[0])
         self.assertIn("Last scan failed", js)
+
+
+class WhatTwoPlayerScansTaught(unittest.TestCase):
+    """17 Sep: a Shapovalov scan paid for 2,077 listings (1,083 of them other
+    Denises) and recorded a UFC card as his; a Gauff scan found 12 bookends the
+    wide scan had never seen, 10 of them lacking the word "card"; and a
+    77/77 Shapovalov Topps Chrome, in plain view, was passed over."""
+
+    UFC = "2025 Topps Royalty UFC Benoit Saint Denis Blue Patch Logo /25 #SR-BS 1/25"
+    SHAPO = "2024 Topps Chrome Tennis Denis Shapovalov 1st Pineapple Refractor 77/77 \u22481/1"
+
+    def detail(self, **aspects):
+        return {"localizedAspects": [{"name": k, "value": v} for k, v in aspects.items()],
+                "price": {"value": "1.00", "currency": "USD"}, "seller": {"username": "s"},
+                "buyingOptions": ["AUCTION"], "itemWebUrl": "https://www.ebay.com/itm/1"}
+
+    def item(self, title):
+        return {"itemId": "v1|1|0", "title": title, "buyingOptions": ["AUCTION"]}
+
+    def test_the_wide_search_never_says_card(self):
+        for brand in engine.DEFAULT_BRAND_KEYWORDS:
+            self.assertNotIn("card", engine.wide_query(brand).lower(), brand)
+        self.assertEqual(engine.wide_query("Topps Chrome"), "Topps Chrome tennis")
+        self.assertEqual(engine.wide_query("Topps Royalty"), "Topps Royalty")
+        self.assertEqual(engine.wide_query("NetPro"), "NetPro")
+        self.assertEqual(engine.wide_query("Topps Graphite"), "Topps Graphite")
+
+    def test_a_changed_wide_query_stales_the_cursor(self):
+        with patch.object(engine, "wide_query", side_effect=lambda b: f"{b} tennis card"):
+            before = engine.scan_cursor_key(None, "Topps Chrome", 0.0, None, [])
+        after = engine.scan_cursor_key(None, "Topps Chrome", 0.0, None, [])
+        self.assertNotEqual(before, after)
+
+    def test_a_player_is_searched_by_full_name_and_surname_only(self):
+        self.assertEqual(engine.name_variants("Denis Shapovalov"), ["Denis Shapovalov", "Shapovalov"])
+        self.assertEqual(engine.name_variants("Coco Gauff"), ["Coco Gauff", "Gauff"])
+        self.assertEqual(engine.name_variants("Serena"), ["Serena"])
+
+    def test_a_first_name_alone_is_not_the_player(self):
+        self.assertFalse(engine.matches_player(self.UFC, "Denis Shapovalov", {}))
+        self.assertTrue(engine.matches_player("Federer 2003 NetPro Elite 1/100", "Roger Federer", {}))
+        self.assertTrue(engine.matches_player(self.SHAPO, "Denis Shapovalov", {}))
+
+    def test_topps_royalty_is_not_only_tennis(self):
+        self.assertNotIn("topps royalty", engine.TENNIS_ONLY_SETS)
+        verdict, reason, _ = engine.judge_listing(self.item(self.UFC), self.detail(Manufacturer="Topps"))
+        self.assertEqual(verdict, "reject")
+        self.assertIn("UFC", reason)
+
+    def test_a_blank_or_line_named_maker_is_read_off_the_title(self):
+        for aspects in ({}, {"Manufacturer": "Topps Chrome"}, {"Condition": "Ungraded - Excellent"}):
+            verdict, reason, f = engine.judge_listing(self.item(self.SHAPO), self.detail(**aspects))
+            self.assertEqual(verdict, "match", (aspects, reason))
+            self.assertEqual((f["card_number"], f["print_run"]), (77, 77))
+            self.assertEqual(f["manufacturer"], "Topps")
+        self.assertEqual(engine.resolve_manufacturer("Upper Deck", "", "Upper Deck Federer 1/1"), "Upper Deck")
+        verdict, reason, _ = engine.judge_listing(self.item("2003 SP Authentic Roger Federer 1/1 tennis"),
+                                                  self.detail(Manufacturer="Upper Deck"))
+        self.assertEqual(verdict, "reject")
+
+    def test_what_the_title_settles_costs_no_call(self):
+        self.assertIn("neither the first nor the last", engine.settled_by_title("2024 Topps Chrome Coco Gauff 7/50 tennis"))
+        self.assertIn("UFC", engine.settled_by_title(self.UFC))
+        self.assertIn("custom", engine.settled_by_title("Custom Federer 1/1 Topps Chrome"))
+        for kept in (self.SHAPO, "2024 Topps Chrome Coco Gauff 1/50", "2024 Topps Chrome Coco Gauff 50/50",
+                     "2024 Topps Chrome Coco Gauff Refractor", "NetPro Federer 1/0", "Topps Chrome tennis golf lot 1/50",
+                     "2024 Topps Royalty Tennis Jamie Murray On Card Auto Relic /10 Superior Signature"):
+            self.assertEqual(engine.settled_by_title(kept), "", kept)
+
+    def test_a_settled_listing_is_not_fetched_and_keeps_its_reason(self):
+        items = [{"itemId": "v1|7|0", "title": "2024 Topps Chrome Coco Gauff 7/50 tennis"},
+                 {"itemId": "v1|1|0", "title": "2024 Topps Chrome Coco Gauff 1/50 tennis"}]
+        asked = []
+
+        def details(_token, ids, **kw):
+            asked.extend(ids)
+            return {i: self.detail(Manufacturer="Topps", Set="2024 Topps Chrome Tennis", Sport="Tennis") for i in ids}
+
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter(items)), \
+                patch.object(engine, "get_item_details", side_effect=details):
+            matches, checked = engine.run_scan(None, ["Topps Chrome"])
+            with open(os.path.join(folder, engine.STATE_FILE)) as f:
+                seen = json.load(f)
+        self.assertEqual(checked, 2)
+        self.assertEqual(asked, ["v1|1|0"], "the 7/50 should never have been fetched")
+        self.assertEqual(seen["v1|7|0"]["verdict"], "reject")
+        self.assertIn("neither the first nor the last", seen["v1|7|0"]["reason"])
+        self.assertEqual(len(matches), 1)
+
+    def test_a_player_scan_writes_no_cursor(self):
+        items = [{"itemId": "v1|1|0", "title": "2024 Topps Chrome Coco Gauff 1/50 tennis", "itemCreationDate": "2026-09-17T00:00:00.000Z"}]
+
+        def listings(_t, _p, _b, on_complete=None, **kw):
+            if on_complete: on_complete("q", "2026-09-17T00:00:00.000Z")
+            return iter(items)
+
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=listings), \
+                patch.object(engine, "get_item_details", return_value={"v1|1|0": self.detail(Manufacturer="Topps", Set="2024 Topps Chrome", Sport="Tennis", **{"Player/Athlete": "Coco Gauff"})}):
+            engine.run_scan(["Coco Gauff"], ["Topps Chrome"])
+            with open(os.path.join(folder, engine.SCAN_CURSOR_FILE)) as f:
+                self.assertEqual(json.load(f), {})
+
+    def test_the_board_drops_a_card_of_another_sport(self):
+        self.assertTrue(engine.other_sport_in_title(self.UFC))
+        self.assertEqual(engine.other_sport_in_title("2024 Topps Chrome Tennis Golf Legends Federer 1/1"), "")
+        self.assertEqual(engine.other_sport_in_title("2024 Topps Chrome Golfo Federer 1/1"), "")
 
 
 if __name__ == "__main__":
