@@ -162,6 +162,13 @@ added -- run `py test_engine.py` before pushing engine changes.
   a match or a reject, so only the search pages are paid for again -- about 42
   calls across all 7 sets, against a 4,500 budget. Keeping the cursor for an
   unchanged repeat saves 35 of those; that is all it was ever worth.
+- **A fingerprint resolves the settings before hashing.** The website always
+  fills the print-run box, so pressing "Run a scan" without touching anything
+  sends `max_print_run=500` where a scheduled run sends nothing. They are the
+  same scan. Before 17 Sep they hashed differently, so no page-started scan
+  ever matched the cursor the scheduled one had left, and every one walked all
+  seven sets in full. Seen live in runs 29 and 30: the same default scan wrote
+  `7a651a5f2ed5ae03` and `60a3c781e14f279c`.
 - **"Not a Federer card" is a filtered verdict, not a reject.** It describes
   the search, not the card, so the player is part of the rules fingerprint. As
   a permanent reject it would have hidden that card from every later scan,

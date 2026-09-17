@@ -1326,10 +1326,26 @@ def state_verdict(entry):
 
 
 def rules_fingerprint(rules):
-    """Stable identity for settings that can change a filtered verdict."""
+    """Stable identity for settings that can change a filtered verdict.
+
+    The settings are resolved to what they actually mean before hashing, so a
+    value sent explicitly fingerprints the same as the same value left out.
+    The website always fills the print-run box, so pressing "Run a scan"
+    without touching anything sends 500 where a scheduled run sends nothing --
+    the same scan, and before this it hashed differently, which meant no
+    page-started scan ever matched the cursor the scheduled one had left.
+    """
+    resolved = dict(rules)
+    resolved["max_print_run"] = rules.get("max_print_run") or MAX_PRINT_RUN
+    inclusive = rules.get("print_run_inclusive")
+    resolved["print_run_inclusive"] = (PRINT_RUN_INCLUSIVE if inclusive is None
+                                       else bool(inclusive))
+    resolved["min_price"] = float(rules.get("min_price") or 0.0)
+    ceiling = rules.get("max_price")
+    resolved["max_price"] = None if ceiling is None else float(ceiling)
     serializable = {
         key: sorted(value) if isinstance(value, set) else value
-        for key, value in rules.items()
+        for key, value in resolved.items()
     }
     raw = json.dumps(serializable, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
