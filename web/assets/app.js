@@ -508,13 +508,26 @@ function isNewCard(card) {
   return !!card.link && newlyFound.has(card.link);
 }
 
-/* the "new" flag that rides next to the star */
-function newFor(card) {
-  const tag = el("span", "new-tag", "New");
-  const words = "Found in the last hour";
-  tag.title = words;
-  tag.setAttribute("aria-label", words);
+function isSoldCard(card) {
+  return statusOf(card).status === "sold";
+}
+
+function flagTag(className, words, title) {
+  const tag = el("span", className, words);
+  tag.title = title;
+  tag.setAttribute("aria-label", title);
   return tag;
+}
+
+/* One flag rides beside the star, and sold outranks new: a card that cannot
+   be bought is the more useful thing to know at a glance, and both in the same
+   corner would be a scrum. Sold comes from results/status.json on the hosted
+   page, or from whatever the saved page last checked locally -- and from the
+   owner's own mark ahead of either, since statusOf honours that first. */
+function flagFor(card) {
+  if (isSoldCard(card)) return flagTag("sold-tag", "Sold", "This listing has sold");
+  if (isNewCard(card)) return flagTag("new-tag", "New", "Found in the last hour");
+  return null;
 }
 
 /* the little star on lots and match cards; a span, since they are buttons */
@@ -558,6 +571,27 @@ function ago(iso) {
   const h = Math.round(mins / 60);
   if (h < 48) return `${h} h ago`;
   return `${Math.round(h / 24)} days ago`;
+}
+
+/* The board and the matches need statuses too, not just the saved page, so
+   the published file is read once at startup. Hosted only on purpose: the file
+   is static and free, while the local path asks eBay per listing and every one
+   of those comes out of the same daily allowance a scan spends. Locally the
+   board uses whatever the saved page last checked, kept in this browser. */
+async function loadStatuses() {
+  if (!HOSTED) return;
+  try {
+    const data = await (await fetch("results/status.json", { cache: "no-store" })).json();
+    if (!data || !data.statuses) return;
+    Object.assign(state.statuses, data.statuses);
+    state.statusCheckedAt = data.checkedAt || state.statusCheckedAt;
+    try {
+      localStorage.setItem(SAVED.statusKey,
+        JSON.stringify({ at: state.statusCheckedAt, statuses: state.statuses }));
+    } catch { /* private mode: this page still has them in memory */ }
+    renderBoard();
+    renderMatches();
+  } catch { /* no status file yet; cards simply carry no sold flag */ }
 }
 
 async function refreshStatuses(keys) {
@@ -1175,7 +1209,8 @@ function buildCard(match, index) {
       photo.append(el("span", "mc-crest", initials(match.player)));
       photo.append(serialTag);
       photo.append(starFor(match));
-      if (isNewCard(match)) photo.append(newFor(match));
+      const again = flagFor(match);
+      if (again) photo.append(again);
     });
     photo.append(img);
   } else {
@@ -1184,11 +1219,12 @@ function buildCard(match, index) {
   const serialTag = el("span", "mc-serial-tag", match.serial);
   photo.append(serialTag);
   photo.append(starFor(match));
-  if (isNewCard(match)) {
-    // the serial already sits under the star in that corner; the class moves
-    // it clear so the three do not stack
-    photo.classList.add("has-new");
-    photo.append(newFor(match));
+  const flag = flagFor(match);
+  if (flag) {
+    // the serial shares that corner with the star; the class steps it clear
+    // so the three do not stack
+    photo.classList.add("has-flag");
+    photo.append(flag);
   }
   card.append(photo);
 
@@ -1281,7 +1317,8 @@ function buildLot(card, rank) {
   if (card.colourMatch === "yes") photo.append(el("span", "cm-tag", "Colour match"));
   if (card.caution) { const t = el("span", "caution-tag", "Check by eye"); t.title = card.caution; photo.append(t); }
   photo.append(starFor(card));
-  if (isNewCard(card)) photo.append(newFor(card));
+  const flag = flagFor(card);
+  if (flag) photo.append(flag);
   lot.append(photo);
 
   const body = el("div", "lot-body");
@@ -2499,7 +2536,8 @@ async function stopScan() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initSaved();
-  loadConfig().then(loadSavedMatches).then(loadBoard).then(resumeLocalScan).then(loadAllowance);
+  loadConfig().then(loadSavedMatches).then(loadBoard).then(loadStatuses)
+    .then(resumeLocalScan).then(loadAllowance);
   initRail();
   initWakeChecks();
 

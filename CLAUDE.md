@@ -155,7 +155,7 @@ as `known`, not as a new match. The engine is working when it says "Added 0
 new qualifying listing(s)". Judge a scan by the "Checked N listings" line and
 by the lower section of the Matches panel, not by whether anything was new.
 
-6. **A "New" flag beside the star.** Cards the latest scan turned up carry a
+6. **A "New" or "Sold" flag beside the star.** Cards the latest scan turned up carry a
    green NEW pill next to the star, on the board rail and on match cards. It is
    derived from `state.matches` (that is `new_matches.json` hosted, the live
    event stream locally) at render time, so nothing extra is stored. Cards
@@ -166,10 +166,19 @@ by the lower section of the Matches panel, not by whether anything was new.
    `scheduleNewFlagSweep()` sets one timer for the next card due, and
    `initWakeChecks` sweeps on the way back to a tab whose timers were throttled
    while hidden. A card whose date will not parse keeps its flag until the next
-   scan replaces the list. `.mc-serial-tag` moved from `right: 10px` to `44px` while doing this:
-   the star sits at `right: 8px` and is 30 wide, so at 10px it covered the
-   serial and clipped it. With a flag present the serial steps left again
-   (`.mc-photo.has-new`).
+   scan replaces the list. **A sold card shows a red SOLD flag instead**, since
+   sold outranks new -- one flag rides in that corner, never two. Sold comes
+   from `statusOf()`, so the owner's own mark wins over eBay's reading, the
+   same as on the saved page. `loadStatuses()` reads `results/status.json` once
+   at startup so the board knows before the saved page is ever opened; it is
+   **hosted only on purpose**, because the local path asks eBay per listing and
+   those calls come out of the same daily allowance a scan spends. Locally the
+   board uses whatever the saved page last checked, kept in this browser. The
+   saved page keeps its SOLD band across the photo and suppresses the pill, so
+   a card there is not marked twice. `.mc-serial-tag` moved from `right: 10px`
+   to `44px` while doing this: the star sits at `right: 8px` and is 30 wide, so
+   at 10px it covered the serial and clipped it. With a flag present the serial
+   steps left again (`.mc-photo.has-flag`).
 
 ## Open items
 

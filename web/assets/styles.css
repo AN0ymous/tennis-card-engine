@@ -512,10 +512,11 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
 .star.is-on { color: var(--gold); background: #FFFFFF; }
 .lot-photo .star { top: auto; bottom: 8px; right: 8px; }
 
-/* "New": found by the latest scan, riding beside the star. Its own colour,
-   since the other tags are taken -- optic yellow is a colour match, amber is
-   check-by-eye, red is sold. */
-.new-tag {
+/* The flag beside the star: "New" for a card the latest scan turned up, "Sold"
+   for one that has gone. One or the other, never both -- sold wins. Green and
+   red are theirs alone; optic yellow is a colour match and amber is
+   check-by-eye. */
+.new-tag, .sold-tag {
   position: absolute; z-index: 3;
   top: 13px; right: 44px;
   padding: 3px 9px; border-radius: 999px;
@@ -524,9 +525,12 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
   box-shadow: 0 1px 5px rgba(0, 0, 0, .3);
   pointer-events: none;
 }
-.lot-photo .new-tag { top: auto; bottom: 13px; right: 44px; }
-/* with a New flag between them, the serial steps left again */
-.mc-photo.has-new .mc-serial-tag { right: 96px; }
+.sold-tag { background: #B3261E; }
+.lot-photo .new-tag, .lot-photo .sold-tag { top: auto; bottom: 13px; right: 44px; }
+/* with a flag between them, the serial steps left again */
+.mc-photo.has-flag .mc-serial-tag { right: 96px; }
+/* the saved page draws sold as a band across the photo already */
+.saved-item .sold-tag { display: none; }
 .holo-star {
   display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 10px 14px;
   border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink);
