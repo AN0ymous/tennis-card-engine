@@ -135,6 +135,13 @@ on a website.
    keeps `app.js` for a while and a merge could leave a phone running the old
    page against new results: run 29 on 17 Sep dispatched a scan with no
    settings at all for exactly that reason and looked like a failed fix.
+8. **A name you typed in can be taken out again.** An added chip (a player or
+   set from the search box, class `is-added`, remembered in `tce.addedPlayers`
+   / `tce.addedSets`) carries a small cross that removes it and drops it from
+   the remembered list; the built-in 15 players and 7 sets do not. The cross
+   sits inside the chip's label, so its click is stopped from also toggling
+   the chip. Taking away the last ticked player turns "every player" back on,
+   since nothing ticked would mean nothing to scan and nothing to show.
 5. **eBay calls today.** A small meter under the progress bar, from eBay's own
    Developer Analytics figures. The eBay keys never reach the browser: the
    scheduled run writes `results/usage.json` after each scan, and `py
@@ -273,6 +280,16 @@ added -- run `py test_engine.py` before pushing engine changes.
   the search, not the card, so the player is part of the rules fingerprint. As
   a permanent reject it would have hidden that card from every later scan,
   including the all-players scan that would have matched it.
+- **A refused eBay search is said out loud, and a run that could check
+  nothing fails.** Runs 32 to 35 on 17 Sep each checked 0 listings with the
+  day's allowance used up (5,000 of 5,000), and every one went green -- the
+  refusal went to an `on_event` that `main()` never passed, and to
+  `engine_run.log`, which the runner throws away. `main()` now passes an
+  `on_event` that routes every `error` through `say()`, and exits non-zero
+  when searches were refused and not one listing was checked. Because #18
+  put `if: always()` on the export and commit steps, the run still publishes
+  what it has; it just shows red instead of pretending it was a quiet day. A
+  partly refused run stays green with a warning that it covered less.
 - **The 420 figure is not yet confirmed against live eBay.** It holds only if
   `getItems` returns `localizedAspects` (the manufacturer, set and serial the
   judge reads). If it does not, every listing needs its own call anyway, and
