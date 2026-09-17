@@ -447,6 +447,29 @@ function toggleSaved(card) {
   if (state.saved[key] && !HOSTED) refreshStatuses([key]);
 }
 
+/* Cards the most recent scan turned up. state.matches is exactly that list --
+   new_matches.json on the hosted page, the live event stream on a local one --
+   so this is derived from it at render time rather than kept in step by hand.
+   The mark lasts until the next scan replaces that list. */
+const newlyFound = new Set();
+
+function markNewlyFound() {
+  newlyFound.clear();
+  state.matches.forEach((m) => { if (m.link) newlyFound.add(m.link); });
+}
+
+function isNewCard(card) {
+  return !!card.link && newlyFound.has(card.link);
+}
+
+/* the "new" flag that rides next to the star */
+function newFor(card) {
+  const tag = el("span", "new-tag", "New");
+  tag.title = "Found by the latest scan";
+  tag.setAttribute("aria-label", "Found by the latest scan");
+  return tag;
+}
+
 /* the little star on lots and match cards; a span, since they are buttons */
 function starFor(card) {
   const star = el("span", "star" + (isSaved(card) ? " is-on" : ""), isSaved(card) ? "\u2605" : "\u2606");
@@ -1040,6 +1063,7 @@ function noteLine(text, padding = "16px 20px") {
    needed. */
 function renderMatches() {
   const area = $("results-area");
+  markNewlyFound();
   const fresh = sortCards(state.matches.filter(passesFilters));
   const everything = sortCards(state.board.filter(passesFilters));
   state.showingExamples = !state.matches.length && !state.board.length;
@@ -1104,6 +1128,7 @@ function buildCard(match, index) {
       photo.append(el("span", "mc-crest", initials(match.player)));
       photo.append(serialTag);
       photo.append(starFor(match));
+      if (isNewCard(match)) photo.append(newFor(match));
     });
     photo.append(img);
   } else {
@@ -1112,6 +1137,12 @@ function buildCard(match, index) {
   const serialTag = el("span", "mc-serial-tag", match.serial);
   photo.append(serialTag);
   photo.append(starFor(match));
+  if (isNewCard(match)) {
+    // the serial already sits under the star in that corner; the class moves
+    // it clear so the three do not stack
+    photo.classList.add("has-new");
+    photo.append(newFor(match));
+  }
   card.append(photo);
 
   const body = el("div", "mc-body");
@@ -1203,6 +1234,7 @@ function buildLot(card, rank) {
   if (card.colourMatch === "yes") photo.append(el("span", "cm-tag", "Colour match"));
   if (card.caution) { const t = el("span", "caution-tag", "Check by eye"); t.title = card.caution; photo.append(t); }
   photo.append(starFor(card));
+  if (isNewCard(card)) photo.append(newFor(card));
   lot.append(photo);
 
   const body = el("div", "lot-body");
@@ -1230,6 +1262,7 @@ function buildLot(card, rank) {
 
 function renderBoard() {
   const railEl = $("rail");
+  markNewlyFound();
   const all = state.board.length ? state.board : EXAMPLES;
   const cards = sortCards(all.filter(passesFilters));
   const examples = !state.board.length;

@@ -155,6 +155,17 @@ as `known`, not as a new match. The engine is working when it says "Added 0
 new qualifying listing(s)". Judge a scan by the "Checked N listings" line and
 by the lower section of the Matches panel, not by whether anything was new.
 
+6. **A "New" flag beside the star.** Cards the latest scan turned up carry a
+   green NEW pill next to the star, on the board rail and on match cards. It is
+   derived from `state.matches` (that is `new_matches.json` hosted, the live
+   event stream locally) at render time, so nothing extra is stored and the
+   flag clears by itself when the next scan replaces that list. Cards found
+   earlier never carry it, and an empty `new_matches.json` means no flags at
+   all. `.mc-serial-tag` moved from `right: 10px` to `44px` while doing this:
+   the star sits at `right: 8px` and is 30 wide, so at 10px it covered the
+   serial and clipped it. With a flag present the serial steps left again
+   (`.mc-photo.has-new`).
+
 ## Open items
 
 - How often eBay states the sport at all is still unknown: the new `Sport`
