@@ -63,7 +63,16 @@ on a website.
    next tick. On a local page, `resumeLocalScan()` replays the server's whole
    event log, so a scan started before a reload comes back with its log
    intact.
-3. **Matches section fallback:** when the latest scan's `new_matches.json` is
+3. **A progress line for hosted scans.** A local scan drives the bar from the
+   engine's own events; a hosted scan has no event stream, so the bar follows
+   the GitHub Actions run instead, using the same token that started it
+   (`/actions/runs/{id}/jobs`, polled every 10s). It shows the workflow step in
+   plain words ("Searching eBay"), the step count and the time elapsed. The run
+   id is kept in `tce.watching`, so a dropped tab resumes the same run. With no
+   token, a rate-limited API or a run not yet created, the bar sweeps back and
+   forth with the elapsed time rather than sitting at 0%. CSS shows it only
+   while `body` has `is-watching`.
+4. **Matches section fallback:** when the latest scan's `new_matches.json` is
    empty, show the board's recent cards with "The latest scan found no new
    cards"; show example cards only when nothing has ever been found.
 

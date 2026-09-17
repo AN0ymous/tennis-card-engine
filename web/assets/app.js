@@ -1289,7 +1289,9 @@ async function onHostedRun(c) {
       + "usually within 2 to 4 minutes. ");
     run.textContent = "Scan started";
     run.disabled = true;
-    watchForNewResults(c.lastRun);
+    const watch = { before: c.lastRun || "", startedAt: Date.now() };
+    watchForNewResults(watch);
+    followRun(c, watch);
     return;
   }
   if (r.status === 401) {
@@ -1320,14 +1322,15 @@ const RESULT_POLL_LIMIT_MS = 45 * 60000;
 const WATCH_KEY = "tce.watching";
 let resultTimer = null;
 
-function rememberWatch(before, until) {
+function rememberWatch(watch) {
   try {
-    localStorage.setItem(WATCH_KEY, JSON.stringify({ before: before || "", until }));
+    localStorage.setItem(WATCH_KEY, JSON.stringify(watch));
   } catch { /* private mode: this run has only the interval to go on */ }
 }
 
 function forgetWatch() {
   try { localStorage.removeItem(WATCH_KEY); } catch { /* ignore */ }
+  stopRunProgress();
 }
 
 /* the watch this device is part-way through, or null */
@@ -1349,10 +1352,11 @@ async function checkForNewResults(before) {
   } catch { /* try again on the next tick */ }
 }
 
-function watchForNewResults(before, until) {
+function watchForNewResults(watch) {
   clearInterval(resultTimer);
-  const deadline = until || Date.now() + RESULT_POLL_LIMIT_MS;
-  rememberWatch(before, deadline);
+  const before = watch.before || "";
+  const deadline = watch.until || Date.now() + RESULT_POLL_LIMIT_MS;
+  rememberWatch({ ...watch, before, until: deadline });
   resultTimer = setInterval(() => {
     if (Date.now() > deadline) {
       clearInterval(resultTimer);
@@ -1364,6 +1368,141 @@ function watchForNewResults(before, until) {
     checkForNewResults(before);
   }, RESULT_POLL_MS);
   checkForNewResults(before);              // and look now, not in ten seconds
+}
+
+/* ---- the progress line for a hosted scan ----
+
+   A local scan streams its own events, so its progress bar is driven by the
+   engine. A hosted scan has none of that: it runs on GitHub, and this page
+   only ever learns that results appeared. GitHub does know where the run has
+   got to, though, and the same token that started the scan can read it -- so
+   the bar follows the workflow's own steps.
+
+   The token can be gone, rate-limited, or the run not yet visible. None of
+   that is worth an error: the bar falls back to running back and forth with
+   the time elapsed, which is still a truthful "this is going". */
+
+const GITHUB_API = "https://api.github.com";
+
+/* the workflow's step names, in the words of someone watching for cards */
+const STEP_WORDS = {
+  "Set up job": "Starting up on GitHub",
+  "Bring back last run's results": "Loading what earlier scans found",
+  "Run the engine": "Searching eBay",
+  "Export what the hosted site reads": "Working out what this page shows",
+  "Keep the results in the repo": "Saving the results",
+  "Offer the spreadsheet as a download too": "Attaching the spreadsheet",
+  "Post Run actions/checkout@v5": "Tidying up",
+  "Complete job": "Finishing up",
+};
+
+function stepWords(name) {
+  if (STEP_WORDS[name]) return STEP_WORDS[name];
+  // the unnamed steps read "Run actions/setup-python@v6", "Run pip install ..."
+  return /^Run /.test(name || "") ? "Getting the machine ready" : (name || "Working");
+}
+
+function elapsedWords(ms) {
+  const total = Math.max(0, Math.round(ms / 1000));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")} elapsed`;
+}
+
+let runTimer = null;
+
+async function githubJson(path) {
+  const token = githubToken();
+  const headers = { Accept: "application/vnd.github+json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const r = await fetch(`${GITHUB_API}${path}`, { headers, cache: "no-store" });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+/* the run this scan started, once GitHub has created it */
+async function findDispatchedRun(c, startedAt) {
+  const data = await githubJson(
+    `/repos/${c.repo}/actions/workflows/${c.workflow || "scan.yml"}/runs`
+    + "?event=workflow_dispatch&per_page=10");
+  return (data.workflow_runs || [])
+    .filter((r) => Date.parse(r.created_at) >= startedAt - 120000)
+    .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))[0] || null;
+}
+
+/* how far along that run is, read off the job's own steps */
+async function runProgress(c, runId) {
+  const data = await githubJson(`/repos/${c.repo}/actions/runs/${runId}/jobs`);
+  const job = (data.jobs || [])[0];
+  if (!job) return { words: "Waiting for a free machine on GitHub" };
+  const steps = job.steps || [];
+  if (!steps.length) return { words: "Starting up on GitHub" };
+  const done = steps.filter((st) => st.status === "completed").length;
+  const running = steps.find((st) => st.status === "in_progress");
+  if (job.status === "completed") {
+    const failed = job.conclusion && job.conclusion !== "success";
+    return failed
+      ? { words: "The scan stopped early on GitHub. Open Actions to see why.", stop: true }
+      : { pct: 100, count: `${steps.length} of ${steps.length} steps`,
+          words: "Publishing the page" };
+  }
+  return {
+    pct: Math.round((done / steps.length) * 100),
+    count: `step ${Math.min(done + 1, steps.length)} of ${steps.length}`,
+    words: stepWords((running || {}).name),
+  };
+}
+
+function paintProgress(p, elapsedMs) {
+  const bar = $("progress-bar");
+  const known = typeof p.pct === "number";
+  bar.classList.toggle("is-waiting", !known);
+  bar.style.width = known ? `${p.pct}%` : "";
+  $("progress-count").textContent = p.count || "";
+  $("progress-checked").textContent = elapsedWords(elapsedMs);
+  $("progress-now").textContent = p.words;
+}
+
+/* Follows the GitHub run behind a hosted scan. Safe to call again: it takes
+   over the one timer. The run id is written into the watch once known, so a
+   tab that is dropped and reopened carries on from the same run. */
+function followRun(c, watch) {
+  if (!c.repo) return;
+  clearInterval(runTimer);
+  document.body.classList.add("is-watching");
+  const startedAt = watch.startedAt || Date.now();
+  let runId = watch.runId || null;
+
+  const tick = async () => {
+    const since = Date.now() - startedAt;
+    try {
+      if (!runId) {
+        const run = await findDispatchedRun(c, startedAt);
+        if (!run) {
+          paintProgress({ words: "Waiting for GitHub to pick the scan up" }, since);
+          return;
+        }
+        runId = run.id;
+        const saved = savedWatch();
+        if (saved) rememberWatch({ ...saved, runId });
+      }
+      const p = await runProgress(c, runId);
+      paintProgress(p, since);
+      if (p.stop) stopRunProgress();
+    } catch {
+      // no token, rate-limited, or the run is not readable: time alone is
+      // still true, and the bar says "going" rather than "nothing happening"
+      paintProgress({ words: "Scanning on GitHub" }, since);
+    }
+  };
+
+  runTimer = setInterval(tick, RESULT_POLL_MS);
+  tick();
+}
+
+function stopRunProgress() {
+  clearInterval(runTimer);
+  runTimer = null;
+  document.body.classList.remove("is-watching");
+  $("progress-bar").classList.remove("is-waiting");
 }
 
 /* Picks up a scan this device was already waiting on, after a tab switch or
@@ -1381,7 +1520,8 @@ function resumeHostedWatch(c) {
   const run = $("run-btn");
   run.disabled = true;
   run.textContent = "Scan running";
-  watchForNewResults(watching.before, watching.until);
+  watchForNewResults(watching);
+  followRun(c, watching);
   return true;
 }
 
@@ -1921,7 +2061,10 @@ function initWakeChecks() {
     if (document.visibilityState === "hidden") return;
     if (HOSTED) {
       const watching = savedWatch();
-      if (watching) checkForNewResults(watching.before);
+      if (watching) {
+        checkForNewResults(watching.before);
+        if (state.config) followRun(state.config, watching);   // and catch the bar up
+      }
       return;
     }
     if (state.running) poll();

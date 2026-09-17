@@ -1225,5 +1225,20 @@ footer.site .inline-code { background: rgba(255, 255, 255, .1); border-color: rg
 /* hosted on GitHub Pages: no live scanning from the browser */
 .hosted-note { margin: 0 0 4px; color: var(--ink-2); font-size: 13px; line-height: 1.6; }
 .is-hosted .progress, .is-hosted #activity, .is-hosted #write-outputs, .is-hosted #portraits { display: none; }
+/* a hosted scan has no event stream to log, but GitHub knows where its run
+   has got to, so the bar comes back while one is being followed */
+.is-hosted.is-watching .progress { display: block; }
+/* nothing to measure yet -- a bar running back and forth, not a stuck 0% */
+.progress-bar.is-waiting {
+  width: 32%;
+  animation: progress-sweep 1.5s var(--ease) infinite;
+}
+@keyframes progress-sweep {
+  0%   { margin-left: -32%; }
+  100% { margin-left: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-bar.is-waiting { animation: none; width: 100%; opacity: .45; }
+}
 .is-hosted label[for="write-outputs"], .is-hosted label[for="portraits"],
 .is-hosted label[for="write-outputs"] + .hint, .is-hosted label[for="portraits"] + .hint { display: none; }
