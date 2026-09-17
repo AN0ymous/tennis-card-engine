@@ -338,6 +338,12 @@ a { color: var(--gold); text-underline-offset: 3px; }
 }
 .lot-when { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .lot-player { font-size: 15.5px; font-weight: 600; line-height: 1.25; margin-top: 2px; }
+/* A card whose player is genuinely not stated anywhere: say so quietly, not as
+   a headline -- and never the old "UNKNOWN PLAYER" shout. */
+.mc-player.is-unnamed, .lot-player.is-unnamed {
+  color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 13px;
+}
+
 .lot-set { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* the masthead keeps the numbers, now that the hero carries the title */
