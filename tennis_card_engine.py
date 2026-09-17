@@ -872,6 +872,47 @@ def save_outputs(wb, xlsx_path, seen, state_path, cursors, cursor_path,
             say(f"could not save the {what}: {exc}")
 
 
+# A reject is permanent only while the rule that made it stands. Bump this
+# when a permanent rule changes in a way that could reverse an old reject,
+# and name the old reason's opening words in RECONSIDER_REASONS, so those
+# rejects -- and only those -- are judged again when a walk next reaches
+# them. A reject made under the current version is never looked at twice.
+JUDGE_VERSION = 2
+RECONSIDER_REASONS = {
+    2: ("manufacturer not in allow-list",),      # a blank or line-named maker now reads off the title
+}
+
+
+def reject_stands(entry, title):
+    """Whether a recorded reject is still trusted for this listing.
+
+    A reject from before 17 Sep is a bare string with no reason and no
+    version. The only thing known about it is the title in front of us, so
+    it stands unless the title carries a bookend serial -- the one case worth
+    a call, since that listing could be a match the old rules turned away. A
+    reject with no serial in the title stays; the specifics might carry one
+    (1 of 71 recorded matches did), and that slice of the backlog is the
+    price of not re-fetching thousands. A versioned reject stands unless its
+    version is older than the judge and its reason is one a newer version
+    reconsiders."""
+    if not isinstance(entry, dict):
+        card_number, print_run = extract_serial(title, {})
+        return not (card_number is not None and print_run is not None
+                    and card_number in (1, print_run))
+    made = int(entry.get("judge") or 1)
+    if made >= JUDGE_VERSION:
+        return True
+    reason = str(entry.get("reason") or "")
+    return not any(reason.startswith(opening)
+                   for version, openings in RECONSIDER_REASONS.items()
+                   if version > made for opening in openings)
+
+
+def rejected(reason):
+    """The state entry for a reject made by this judge."""
+    return {"verdict": "reject", "reason": reason, "judge": JUDGE_VERSION}
+
+
 def settled_by_title(title):
     """A reject the title proves on its own, so the listing costs no detail
     call: a custom, another sport, or a serial that is not a bookend. The
@@ -2057,17 +2098,25 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                     triage = [(item, seen.get(item.get("itemId")))
                               for item in window if item.get("itemId")]
                     checked += len(triage)
+
+                    def needs_judging(entry, title):
+                        verdict = state_verdict(entry)
+                        if verdict == "match":
+                            return False
+                        if verdict == "reject":
+                            return not reject_stands(entry, title)
+                        return not filtered_for_rules(entry, rule_key)
+
                     for item, earlier in triage:
-                        if earlier is None:
+                        if needs_judging(earlier, item.get("title", "")):
                             reason = settled_by_title(item.get("title", ""))
                             if reason:
-                                seen[item["itemId"]] = {"verdict": "reject", "reason": reason}
+                                seen[item["itemId"]] = rejected(reason)
                                 emit("reject", title=item.get("title", ""), reason=reason)
                     triage = [(item, seen.get(item["itemId"])) for item, _ in triage]
                     details = get_item_details(
                         token, [item["itemId"] for item, earlier in triage
-                                if state_verdict(earlier) not in ("match", "reject")
-                                and not filtered_for_rules(earlier, rule_key)])
+                                if needs_judging(earlier, item.get("title", ""))])
 
                     for item, earlier in triage:
                         item_id = item["itemId"]
@@ -2078,7 +2127,7 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                             known += 1
                             emit("known", title=title, link=item.get("itemWebUrl", ""))
                             continue
-                        if earlier_verdict == "reject" or filtered_for_rules(earlier, rule_key):
+                        if not needs_judging(earlier, title):
                             judged += 1             # turned down before for good; no call to eBay
                             continue
 
@@ -2095,7 +2144,7 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                             if verdict == "reject":
                                 # the reason is kept, so "why was my card
                                 # passed over?" can be answered from the file
-                                seen[item_id] = {"verdict": "reject", "reason": reason}
+                                seen[item_id] = rejected(reason)
                             else:
                                 seen[item_id] = {"verdict": "filtered", "rules": rule_key,
                                                  "reason": reason}

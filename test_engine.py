@@ -1427,5 +1427,70 @@ class WhatTwoPlayerScansTaught(unittest.TestCase):
         self.assertEqual(engine.other_sport_in_title("2024 Topps Chrome Golfo Federer 1/1"), "")
 
 
+class ARejectIsOnlyAsPermanentAsItsRule(unittest.TestCase):
+    """The 77/77 Shapovalov card was stamped a reject by the old maker rule.
+    Fixing the rule alone would never have reached it: a scan skipped every
+    reject without looking. Now a reject carries the judge version it was
+    made under, and one a newer judge might reverse is judged again."""
+
+    BOOKEND = "2024 Topps Chrome Tennis Denis Shapovalov 1st Pineapple Refractor 77/77"
+    MIDRUN = "2024 Topps Chrome Tennis Denis Shapovalov Refractor 7/77"
+    UNNUMBERED = "2024 Topps Chrome Tennis Denis Shapovalov Refractor"
+
+    def test_an_old_bare_reject_is_reconsidered_only_for_a_bookend_title(self):
+        self.assertFalse(engine.reject_stands("reject", self.BOOKEND))
+        self.assertTrue(engine.reject_stands("reject", self.MIDRUN))
+        self.assertTrue(engine.reject_stands("reject", self.UNNUMBERED))
+
+    def test_a_versioned_reject_is_reconsidered_by_reason_and_version(self):
+        old_maker = {"verdict": "reject", "reason": "manufacturer not in allow-list: ''", "judge": 1}
+        old_serial = {"verdict": "reject", "reason": "no serial number (N/M) in the title or specifics", "judge": 1}
+        current = {"verdict": "reject", "reason": "manufacturer not in allow-list: ''", "judge": engine.JUDGE_VERSION}
+        self.assertFalse(engine.reject_stands(old_maker, self.BOOKEND))
+        self.assertTrue(engine.reject_stands(old_serial, self.BOOKEND))
+        self.assertTrue(engine.reject_stands(current, self.BOOKEND))
+        # a reject with a reason but no version is a version-1 reject
+        self.assertFalse(engine.reject_stands({"verdict": "reject", "reason": "manufacturer not in allow-list: 'Topps Chrome'"}, self.BOOKEND))
+
+    def test_a_scan_judges_the_reconsidered_ones_again_and_no_others(self):
+        items = [{"itemId": "v1|1|0", "title": self.BOOKEND},
+                 {"itemId": "v1|2|0", "title": self.MIDRUN},
+                 {"itemId": "v1|3|0", "title": self.UNNUMBERED},
+                 {"itemId": "v1|4|0", "title": "2024 Topps Chrome Tennis Coco Gauff 1/25"}]
+        seen = {"v1|1|0": "reject", "v1|2|0": "reject", "v1|3|0": "reject",
+                "v1|4|0": {"verdict": "reject", "reason": "no serial number (N/M) in the title or specifics", "judge": 1}}
+        asked = []
+
+        def details(_token, ids, **kw):
+            asked.extend(ids)
+            return {i: {"localizedAspects": [{"name": "Sport", "value": "Tennis"}],
+                        "price": {"value": "1.00", "currency": "USD"}, "seller": {"username": "s"},
+                        "buyingOptions": ["AUCTION"], "itemWebUrl": "https://www.ebay.com/itm/1"} for i in ids}
+
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter(items)), \
+                patch.object(engine, "get_item_details", side_effect=details):
+            engine.save_state(os.path.join(folder, engine.STATE_FILE), seen)
+            matches, checked = engine.run_scan(None, ["Topps Chrome"])
+            with open(os.path.join(folder, engine.STATE_FILE)) as f:
+                after = json.load(f)
+        self.assertEqual(asked, ["v1|1|0"], "only the bookend-titled old reject is worth a call")
+        self.assertEqual([m["itemId"] for m in matches], ["v1|1|0"], "the blank-maker card comes through")
+        self.assertEqual(after["v1|2|0"], "reject")
+        self.assertEqual(after["v1|3|0"], "reject")
+        self.assertEqual(after["v1|4|0"]["judge"], 1)
+
+    def test_a_reject_made_now_carries_the_version(self):
+        entry = engine.rejected("no serial number (N/M) in the title or specifics")
+        self.assertEqual(entry["judge"], engine.JUDGE_VERSION)
+        self.assertTrue(engine.reject_stands(entry, self.BOOKEND))
+
+    def test_every_reconsidered_reason_belongs_to_a_version_the_judge_reached(self):
+        for version in engine.RECONSIDER_REASONS:
+            self.assertLessEqual(version, engine.JUDGE_VERSION)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
