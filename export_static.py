@@ -73,12 +73,18 @@ if os.path.exists(status_path):
     except (json.JSONDecodeError, OSError):
         previous = {}
 statuses = previous
+report = {}
 try:
     ids = engine.item_ids_in_spreadsheet(xlsx)
     if ids:
-        statuses = engine.refresh_statuses(engine.get_ebay_token(), ids, previous)
+        statuses = engine.refresh_statuses(engine.get_ebay_token(), ids, previous, report=report)
 except Exception as exc:                                  # noqa: BLE001 -- keep the last file
     print(f"status refresh skipped: {exc}")
+if report:
+    # said every time, so a status that never changes can be told from one
+    # that was never asked about (run 42 on 17 Sep: 55 asked, 55 refused, 0 said)
+    print(f"statuses: asked eBay about {report['asked']} of {len(ids)} listing(s); "
+          f"{report['refused']} refused (last reading kept); {report['gone']} no longer served")
 with open(status_path, "w") as f:
     json.dump({"checkedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                "statuses": statuses}, f)

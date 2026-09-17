@@ -235,6 +235,16 @@ by the lower section of the Matches panel, not by whether anything was new.
   "check by eye" caution below can become a rejection; if many leave it blank,
   it has to stay a caution. Sort the spreadsheet by `Sport` after the next run.
 - `README.md` is not a real readme (it contains pasted engine code).
+- **Does the surname search really return everything the full-name search
+  does?** Run 41 (both searches) checked 605 Shapovalov Topps Chrome
+  listings; run 42, 47 minutes later (surname only), checked 579. Listings
+  ending in between, and eBay's own drift, are the likely 26; eBay matches
+  every word, so a listing the full name finds and the surname does not
+  would have to come from eBay relaxing the longer query, which brings other
+  people's cards, not his. Settle it for two calls from the PC:
+  `py -c "import tennis_card_engine as e; t=e.get_ebay_token(); [print(q, e.search_ebay(t, q, 1, newest_first=True)[1]) for q in ('Shapovalov Topps Chrome', 'Denis Shapovalov Topps Chrome')]"`
+  -- if the second total is ever the larger, the narrower search must run
+  every time again, not only past the cap.
 
 Done since these notes were written: `app.js` confirmed on `main` (the Matches
 fallback works), `scan.yml`'s six-hourly comment corrected, and `test_engine.py`
@@ -286,7 +296,18 @@ and the one-time full re-walk after the cursor format changed happened at run
   listing), and an ended reading with neither is asked about again -- so
   those 55 repair themselves on the next export. In a scan, a listing gone
   between search and fetch is a reject at once; a refused fetch is the
-  retried-then-gone case above.
+  retried-then-gone case above. **Run 42 (17 Sep, 12:45) then showed the
+  other half:** the export made three batch status calls for the 55, every
+  one was turned away, and not one status changed -- with nothing in the log,
+  since the warning went to `engine_run.log`. Single calls were working
+  minutes earlier, so the batch endpoint itself is what eBay turns away (eBay
+  lists `getItems` as a limited release, so a 403 for this keyset is the
+  likely answer; the next run's log prints the status and eBay's words). A
+  400/403/404/405 on the batch call now switches the process to single calls
+  and says so; a 429, a 5xx or a dropped connection is a refusal, said once,
+  and the readings are kept. The export prints "statuses: asked eBay about N
+  ... M refused ... K no longer served" every time, so "nothing changed" can
+  be told from "nothing was asked".
 - **An active status younger than `STATUS_FRESH_SECONDS` (an hour) is not
   asked about again.** Several scans in an hour used to re-check every unsold
   row each time -- four batch calls a run, more than a repeat scan itself.
@@ -358,13 +379,15 @@ and the one-time full re-walk after the cursor format changed happened at run
   put `if: always()` on the export and commit steps, the run still publishes
   what it has; it just shows red instead of pretending it was a quiet day. A
   partly refused run stays green with a warning that it covered less.
-- **Measured 17 Sep: a never-seen listing costs one call, and batching did
-  not help.** The Shapovalov scan judged 2,077 listings for 1,873 single
-  detail calls plus 96 batch calls: eBay's `getItems` hands back the item
-  specifics the judge reads for about 4 listings in 100, so a batch of 20
-  cost one call and then 19 singles anyway -- a wash in calls, and 96 extra
-  round trips. Judging no longer batches; statuses, which need no specifics,
-  still go twenty at a time. The old 420-calls-a-scan figure was wrong. What does
+- **Measured 17 Sep: a never-seen listing costs one call, and batching never
+  helped.** The Shapovalov scan judged 2,077 listings for 1,873 single
+  detail calls plus 96 batch calls. That was first read as "`getItems` hands
+  back the specifics for about 4 listings in 100"; run 42 showed the likelier
+  truth, that `getItems` answered nothing usable at all and the old code fell
+  back to singles without a word, which gives the same arithmetic. Either
+  way a batch of 20 cost one call and then 20 singles. Judging no longer
+  batches; statuses try one batch per process and fall back to singles the
+  moment eBay turns it away. The old 420-calls-a-scan figure was wrong. What does
   save calls: `seen_items.json` (a judged listing is never fetched again), the
   cursor (a repeat wide scan fetches only what was listed since), and
   `settled_by_title` (a custom, another sport, or a serial that is not a
@@ -398,10 +421,12 @@ and the one-time full re-walk after the cursor format changed happened at run
   and after a scan (`py ebay_usage.py --raw`, or the "eBay calls today" panel
   on the page) and compare -- the difference is the real call count.
 - Detail fetching for the judge is one call per listing, `DETAIL_WORKERS`
-  (8) in flight at once; lower it if eBay starts refusing calls. Statuses go
-  in batches of `DETAIL_BATCH_SIZE` (20, eBay's ceiling, do not raise), and
-  fall back to single calls if eBay ever drops `getItems`. `TwoWaysToFetch`
-  in `test_engine.py` pins both, with no keys.
+  (8) in flight at once; lower it if eBay starts refusing calls. Statuses
+  try batches of `DETAIL_BATCH_SIZE` (20, eBay's ceiling, do not raise) and
+  fall back to single calls the moment eBay turns the batch call away, which
+  as of run 42 it seems always to do; the batch costs one wasted call per
+  process until it is settled and removed. `TwoWaysToFetch` and
+  `StatusRefresh` in `test_engine.py` pin both paths, with no keys.
 - **A search stops when eBay says there is no further page.** eBay's `total`
   is an estimate that runs high, so the last page used to be followed by an
   empty one, a call each. `search_ebay` now hands back whether the response
@@ -419,8 +444,9 @@ and the one-time full re-walk after the cursor format changed happened at run
   seller, before any detail call.
 - **The run says where its calls went.** After "Checked N listings" the
   Actions log prints detail calls made, listings settled from the search
-  result with no call, listings already judged, and the top reasons listings
-  were turned away. Any further saving -- for instance whether a title with
+  result with no call, listings already judged, listings already recorded as
+  matches, and the top reasons listings were turned away; the four add up to
+  N. A refused detail call is said out loud with the count. Any further saving -- for instance whether a title with
   no serial at all is ever a match through its specifics -- is to be decided
   from those numbers after a full walk, not guessed.
 - Never commit `.env` or put any key or token in the code.

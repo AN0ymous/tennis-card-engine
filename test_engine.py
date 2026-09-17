@@ -394,6 +394,7 @@ class StatusRefresh(unittest.TestCase):
         requests.get = self._get
         engine.consume_api_call = self._consume
         engine._bulk_details_supported = True
+        engine._bulk_refusal_said = False
 
     def refresh(self, previous, bulk=True):
         fake = FakeEbay(bulk=bulk)
@@ -434,6 +435,50 @@ class StatusRefresh(unittest.TestCase):
         unknown = engine.refresh_statuses("fake-token", self.IDS[3:4], {})
         self.assertEqual(unknown[self.IDS[3]]["status"], "unknown")
 
+    class Forbidden(FakeEbay):
+        """What run 42 on 17 Sep most likely met: eBay does not offer the bulk
+        call to this keyset, while the single call works as ever."""
+        def get(self, url, headers=None, params=None, timeout=None, **kw):
+            if url.rstrip("/").endswith("/buy/browse/v1/item"):
+                self.calls["getItems"] += 1
+                return self.Response({"errors": [{"errorId": 1100, "message": "Access denied"}]}, status=403)
+            return super().get(url, headers, params, timeout, **kw)
+
+    def test_a_bulk_call_ebay_does_not_offer_falls_back_to_single_calls_and_says_so(self):
+        """Run 42: three batch status calls, every one turned away, and the 55
+        wrongly "ended" statuses left exactly as they were -- with nothing in
+        the log to say so. A refusal that is really "not for you" must fall
+        back to the single call, which repairs them, and name itself."""
+        import io, contextlib
+        legacy = {"status": "ended", "checkedAt": "2026-09-17T06:21:44Z"}
+        fake = self.Forbidden()
+        requests.get = fake.get
+        engine._bulk_details_supported = True
+        report = {}
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            statuses = engine.refresh_statuses(
+                "fake-token", self.IDS[:55], {i: dict(legacy) for i in self.IDS[:55]}, report=report)
+        self.assertEqual([statuses[i]["status"] for i in self.IDS[:55]], ["active"] * 55)
+        self.assertEqual(fake.calls["getItem"], 55)            # the repair
+        self.assertLessEqual(fake.calls["getItems"], 3)        # then never again this process
+        self.assertFalse(engine._bulk_details_supported)
+        self.assertEqual(report, {"asked": 55, "refused": 0, "gone": 0})
+        self.assertIn("HTTP 403", err.getvalue())
+        self.assertIn("Access denied", err.getvalue())
+
+    def test_a_refusal_is_said_once_and_counted(self):
+        import io, contextlib
+        fake = self.Refusing()
+        requests.get = fake.get
+        report = {}
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            engine.refresh_statuses("fake-token", self.IDS[:55], {}, report=report)
+        self.assertEqual(report, {"asked": 55, "refused": 55, "gone": 0})
+        self.assertEqual(err.getvalue().count("refused a bulk item call"), 1)
+        self.assertIn("HTTP 429", err.getvalue())
+
     def test_a_listing_ebay_no_longer_serves_is_ended_on_its_word(self):
         fake = FakeEbay(listings=1)                  # the fake serves only listing 0
         requests.get = fake.get
@@ -449,10 +494,12 @@ class StatusRefresh(unittest.TestCase):
                 return fake.Response({"errors": [{"message": "not found"}]}, status=404)
             return fake_get(url, headers, params, timeout, **kw)
         requests.get = get
-        statuses = engine.refresh_statuses("fake-token", [self.IDS[0], gone], {})
+        report = {}
+        statuses = engine.refresh_statuses("fake-token", [self.IDS[0], gone], {}, report=report)
         self.assertEqual(statuses[self.IDS[0]]["status"], "active")
         self.assertEqual(statuses[gone]["status"], "ended")
         self.assertTrue(statuses[gone]["gone"])
+        self.assertEqual(report, {"asked": 2, "refused": 0, "gone": 1})
         self.assertTrue(engine.status_settled(statuses[gone]))
 
     def test_an_ended_reading_with_no_evidence_is_asked_about_again(self):
