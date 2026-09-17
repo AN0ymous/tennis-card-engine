@@ -54,7 +54,28 @@ on a website.
    `results/config.json` shows a new `lastRun`. Without one, the button opens
    the GitHub Actions page. Hosted note text says "on a schedule", not a fixed
    interval.
-2. **Matches section fallback:** when the latest scan's `new_matches.json` is
+2. **Scans survive leaving the tab.** No scan runs in the page: the local one
+   runs in `server.py`'s thread, the hosted one on GitHub. What used to stop
+   was the page *noticing*, since a hidden tab has its timers throttled and a
+   phone may drop the tab entirely. The hosted watch is kept in localStorage
+   (`tce.watching`, with a deadline and the run id) and picked up on load, and
+   `visibilitychange` / `focus` / `pageshow` re-check straight away instead of
+   waiting for the next tick. On a local page, `resumeLocalScan()` replays the
+   server's whole event log from seq 0, so a scan started before a reload comes
+   back with its log and progress intact. A watch whose results already landed
+   is dropped rather than acted on, so it can never cause a reload loop.
+3. **Progress while a scan runs.** A local scan drives the bar from the
+   engine's own events. A hosted scan has no event stream, so the bar follows
+   the GitHub run instead: `readRunProgress()` finds the run this dispatch
+   created (by time, not "the latest run", which could be the daily one) and
+   reads `/actions/runs/{id}/jobs` for the step, shown in plain words
+   ("Searching eBay"), with the step count and the clock. When that cannot be
+   read -- no key, rate-limited, run not yet created -- it falls back to
+   `HOSTED_PHASES`, which is honest about being an estimate. The bar is
+   visible in hosted mode whether or not a scan is running; when idle it says
+   when the last scan finished. The activity log stays hidden there, since
+   GitHub sends no per-listing events.
+4. **Matches section fallback:** when the latest scan's `new_matches.json` is
    empty, show the board's recent cards with "The latest scan found no new
    cards"; show example cards only when nothing has ever been found.
 
