@@ -35,7 +35,8 @@ on a website.
   all players, all 7 sets, all card types, graded and raw, both listing types,
   any price -- that is what keeps the spreadsheet comprehensive. Pressing "Run
   a scan" sends whatever the scan setup is set to, on the hosted site exactly
-  as on the PC. Until 17 Sep the hosted button sent nothing but `{"ref":
+  as on the PC, and the same setup narrows "Everything found so far" the
+  moment it changes, with no scan needed. Until 17 Sep the hosted button sent nothing but `{"ref":
   "main"}` and `scan.yml` declared no inputs, so every phone-started scan
   quietly ran the defaults however the controls were set.
 - eBay's account deletion notifications: opted out ("not persisting eBay data").
@@ -108,6 +109,32 @@ on a website.
    capped at 24 while the spreadsheet held 54, so most of the record never
    reached the page. At roughly 780 bytes a card that ceiling is about 390KB
    -- revisit if the spreadsheet approaches it.
+6. **The scan setup is the filter, everywhere, and it survives a reload.**
+   Players, sets and the print-run ceiling (with "inclusive") go to the engine
+   to decide what is recorded -- and until 17 Sep that was all they did:
+   "Everything found so far" ignored them, so a scan narrowed to one set and
+   one player still showed the whole record, while card type, condition,
+   price and listing type (whose state the page already shared with the
+   display filters) narrowed it. Reproduced with real clicks: Topps Chrome
+   only, one player, ceiling 100 -- 54 shown. Now `inPlayers`, `inBrands` and
+   `underCeiling` sit in `passesFilters` beside the others. A card's set comes
+   from `brand` on each board card, which `build_board` works out with
+   `brand_of` from the same evidence the brand gate accepted it on (the Set
+   field, else the qualified title), so the two cannot disagree; a card it
+   cannot place is shown, never hidden, like every other unknown on the page.
+   Players match when one whole name contains the other ("DANIIL MEDVEDEV",
+   "Erika Andreeva, Mirra Andreeva"), which keeps Serena and Venus apart.
+   Separately, `loadConfig` used to put every scan-setup control back to the
+   engine default on each load, and a finished hosted scan reloads the page
+   -- so the setup you had just scanned with was gone by the time its results
+   appeared. The whole setup is now kept in localStorage (`tce.scanSetup`) and
+   restored after the defaults go in. Nothing saved means exactly the old
+   behaviour.
+7. **`app.js` and `styles.css` are stamped with the commit on publish.**
+   `pages.yml` rewrites the two asset links to `?v=<sha>`, because a browser
+   keeps `app.js` for a while and a merge could leave a phone running the old
+   page against new results: run 29 on 17 Sep dispatched a scan with no
+   settings at all for exactly that reason and looked like a failed fix.
 5. **eBay calls today.** A small meter under the progress bar, from eBay's own
    Developer Analytics figures. The eBay keys never reach the browser: the
    scheduled run writes `results/usage.json` after each scan, and `py

@@ -305,9 +305,112 @@ function sortCards(list) {
 }
 
 /* every display filter in one place */
+/* ---- the scan setup is a filter too: players, sets, print-run ceiling ----
+   These three go to the engine to decide what gets recorded, and until now
+   that was all they did: "Everything found so far" ignored them, so narrowing
+   the scan to one set and one player still showed the whole record. Now they
+   narrow what is shown exactly as price, listing type, card type and condition
+   already did. A card the page cannot place -- no brand, no readable serial --
+   is shown rather than hidden, as everywhere else on this page. */
+
+/* the ticked chips of a group, lower-cased; null when the group is not narrowing */
+function chosen(group) {
+  const boxes = chipsOf(group);
+  const on = boxes.filter((b) => b.checked);
+  if (!on.length || on.length === boxes.length) return null;
+  return on.map((b) => b.value);
+}
+
+/* "Daniil Medvedev" is the same person as "DANIIL MEDVEDEV", and a card
+   recorded as "Erika Andreeva, Mirra Andreeva" is Mirra's; "Serena Williams"
+   is not "Venus Williams". Whole names contain each other, one way or the other. */
+function samePlayer(wanted, recorded) {
+  const a = words(wanted), b = words(recorded);
+  if (!a.length || !b.length) return false;
+  const within = (x, y) => x.every((w) => y.includes(w));
+  return within(a, b) || within(b, a);
+}
+
+function inPlayers(card) {
+  if ($("all-players").checked) return true;
+  const names = chosen("player");
+  if (!names) return true;
+  return names.some((name) => samePlayer(name, card.player || ""));
+}
+
+function inBrands(card) {
+  const sets = chosen("brand");
+  if (!sets || !card.brand) return true;
+  return sets.some((name) => name.toLowerCase() === card.brand.toLowerCase());
+}
+
+function printRunOf(card) {
+  const m = String(card.serial || "").match(/^\s*\d+\s*\/\s*(\d+)\s*$/);
+  return m ? Number(m[1]) : null;
+}
+
+function underCeiling(card) {
+  const run = printRunOf(card);
+  if (run == null) return true;                          // unreadable serial: never hide
+  const ceiling = Number($("max-print-run").value)
+    || (state.config && state.config.maxPrintRun) || 500;
+  return run < ceiling || ($("inclusive").checked && run === ceiling);
+}
+
 function passesFilters(card) {
   return inPriceRange(card) && inListingType(card) && inBookend(card) && inWindow(card)
-    && inCardType(card) && inCondition(card) && inColourMatch(card);
+    && inCardType(card) && inCondition(card) && inColourMatch(card)
+    && inPlayers(card) && inBrands(card) && underCeiling(card);
+}
+
+/* ---- and it survives a reload ----
+   A finished hosted scan reloads the page, and loadConfig used to put every
+   scan-setup control back to the engine's default on the way in. So the setup
+   you had just scanned with was gone by the time the results appeared. */
+const SCAN_SETUP_KEY = "tce.scanSetup";
+
+function saveScanSetup() {
+  try {
+    localStorage.setItem(SCAN_SETUP_KEY, JSON.stringify({
+      allPlayers: $("all-players").checked,
+      players: selected("player"),
+      brands: selected("brand"),
+      ceiling: $("max-print-run").value,
+      inclusive: $("inclusive").checked,
+    }));
+  } catch { /* private mode: the setup lasts the session */ }
+}
+
+function restoreScanSetup() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(SCAN_SETUP_KEY) || "null"); } catch { /* ignore */ }
+  if (!saved) return;
+  const tick = (group, names) => {
+    const wanted = new Set((names || []).map((n) => n.toLowerCase()));
+    chipsOf(group).forEach((b) => { b.checked = wanted.has(b.value.toLowerCase()); });
+  };
+  if (Array.isArray(saved.players)) tick("player", saved.players);
+  if (Array.isArray(saved.brands)) tick("brand", saved.brands);
+  if (typeof saved.allPlayers === "boolean") $("all-players").checked = saved.allPlayers;
+  if (saved.ceiling && Number(saved.ceiling) > 0) $("max-print-run").value = saved.ceiling;
+  if (typeof saved.inclusive === "boolean") $("inclusive").checked = saved.inclusive;
+  syncPlayerChips();
+}
+
+/* every change to the setup: remember it, and narrow what is shown right away */
+function scanSetupChanged() {
+  saveScanSetup();
+  renderMatches();
+  renderBoard();
+}
+
+function wireScanSetup() {
+  // chips are built and rebuilt after load, so listen on their containers
+  ["players-chips", "brands-chips"].forEach((id) =>
+    $(id).addEventListener("change", scanSetupChanged));
+  $("all-players").addEventListener("change", scanSetupChanged);
+  $("inclusive").addEventListener("change", scanSetupChanged);
+  $("max-print-run").addEventListener("input", scanSetupChanged);
 }
 
 /* ------------------------------------------------------------ saved cards */
@@ -694,6 +797,7 @@ async function loadConfig() {
 
   $("max-print-run").value = c.maxPrintRun;
   $("inclusive").checked = !!c.printRunInclusive;
+  restoreScanSetup();                    // what this device last scanned with, if anything
   $("ref-category").textContent = c.categoryId;
   $("ref-marketplace").textContent = c.marketplace;
   $("ref-per-query").textContent = (c.maxResultsPerBrand || c.resultsPerQuery).toLocaleString();
@@ -880,6 +984,7 @@ function addSearched(group, raw) {
   if (!existing) remember(group, name);              // only genuinely new names are kept
   cfg.narrowed();
   $(cfg.input).value = "";
+  scanSetupChanged();
   return chip;
 }
 
@@ -972,8 +1077,9 @@ function renderMatches() {
   area.append(sectionHead("Everything found so far",
     `${everything.length}${everything.length === state.board.length ? "" : ` of ${state.board.length}`}`));
   area.append(everything.length ? cardGrid(everything, fresh.length)
-    : noteLine("Nothing matches the filters in the scan setup. Widen the card type, "
-      + "graded or raw, price, listing type, bookend or listed-within choice."));
+    : noteLine("Nothing recorded matches the scan setup. Widen the players, sets, "
+      + "print-run ceiling, card type, graded or raw, price, listing type, bookend "
+      + "or listed-within choice."));
 }
 
 function initials(name) {
@@ -2333,8 +2439,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const boxes = [...document.querySelectorAll(`input[data-group="${group}"]`)];
       const turnOn = boxes.some((b) => !b.checked);
       boxes.forEach((b) => { b.checked = turnOn; });
+      scanSetupChanged();
     });
   });
+  wireScanSetup();
 
   $("holo-close").addEventListener("click", closeHologram);
   $("holo").addEventListener("click", (e) => {
