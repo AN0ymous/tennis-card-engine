@@ -538,7 +538,6 @@ on 18 Sep decompose exactly (counter deltas 432 and 307):
   column answers it after the next scan. If nearly every listing states it, the
   "check by eye" caution below can become a rejection; if many leave it blank,
   it has to stay a caution. Sort the spreadsheet by `Sport` after the next run.
-- `README.md` is not a real readme (it contains pasted engine code).
 - **Does the surname search really return everything the full-name search
   does?** Run 41 (both searches) checked 605 Shapovalov Topps Chrome
   listings; run 42, 47 minutes later (surname only), checked 579. Listings
