@@ -1,1 +1,56 @@
-[]
+[
+  {
+    "player": "YUE YUAN",
+    "manufacturer": "Topps",
+    "set_name": "2024 TOPPS CHROME TENNIS",
+    "brand": "Topps Chrome",
+    "title": "2024 TOPPS CHROME TENNIS SUPERFRACTOR 1/1 #7 YUE YUAN 1/1 PSA 10",
+    "serial": "1/1",
+    "bookend": "True 1/1 (both bookends)",
+    "price": "999.99 USD",
+    "link": "https://www.ebay.com/itm/298685251941",
+    "image": "https://i.ebayimg.com/images/g/0~oAAeSwSmdqrQmx/s-l1600.jpg",
+    "images": [
+      "https://i.ebayimg.com/images/g/ovkAAeSwnJNqrQmx/s-l1600.jpg"
+    ],
+    "listed": "2026-09-18T09:49:09.000Z",
+    "listing": "Buy It Now",
+    "bids": null,
+    "itemId": "v1|298685251941|0",
+    "cardType": "base",
+    "grading": "Professional Sports Authenticator (PSA) 10",
+    "parallel": "",
+    "outfit": "",
+    "colourMatch": "no",
+    "sport": "Tennis",
+    "caution": "",
+    "found": "2026-09-18 10:40 UTC"
+  },
+  {
+    "player": "UGO HUMBERT",
+    "manufacturer": "Topps",
+    "set_name": "2024 TOPPS CHROME TENNIS",
+    "brand": "Topps Chrome",
+    "title": "2024 TOPPS CHROME TENNIS SUPERFRACTOR 1/1 #101 UGO HUMBERT 1/1 PSA 9",
+    "serial": "1/1",
+    "bookend": "True 1/1 (both bookends)",
+    "price": "899.99 USD",
+    "link": "https://www.ebay.com/itm/117418478439",
+    "image": "https://i.ebayimg.com/images/g/SusAAeSw96JqrQma/s-l1600.jpg",
+    "images": [
+      "https://i.ebayimg.com/images/g/L6YAAeSwfuZqrQma/s-l1600.jpg"
+    ],
+    "listed": "2026-09-18T09:48:19.000Z",
+    "listing": "Buy It Now",
+    "bids": null,
+    "itemId": "v1|117418478439|0",
+    "cardType": "base",
+    "grading": "Professional Sports Authenticator (PSA) 9",
+    "parallel": "",
+    "outfit": "",
+    "colourMatch": "no",
+    "sport": "Tennis",
+    "caution": "",
+    "found": "2026-09-18 10:40 UTC"
+  }
+]
