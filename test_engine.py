@@ -1704,6 +1704,56 @@ class TheMatchesPanelIsPaged(unittest.TestCase):
         self.assertIn("`${everything.length} of ${state.board.length} match the filters`", body)
 
 
+class TheSavedPageAsksTheRightSide(unittest.TestCase):
+    """The saved page is routed from the hash the moment the script runs --
+    before loadConfig has found out whether there is a server. HOSTED starts
+    false, so on the hosted site it asked a server that is not there, GitHub
+    Pages answered with its 404 page, and the reader got
+
+        Couldn't check eBay (Unexpected token '<', "<!DOCTYPE "... is not
+        valid JSON). Mark cards sold or active yourself below.
+
+    under a page whose statuses were sitting in results/status.json all along."""
+
+    def js(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            return f.read()
+
+    def test_hosted_is_not_believed_until_the_config_has_answered(self):
+        js = self.js()
+        self.assertIn("let modeSettled = false;", js)
+        body = js.split("async function refreshStatuses(")[1].split("\n}")[0]
+        self.assertIn("if (!modeSettled)", body)
+        self.assertLess(body.index("if (!modeSettled)"), body.index("if (HOSTED)"),
+                        "the guard has to come before the side is chosen")
+
+    def test_waiting_is_not_dressed_up_as_a_failure(self):
+        """It is a wait, so it must not say eBay could not be reached."""
+        body = self.js().split("async function refreshStatuses(")[1].split("\n}")[0]
+        guard = body.split("if (!modeSettled)")[1].split("return;")[0]
+        self.assertNotIn("Couldn't", guard)
+
+    def test_the_config_calls_back_when_it_knows(self):
+        """Otherwise the page would sit on "Checking..." for good."""
+        js = self.js()
+        settle = js.split("function settleMode()")[1].split("\n}")[0]
+        self.assertIn("modeSettled = true", settle)
+        self.assertIn("refreshStatuses()", settle)
+        self.assertIn('$("saved-page").hidden', settle)
+        load = js.split("async function loadConfig()")[1].split("\n}\n")[0]
+        self.assertGreaterEqual(load.count("settleMode()"), 2,
+                                "every way out of loadConfig settles the mode")
+
+    def test_a_response_that_is_not_json_reads_as_a_plain_message(self):
+        """"Unexpected token '<'" tells the reader nothing they can act on."""
+        js = self.js()
+        body = js.split("async function readJson(r)")[1].split("\n}")[0]
+        self.assertIn("JSON.parse(text)", body)
+        self.assertIn("the server answered", body)
+        asks = js.split("async function refreshStatuses(")[1].split("\n}")[0]
+        self.assertNotIn(".json()", asks, "every read goes through readJson")
+
+
 class TheContentsPanelKeepsUp(unittest.TestCase):
     """The panel behind the tennis ball is the map of the site, and a map
     goes stale silently: it still listed "Method and process" as a section of

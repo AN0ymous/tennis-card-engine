@@ -16,6 +16,14 @@ const API = {
 const portraits = new Map();          // player -> portrait payload, fetched once
 
 let HOSTED = false;                  // true when there is no server: GitHub Pages
+/* Whether HOSTED can be believed yet. It starts false and only becomes true
+   when loadConfig finds a server, so anything that runs before loadConfig has
+   answered would take a hosted page for a local one. The saved page did
+   exactly that: it is routed from the hash the moment the script runs, and on
+   the hosted site it asked a server that is not there. GitHub Pages answered
+   with its 404 page, and "Unexpected token '<', "<!DOCTYPE "..." went on
+   screen under "Couldn't check eBay". */
+let modeSettled = false;
 
 /* ---- where a reload leaves you ----
    The browser puts a reloaded page back where it was scrolled to, which is
@@ -662,20 +670,39 @@ async function loadStatuses() {
   } catch { /* no status file yet; cards simply carry no sold flag */ }
 }
 
+/* A response that is not JSON at all -- GitHub Pages' 404 page, a proxy's
+   error page -- used to surface as "Unexpected token '<'", which tells the
+   reader nothing they can act on. */
+async function readJson(r) {
+  const text = await r.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(r.ok ? "the server sent something that is not JSON"
+                         : `the server answered ${r.status}`);
+  }
+}
+
 async function refreshStatuses(keys) {
   const cards = (keys || Object.keys(state.saved)).map((k) => state.saved[k]).filter(Boolean);
   const ids = [...new Set(cards.map(itemIdOf).filter(Boolean))];
   const note = $("saved-checked");
   if (!ids.length) { note.textContent = ""; return; }
+  if (!modeSettled) {
+    // Which side to ask is not known yet. loadConfig calls back the moment
+    // it is, so this is a wait rather than a failure.
+    note.textContent = "Checking\u2026";
+    return;
+  }
   note.textContent = "Checking eBay\u2026";
   try {
     let data;
     if (HOSTED) {
-      data = await (await fetch("results/status.json", { cache: "no-store" })).json();
+      data = await readJson(await fetch("results/status.json", { cache: "no-store" }));
       state.statusCheckedAt = data.checkedAt || null;
     } else {
       const r = await fetch(`api/status?ids=${encodeURIComponent(ids.join(","))}`);
-      data = await r.json();
+      data = await readJson(r);
       if (!r.ok) throw new Error(data.error || r.status);
       state.statusCheckedAt = new Date().toISOString();
     }
@@ -938,6 +965,13 @@ function initPrice(c) {
 
 /* ----------------------------------------------------------------- config */
 
+/* HOSTED is final now. Anything that had to know which side to ask and was
+   told to wait gets its answer here. */
+function settleMode() {
+  modeSettled = true;
+  if (!$("saved-page").hidden) refreshStatuses();
+}
+
 async function loadConfig() {
   const pill = $("status-pill");
   try {
@@ -962,9 +996,11 @@ async function loadConfig() {
       initListing();
       initSegs();
       renderMatches();
+      settleMode();
       return;
     }
   }
+  settleMode();                 // whichever way that went, the side to ask is known
   const c = state.config;
 
   if (!c.engineAvailable) {
