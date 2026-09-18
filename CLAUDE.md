@@ -413,6 +413,15 @@ on a website.
    **When you change the UI, change the panel in the same commit.** The list
    is grouped: "On this page" (board, scan setup, matches, and the activity
    log locally) and "Other pages" (saved cards, how it works).
+   **No entry is marked as where you are** (the old `is-here`, driven by an
+   IntersectionObserver). On a page of its own the section it watches is the
+   only thing on screen, so "How it works" stayed lit for good once you opened
+   it. The marking is gone rather than patched, at the owner's call.
+   **The veil dims the page rather than covering it:** it was an opaque
+   `color-mix` of the ground colour with black, which made the panel read as a
+   different page instead of a layer over this one. It is now a translucent
+   tint with a small `backdrop-filter` blur, so the page shows through in both
+   themes.
 
 13. **The title in the top bar is the way home.** Two pages and a long main
    one, and nothing said how to get back except the browser. `#home-btn`
