@@ -1087,12 +1087,22 @@ def check_listing_status(token, item_id):
     return status_from_detail(detail)
 
 
-# An active reading younger than this is not asked for again: several scans
-# in an hour used to re-check every unsold row each time, a call a row that
-# cost far more than the repeat scan itself. The daily run is always
-# past it. A SOLD flag can therefore lag by up to an hour; set 0 to re-check
+# An active reading younger than this is not asked for again. It was an hour,
+# which meant every scan started by hand past that hour re-checked every
+# unsold row -- a call a row, and the largest line in the bill once the
+# no-sign rule had taken two thirds off the detail calls (run 61: 181 status
+# calls against 119 detail; run 63: 189 against 170).
+#
+# Measured on what those calls bought: across runs 61 and 63, 370 status
+# calls changed not one reading. At twenty hours the **daily scheduled run,
+# which is twenty-four hours after the last one, still refreshes every
+# listing exactly as before** -- nothing about the scheduled behaviour
+# changes -- while scans started by hand during the day stop paying for it
+# again and again. A SOLD flag is then as fresh as the daily run makes it,
+# which is what it was designed to be; the saved page's "Check eBay now"
+# still asks at once for the cards you care about. Set 0 to re-check on
 # every run.
-STATUS_FRESH_SECONDS = 3600
+STATUS_FRESH_SECONDS = 20 * 3600
 
 
 def status_settled(entry):

@@ -19,6 +19,7 @@ import shutil
 import smtplib
 import tempfile
 import unittest
+from datetime import timedelta
 import subprocess
 import sys
 import urllib.parse
@@ -3111,6 +3112,85 @@ class TitlesWithNoSignOfASerial(unittest.TestCase):
         self.assertEqual(seen_event["audited"], 2)
         self.assertEqual(sum(seen_event[k] for k in ("fetched", "settled", "judged", "known")),
                          seen_event["checked"])
+
+
+class EveryStatusCallHasToEarnItself(unittest.TestCase):
+    """Once the no-sign rule had taken two thirds off the detail calls, the
+    status refresh was the biggest line in the bill -- 181 of run 61's 307
+    calls, 189 of run 63's 375 -- and across those two runs 370 status calls
+    changed not one reading. Three things stop it paying for nothing."""
+
+    def sheet_and_board(self):
+        xlsx = os.path.join(HERE, "results", engine.OUTPUT_XLSX)
+        board = os.path.join(HERE, "results", "board.json")
+        if not (os.path.exists(xlsx) and os.path.exists(board)):
+            self.skipTest("no published results to measure against")
+        with open(board) as f:
+            cards = json.load(f)["cards"]
+        return engine.item_ids_in_spreadsheet(xlsx), cards
+
+    def asked(self, ids, previous, within):
+        now = engine.datetime.now(engine.timezone.utc)
+        return [i for i in dict.fromkeys(ids)
+                if i and not engine.status_settled(previous.get(i))
+                and not ((previous.get(i) or {}).get("status") == "active"
+                         and engine.status_fresh(previous.get(i), now, within))]
+
+    def aged(self, ids, hours):
+        stamp = (engine.datetime.now(engine.timezone.utc)
+                 - timedelta(hours=hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return {i: {"status": "active", "checkedAt": stamp} for i in ids}
+
+    def test_the_daily_run_still_refreshes_every_listing(self):
+        """The whole saving rests on this: the scheduled run is 24 hours after
+        the last one, so it must still be past the window. Raise the constant
+        to a day or more and the SOLD flag quietly stops being refreshed at
+        all, which is the one thing that must not happen."""
+        self.assertLess(engine.STATUS_FRESH_SECONDS, 24 * 3600,
+                        "the daily run would stop refreshing statuses")
+        ids = [f"v1|{n}|0" for n in range(20)]
+        self.assertEqual(len(self.asked(ids, self.aged(ids, 24), None)), 20)
+
+    def test_a_scan_started_by_hand_during_the_day_pays_nothing(self):
+        """This is where the calls went: every repeat scan past the old hour
+        re-checked every unsold row, a call a row, to be told nothing."""
+        ids = [f"v1|{n}|0" for n in range(20)]
+        for gap in (2, 6, 12):
+            with self.subTest(hours=gap):
+                self.assertEqual(self.asked(ids, self.aged(ids, gap), None), [])
+        # and the hour it used to be would have asked about all of them
+        self.assertEqual(len(self.asked(ids, self.aged(ids, 2), 3600)), 20)
+
+    def test_a_row_the_board_drops_is_read_by_nobody(self):
+        """A custom, a grade pair, a card number, a title that argues with
+        itself: shown nowhere, so its status is worth no call."""
+        sheet_ids, cards = self.sheet_and_board()
+        board_ids = {engine.item_id_from_link(c.get("link", "")) for c in cards}
+        spare = [i for i in sheet_ids if i not in board_ids]
+        self.assertTrue(spare, "expected the board to drop some recorded rows")
+        with open(os.path.join(HERE, "export_static.py")) as f:
+            export = f.read()
+        self.assertIn("board_ids = [i for i in dict.fromkeys(engine.item_id_from_link", export)
+        self.assertIn("ids = board_ids", export)
+
+    def test_the_readings_of_those_rows_are_kept_not_dropped(self):
+        """Not asking is not the same as forgetting: a card starred before a
+        rule dropped its row still shows its last reading."""
+        with open(os.path.join(HERE, "export_static.py")) as f:
+            export = f.read()
+        self.assertIn("seeded = dict(previous)", export)
+        self.assertIn("statuses = seeded", export, "a skipped refresh keeps them too")
+
+    def test_a_card_this_run_just_found_is_not_asked_about_again(self):
+        """It came from a live search result and a detail call that answered
+        seconds ago. That is the one call we can be certain says nothing."""
+        with open(os.path.join(HERE, "export_static.py")) as f:
+            export = f.read()
+        self.assertIn("just_found", export)
+        self.assertIn('{"status": "active", "checkedAt": now_stamp}', export)
+        # and it is not allowed to overwrite a settled reading
+        seed = export.split("for item_id in just_found:")[1].split("ids = board_ids")[0]
+        self.assertIn("engine.status_settled(seeded.get(item_id))", seed)
 
 
 class TheExportNeverBlanksThePublishedBoard(unittest.TestCase):
