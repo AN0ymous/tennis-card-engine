@@ -396,6 +396,31 @@ on a website.
    a hash that names an element inside a page, opens that page and goes to it,
    so every link into the reference still works.
 
+12. **The contents panel is the map of the site, so it is kept in step by
+   tests, not by memory.** It still called the reference "Method and process,
+   a section of this page" a day after it became a page of its own, and it
+   offered the activity log on the hosted site, where there is no activity
+   log and the link went nowhere at all. A map goes stale silently, so
+   `TheContentsPanelKeepsUp` in `test_engine.py` fails when it does: every
+   entry must lead to an id on the page or a hash `VIEWS` routes, **every
+   page in `VIEWS` must have an entry**, the reference entry must be called
+   whatever the top-bar button calls it, and the numbers must be a CSS
+   counter rather than typed in, so an entry that does not apply leaves no
+   gap in the sequence. The activity entry carries `data-local-only` and the
+   same `.is-hosted` rule that hides the panel hides it. The foot line is
+   written by `loadConfig`, because "Runs on your machine" is false on the
+   hosted page.
+   **When you change the UI, change the panel in the same commit.** The list
+   is grouped: "On this page" (board, scan setup, matches, and the activity
+   log locally) and "Other pages" (saved cards, how it works).
+
+13. **The title in the top bar is the way home.** Two pages and a long main
+   one, and nothing said how to get back except the browser. `#home-btn`
+   (`goHome()`) puts the main page back and goes to the top, whichever page
+   you are on. It takes the hash **off** the URL with `history.pushState`
+   rather than setting one, which fires no `hashchange` -- so the view is set
+   by hand -- and leaves the back button returning you to the page you left.
+
 ## Why a scan usually adds nothing, and why that is right
 
 `seen_items.json` held 5,635 judged listings on 17 Sep -- 5,577 permanent

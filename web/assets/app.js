@@ -793,6 +793,18 @@ function showSavedView(on) {
   showView(on ? "#saved" : "");
 }
 
+/* The title in the top bar is the way home: whichever page you are on, it
+   puts the main one back and goes to the top. The hash is taken off the URL
+   rather than set to something, so the back button still works -- removing it
+   with pushState fires no hashchange, which is why the view is set by hand. */
+function goHome() {
+  if (location.hash) {
+    history.pushState("", document.title, location.pathname + location.search);
+  }
+  showView("");
+  window.scrollTo({ top: 0 });
+}
+
 function initSaved() {
   try { state.saved = JSON.parse(localStorage.getItem(SAVED.key) || "{}") || {}; } catch { state.saved = {}; }
   try {
@@ -1042,6 +1054,11 @@ async function loadConfig() {
     ? "Outfit colours are read from photos by Claude once an ANTHROPIC_API_KEY secret is added to the repo; until then no card can be marked a colour match."
     : "Outfit colours are read from photos by Claude once ANTHROPIC_API_KEY is in .env (and pip install anthropic); until then no card can be marked a colour match.");
   if (HOSTED) enterHostedMode(c);
+  // The contents panel says where this page runs, and that is not the same
+  // sentence in both places: hosted, the scan runs on GitHub, not here.
+  $("contents-foot").textContent = HOSTED
+    ? "Scans run on GitHub on a schedule. Your eBay keys stay in the repository's secrets and never reach the browser."
+    : "Runs on your machine. Your eBay keys stay in .env and never reach the browser.";
 }
 
 function syncPlayerChips() {
@@ -2816,6 +2833,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initRail();
   initWakeChecks();
 
+  $("home-btn").addEventListener("click", goHome);
   $("stop-btn").addEventListener("click", stopScan);
   $("download-btn").addEventListener("click", () => { window.location = API.spreadsheet; });
   $("run-btn").addEventListener("click", runScan);

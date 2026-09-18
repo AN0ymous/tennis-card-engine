@@ -14,9 +14,9 @@
 
 <header class="topbar">
   <div class="wrap">
-    <div class="brand">
+    <button type="button" class="brand" id="home-btn" aria-label="Home: back to the board">
       <span class="brand-name">Tennis Card Engine</span>
-    </div>
+    </button>
     <button type="button" class="ball" id="contents-btn" aria-label="Contents"
             title="Contents" aria-expanded="false" aria-controls="contents">
       <svg class="ball-svg" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
@@ -598,20 +598,22 @@ Arguments: tennis_card_engine.py</pre>
               aria-label="Close contents">&#10005;</button>
     </div>
     <ol class="contents-list">
-      <li><a href="#board"><span class="c-n">01</span><span class="c-t">The board</span>
-        <span class="c-d">The newest listings, every find</span></a></li>
-      <li><a href="#scan"><span class="c-n">02</span><span class="c-t">Scan setup</span>
-        <span class="c-d">Players, brands, print-run ceiling</span></a></li>
-      <li><a href="#matches"><span class="c-n">03</span><span class="c-t">Matches</span>
-        <span class="c-d">Every card the scan kept</span></a></li>
-      <li><a href="#saved"><span class="c-n">04</span><span class="c-t">Saved cards</span>
-        <span class="c-d">Your starred cards, active or sold</span></a></li>
-      <li><a href="#activity"><span class="c-n">05</span><span class="c-t">Activity</span>
-        <span class="c-d">Live log, with each rejection</span></a></li>
-      <li><a href="#method"><span class="c-n">06</span><span class="c-t">Method and process</span>
-        <span class="c-d">The rules, the six filter stages, the allow-list, scheduling, outputs and limits</span></a></li>
+      <li class="contents-group"><span>On this page</span></li>
+      <li><a href="#board"><span class="c-n"></span><span class="c-t">The board</span>
+        <span class="c-d">Every find, newest first, along the top rail</span></a></li>
+      <li><a href="#scan"><span class="c-n"></span><span class="c-t">Scan setup</span>
+        <span class="c-d">Players, sets, print-run ceiling, price and type &mdash; it decides what a scan records <em>and</em> what the Matches panel shows</span></a></li>
+      <li><a href="#matches"><span class="c-n"></span><span class="c-t">Matches</span>
+        <span class="c-d">What the last scan added, then the whole record, a page at a time</span></a></li>
+      <li data-local-only><a href="#activity"><span class="c-n"></span><span class="c-t">Activity</span>
+        <span class="c-d">The live log while a scan runs, with every listing it turns away and why</span></a></li>
+      <li class="contents-group"><span>Other pages</span></li>
+      <li><a href="#saved"><span class="c-n"></span><span class="c-t">Saved cards</span>
+        <span class="c-d">The cards you starred, active, sold or ended &mdash; the star in the top bar</span></a></li>
+      <li><a href="#method"><span class="c-n"></span><span class="c-t">How it works</span>
+        <span class="c-d">Method and process in six parts: the serial rule, the filter stages, the allow-list, the schedule, where results go, and what it leaves out &mdash; the button in the top bar</span></a></li>
     </ol>
-    <p class="contents-foot">Runs on your machine. Your eBay keys never reach the browser.</p>
+    <p class="contents-foot" id="contents-foot">Runs on your machine. Your eBay keys never reach the browser.</p>
   </div>
 </nav>
 
