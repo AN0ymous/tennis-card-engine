@@ -1922,6 +1922,102 @@ class EveryCallEarnsItsKeep(unittest.TestCase):
                         self.assertIn("would not return", seen["v1|9|0"]["reason"])
                         self.assertEqual(len(cursors), 1, "gone for good, so the mark can move")
 
+    def test_a_listing_the_walk_never_reaches_is_still_asked_about(self):
+        """The 74 left by the 03:41 run on 18 Sep. eBay refused every call that
+        run, so they were recorded unavailable and the marks were rightly held
+        back. The seven-set walk that followed never reached them, found no
+        failures of its own, and wrote its marks past them -- after which
+        nothing would ever have retried them. They are asked about by id."""
+        stranded = "v1|77|0"
+        detail = {"itemId": stranded, "title": "2024 Topps Chrome Coco Gauff 1/50 tennis",
+                  "localizedAspects": [{"name": "Manufacturer", "value": "Topps"},
+                                       {"name": "Set", "value": "2024 Topps Chrome"},
+                                       {"name": "Sport", "value": "Tennis"},
+                                       {"name": "Player/Athlete", "value": "Coco Gauff"}],
+                  "price": {"value": "1.00", "currency": "USD"}, "seller": {"username": "s"},
+                  "buyingOptions": ["AUCTION"], "itemWebUrl": "https://www.ebay.com/itm/77"}
+        asked = []
+
+        def details(token, ids, **kw):
+            asked.extend(ids)
+            return {i: dict(detail) for i in ids if i == stranded}
+
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter([])), \
+                patch.object(engine, "get_item_details", side_effect=details):
+            engine.save_state(os.path.join(folder, engine.STATE_FILE),
+                              {stranded: {"verdict": "unavailable", "tries": 1}})
+            matches, checked = engine.run_scan(None, ["Topps Chrome"])
+            seen = engine.load_state(os.path.join(folder, engine.STATE_FILE))
+
+        self.assertEqual(asked, [stranded], "the walk reached nothing, so nothing else was asked")
+        self.assertEqual(seen[stranded], "match", "it was left unjudged all over again")
+        self.assertEqual([m["itemId"] for m in matches], [stranded])
+        self.assertEqual(checked, 1, "a listing asked about is a listing checked")
+
+    def test_a_listing_ebay_no_longer_serves_is_settled_rather_than_left(self):
+        def gone(token, ids, **kw):
+            return {}
+
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter([])), \
+                patch.object(engine, "get_item_details", side_effect=gone):
+            engine.save_state(os.path.join(folder, engine.STATE_FILE),
+                              {"v1|78|0": {"verdict": "unavailable", "tries": 2}})
+            engine.run_scan(None, ["Topps Chrome"])
+            seen = engine.load_state(os.path.join(folder, engine.STATE_FILE))
+        self.assertEqual(seen["v1|78|0"]["verdict"], "reject")
+        self.assertIn("no longer serves", seen["v1|78|0"]["reason"])
+
+    def test_an_allowance_that_refuses_everything_spends_none_of_their_tries(self):
+        """Asking at a bad moment must not reject a real card. When every one
+        of them is turned away it is the allowance talking, not the listings."""
+        import io, contextlib
+
+        def refuse_all(token, ids, failures=None, **kw):
+            if failures is not None:
+                failures.update(ids)
+            return {}
+
+        err = io.StringIO()
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter([])), \
+                patch.object(engine, "get_item_details", side_effect=refuse_all), \
+                contextlib.redirect_stderr(err):
+            engine.save_state(os.path.join(folder, engine.STATE_FILE),
+                              {f"v1|{n}|0": {"verdict": "unavailable", "tries": 2} for n in (80, 81)})
+            engine.run_scan(None, ["Topps Chrome"])
+            seen = engine.load_state(os.path.join(folder, engine.STATE_FILE))
+        for n in (80, 81):
+            self.assertEqual(seen[f"v1|{n}|0"], {"verdict": "unavailable", "tries": 2},
+                             "a try was spent on the allowance, not on the listing")
+        self.assertIn("keep their tries", err.getvalue())
+
+    def test_a_scan_for_one_player_leaves_the_backlog_alone(self):
+        """A player scan would judge them "not an X card", which is a verdict
+        about that search and settles nothing. The comprehensive scan owns
+        this, so only it asks."""
+        asked = []
+
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter([])), \
+                patch.object(engine, "get_item_details",
+                             side_effect=lambda t, ids, **k: asked.extend(ids) or {}):
+            engine.save_state(os.path.join(folder, engine.STATE_FILE),
+                              {"v1|79|0": {"verdict": "unavailable", "tries": 1}})
+            engine.run_scan(["Coco Gauff"], ["Topps Chrome"])
+            seen = engine.load_state(os.path.join(folder, engine.STATE_FILE))
+        self.assertEqual(asked, [])
+        self.assertEqual(seen["v1|79|0"], {"verdict": "unavailable", "tries": 1})
+
     def test_a_blocked_seller_costs_no_call(self):
         seller = next(iter(engine.BLOCKED_SELLERS))
         item = {"itemId": "v1|5|0", "title": "2024 Topps Chrome Coco Gauff 1/50 tennis",

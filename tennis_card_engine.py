@@ -2482,6 +2482,61 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
     emit("start", players=len(players) or "all", brands=len(brand_keywords),
          queries=total_queries, perBrand=MAX_RESULTS_PER_BRAND)
 
+    def record_judgement(item, detail, player, rule_key):
+        """Judge one fetched listing and put the verdict in the record. The
+        walk and the backlog pass below both come through here, so a listing
+        settled either way is settled the same way."""
+        item_id, title = item["itemId"], item.get("title", "")
+        verdict, reason, f = judge_listing(item, detail, player, rules)
+        if verdict != "match":
+            log.info("REJECT (%s): %s", reason, title)
+            reasons[reason.split(":")[0]] += 1
+            emit("reject", title=title, reason=reason)
+            if verdict == "reject":
+                # the reason is kept, so "why was my card passed over?" can
+                # be answered from the file
+                seen[item_id] = rejected(reason)
+            else:
+                seen[item_id] = {"verdict": "filtered", "rules": rule_key,
+                                 "reason": reason}
+            return
+
+        bookend_label = append_row(ws, f["player"], f["manufacturer"], f["set_name"], title,
+                                   f["card_number"], f["print_run"], f["price"], f["link"],
+                                   f["image"], f["listed"], f["listing"],
+                                   CARD_TYPES[f["cardType"]], f["grading"], f["images"],
+                                   f["parallel"], f["outfit"], f["colourMatch"], f["caution"],
+                                   f["sport"])
+        seen[item_id] = "match"
+        record = {
+            "player": f["player"],
+            "manufacturer": f["manufacturer"],
+            "set_name": f["set_name"],
+            "brand": brand_of(f["manufacturer"], f["set_name"], title),
+            "title": title,
+            "serial": f"{f['card_number']}/{f['print_run']}",
+            "bookend": bookend_label,
+            "price": f["price"],
+            "link": f["link"],
+            "image": f["image"],
+            "images": f["images"],
+            "listed": f["listed"],
+            "listing": f["listing"],
+            "bids": f["bids"],
+            "itemId": item_id,
+            "cardType": f["cardType"],
+            "grading": f["grading"],
+            "parallel": f["parallel"],
+            "outfit": f["outfit"],
+            "colourMatch": f["colourMatch"],
+            "sport": f["sport"],
+            "caution": f["caution"],
+            "found": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        }
+        new_match_records.append(record)
+        log.info("MATCH: %s | %s | %s/%s | %s", f["player"], title, f["card_number"], f["print_run"], f["link"])
+        emit("match", **record)
+
     # Whatever happens in here -- an eBay response the judge cannot read, the
     # workflow's 60-minute timeout, a runner going away -- the run keeps what it
     # has already earned. Before this it was all held in memory until the last
@@ -2615,55 +2670,7 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                             emit("reject", title=title, reason=reason)
                             continue
 
-                        verdict, reason, f = judge_listing(item, detail, player, rules)
-                        if verdict != "match":
-                            log.info("REJECT (%s): %s", reason, title)
-                            reasons[reason.split(":")[0]] += 1
-                            emit("reject", title=title, reason=reason)
-                            if verdict == "reject":
-                                # the reason is kept, so "why was my card
-                                # passed over?" can be answered from the file
-                                seen[item_id] = rejected(reason)
-                            else:
-                                seen[item_id] = {"verdict": "filtered", "rules": rule_key,
-                                                 "reason": reason}
-                            continue
-
-                        bookend_label = append_row(ws, f["player"], f["manufacturer"], f["set_name"], title,
-                                                   f["card_number"], f["print_run"], f["price"], f["link"],
-                                                   f["image"], f["listed"], f["listing"],
-                                                   CARD_TYPES[f["cardType"]], f["grading"], f["images"],
-                                                   f["parallel"], f["outfit"], f["colourMatch"], f["caution"],
-                                                   f["sport"])
-                        seen[item_id] = "match"
-                        record = {
-                            "player": f["player"],
-                            "manufacturer": f["manufacturer"],
-                            "set_name": f["set_name"],
-                            "brand": brand_of(f["manufacturer"], f["set_name"], title),
-                            "title": title,
-                            "serial": f"{f['card_number']}/{f['print_run']}",
-                            "bookend": bookend_label,
-                            "price": f["price"],
-                            "link": f["link"],
-                            "image": f["image"],
-                            "images": f["images"],
-                            "listed": f["listed"],
-                            "listing": f["listing"],
-                            "bids": f["bids"],
-                            "itemId": item_id,
-                            "cardType": f["cardType"],
-                            "grading": f["grading"],
-                            "parallel": f["parallel"],
-                            "outfit": f["outfit"],
-                            "colourMatch": f["colourMatch"],
-                            "sport": f["sport"],
-                            "caution": f["caution"],
-                            "found": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
-                        }
-                        new_match_records.append(record)
-                        log.info("MATCH: %s | %s | %s/%s | %s", f["player"], title, f["card_number"], f["print_run"], f["link"])
-                        emit("match", **record)
+                        record_judgement(item, detail, player, rule_key)
 
                 # Retry a query next run if even one listing detail was missing;
                 # otherwise persist its newest successfully processed timestamp.
@@ -2673,6 +2680,55 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
 
             if cancelled:
                 break
+
+        # Listings eBay would not answer for on an earlier run. The walk
+        # retries one only if it happens to reach it again, and once a later
+        # run writes a mark past it nothing ever does: the 74 left by the
+        # 03:41 run on 18 Sep, when eBay refused every call, were untouched by
+        # the full seven-set walk that followed and would have sat unjudged
+        # for good. So they are asked about by id, which needs no walk to
+        # reach them. After the walk, so the scan's own work comes first and
+        # anything the walk already settled is no longer on the list.
+        stranded = ([i for i, v in seen.items()
+                     if isinstance(v, dict) and v.get("verdict") == "unavailable"]
+                    if write_outputs and not cancelled and not players else [])
+        if stranded:
+            emit("info", message=f"Asking again about {len(stranded)} listing(s) eBay would "
+                                 "not answer for on an earlier run.")
+            refused = set()
+            details = get_item_details(token, stranded, failures=refused)
+            checked += len(stranded)
+            fetched += len(stranded)
+            if len(refused) == len(stranded):
+                # eBay turned away every one of them, which is the allowance
+                # talking and not these listings: spending their tries on it
+                # would reject real cards for being asked at a bad moment.
+                say(f"eBay would not answer for any of the {len(stranded)} listing(s) left "
+                    "over from an earlier run, so they keep their tries and are asked "
+                    "again next run.")
+                checked -= len(stranded)          # nothing was judged
+                fetched -= len(stranded)
+            else:
+                backlog_rules = rules_fingerprint(dict(rules, player=None))
+                for item_id in stranded:
+                    detail = details.get(item_id)
+                    if detail:
+                        record_judgement(dict(detail, itemId=item_id), detail, None, backlog_rules)
+                        continue
+                    earlier = seen.get(item_id) or {}
+                    if item_id in refused:
+                        tries = int(earlier.get("tries") or 0) + 1
+                        if tries >= UNAVAILABLE_TRIES:
+                            reason = f"eBay would not return the item details, {tries} runs running"
+                            seen[item_id] = rejected(reason)
+                        else:
+                            seen[item_id] = {"verdict": "unavailable", "tries": tries}
+                            reason = "eBay would not return the item details; will try again"
+                    else:
+                        reason = "eBay no longer serves this listing"
+                        seen[item_id] = rejected(reason)
+                    reasons[reason] += 1
+                    emit("reject", title=item_id, reason=reason)
     finally:
         if write_outputs:
             save_outputs(wb, xlsx_path, seen, state_path, cursors, cursor_path,
