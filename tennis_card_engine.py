@@ -1191,6 +1191,18 @@ def grade_pairs_in(title):
 # stamped number and stays a serial (the owner's call on both, 18 Sep).
 BASE_CARD_BEFORE_RE = re.compile(r"\bbase(?:\s+card)?\s*[#\"'\u201c\u201d]*\s*$", re.I)
 
+# A lettered card code glued to the number: "#CK-1 /500" is Court Kings card
+# CK-1, one of 500 copies -- which copy is not stated. The "#" test below
+# looks at the character in front of the digit, and on a code that character
+# is the code's own hyphen, so the Federer Ace Authentic card came through as
+# a 001-of-500 bookend.
+CARD_CODE_BEFORE_RE = re.compile(r"#[A-Za-z]{1,6}-$")
+
+# "YOUNGEST Pop 1 /10 Black PSA 10": "Pop 1" is the grader's population
+# report -- one graded this high -- and "/10" is the print run. Neither says
+# which copy of the ten is in the slab.
+POP_BEFORE_RE = re.compile(r"\bpop\.?\s*$", re.I)
+
 
 def is_card_number_pair(title, match):
     """Whether this N/M is a checklist number beside the set's size, not a
@@ -1202,23 +1214,65 @@ def is_card_number_pair(title, match):
       "#001/100" and "S#01/10" have no gap and stay serials; of the twelve
       recorded titles with a "#" in front of the pair only the Alcaraz Aqua
       Refractor had the gap, and its photo showed 148/199.
+    * a lettered card code glued to it: "#CK-1 /500" is Court Kings card CK-1,
+      one of 500. Only the hyphenated shape counts, so "#1/199" and "S#01/10"
+      are untouched.
     * "base card" straight in front: 'SILVER BASE CARD 100 /100' is card 100
       of a 100-card set. 'SILVER BASE CARD #001/100' has no gap and is the
       stamped serial it looks like; "BASE CARD GOLD 01/10" has neither the
       gap nor the words directly in front.
+    * "Pop" straight in front: "YOUNGEST Pop 1 /10 Black PSA 10" is a
+      population report beside a print run, and says nothing about the copy.
 
     The gap alone is not a sign: the recorded "BEN SHELTON RC 1 /5 PSA 10" is
-    a real 1/5."""
+    a real 1/5. Measured against the 182 rows recorded by 18 Sep, six titles
+    have the gap: two were already caught, the two named above are the ones
+    these prefixes add, and three stay serials."""
     if not re.search(r"\d\s+/", match.group(0)):
         return False
     before = title[:match.start()]
-    return before.endswith("#") or bool(BASE_CARD_BEFORE_RE.search(before))
+    return (before.endswith("#")
+            or bool(CARD_CODE_BEFORE_RE.search(before))
+            or bool(BASE_CARD_BEFORE_RE.search(before))
+            or bool(POP_BEFORE_RE.search(before)))
 
 
 def card_number_pairs_in(title):
     """The N/M strings in a title that read as card number + print run."""
     return {f"{int(m.group(1))}/{int(m.group(2))}"
             for m in SERIAL_RE.finditer(title) if is_card_number_pair(title, m)}
+
+
+def is_contradicted_pair(title, match):
+    """Whether this N/M is contradicted by a print run the same title states
+    on its own, so it cannot be the card's serial.
+
+    The shape seen so far is the seller's boast: '2025 Topps Chrome Coco
+    Gauff Purple Geometric Refractor # /10 \U0001f525\U0001f525\U0001f525
+    1/1 on eBay' at $285, recorded as a True 1/1. "1/1 on eBay" means the
+    only one listed on eBay; the card is one of ten, and its photo reads
+    09/10. A card from a run of ten cannot also be a true 1/1.
+
+    Deliberately narrow: only a 1/1 is turned away, and only when the title
+    itself states a run of two or more elsewhere. A genuine 1/1 has no such
+    number to state, and two ordinary numbers that disagree ("/250 ... 1/25")
+    are left alone -- a parallel really can be a shorter run than the base.
+    Stating the same run twice is no contradiction either, which is what
+    keeps the Andreeva "01/10 ... /10" a serial.
+
+    Like a grade pair or a card number, this is stepped over rather than
+    rejected outright: the specifics, and the photo where the photo step is
+    on, get their say before the listing is turned away."""
+    if (int(match.group(1)), int(match.group(2))) != (1, 1):
+        return False
+    elsewhere = title[:match.start()] + " " + title[match.end():]
+    return any(int(m.group(1)) > 1 for m in PRINT_RUN_ELSEWHERE_RE.finditer(elsewhere))
+
+
+def contradicted_pairs_in(title):
+    """The N/M strings in a title the title itself contradicts."""
+    return {f"{int(m.group(1))}/{int(m.group(2))}"
+            for m in SERIAL_RE.finditer(title) if is_contradicted_pair(title, m)}
 
 
 def specifics_serial(aspects):
@@ -1245,6 +1299,8 @@ def extract_serial(title, aspects):
             continue                        # a grade; the serial may still follow
         if is_card_number_pair(title, m):
             continue                        # "#1 /199": card number and print run, no position
+        if is_contradicted_pair(title, m):
+            continue                        # "/10 ... 1/1 on eBay": the title argues with itself
         return int(m.group(1)), int(m.group(2))
 
     return specifics_serial(aspects) or (None, None)
@@ -2161,6 +2217,10 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
         # from a serial. Off the page, row kept.
         if cell(row, "Serial #") in card_number_pairs_in(cell(row, "Card Description")):
             continue
+        # "# /10 ... 1/1 on eBay" recorded as a True 1/1 before the reader
+        # noticed the title arguing with itself. Off the page, row kept.
+        if cell(row, "Serial #") in contradicted_pairs_in(cell(row, "Card Description")):
+            continue
         if other_sport_in_title(cell(row, "Card Description")):
             continue
         price = cell(row, "Price")
@@ -2319,7 +2379,8 @@ def judge_listing(item, detail, player=None, rules=None):
         # "#1 /199" states the print run and not the position; the stamp on
         # the card does. With the photo step on, read it -- only for this
         # shape of title, so the call is rare -- and say where it came from.
-        seen = serial_photo_reading(photos) if card_number_pairs_in(title) else None
+        shape = card_number_pairs_in(title) or contradicted_pairs_in(title)
+        seen = serial_photo_reading(photos) if shape else None
         if not seen:
             return "reject", "no serial number (N/M) in the title or specifics", None
         card_number, print_run = seen

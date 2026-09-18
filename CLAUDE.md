@@ -171,8 +171,15 @@ on a website.
   as 1/199, was card #1 of the set, one of 199, stamped 148/199 in its
   photo; of the twelve recorded titles with a "#" in front of the pair only
   that one had the gap, and "#1/199", "# 1/10", "#001/100" and "S#01/10"
-  stay serials. Behind "base card" (`BASE_CARD_BEFORE_RE`): 'SILVER BASE
-  CARD 100 /100' is card 100 of a 100-card set. **The words alone are no
+  stay serials. Behind a **lettered card code** (`CARD_CODE_BEFORE_RE`):
+  "Court Kings Roger Federer #CK-1 /500" is card CK-1, one of 500 -- the
+  "#" test reads the character in front of the digit, and on a code that
+  character is the code's own hyphen, which is how that row was recorded as
+  a 001-of-500 bookend. Behind **"Pop"** (`POP_BEFORE_RE`): "YOUNGEST Pop 1
+  /10 Black PSA 10" is the grader's population report beside the print run,
+  and neither number says which of the ten is in the slab. Behind "base
+  card" (`BASE_CARD_BEFORE_RE`): 'SILVER BASE CARD 100 /100' is card 100 of
+  a 100-card set. **The words alone are no
   sign, and neither is the gap alone.** On this site "base" means no
   autograph and no patch, so a numbered insert or parallel is still base:
   'SILVER BASE CARD #001/100' has no gap and is the stamped serial it looks
@@ -198,6 +205,25 @@ on a website.
   filtered listing never pays for it, and it is an Anthropic call, never an
   eBay one. Without the key only the specifics caution is possible, and a
   card already recorded is never re-judged.
+- **A title that argues with itself is not believed on the serial.**
+  '2025 Topps Chrome Coco Gauff Purple Geometric Refractor # /10 1/1 on
+  eBay' at $285 was recorded as a True 1/1, and so was a second Gauff at
+  $315. "1/1 on eBay" is the seller's boast -- the only one listed there --
+  and the card is one of ten, its photo stamped 09/10. A run of ten has no
+  true 1/1 in it. `is_contradicted_pair` turns away a 1/1 when the same
+  title states a print run of two or more on its own
+  (`PRINT_RUN_ELSEWHERE_RE`, the sign the grade rule already uses), and
+  `contradicted_pairs_in` drops the recorded rows from the page while the
+  rows stay. **Deliberately narrow, because completeness comes first:** only
+  a 1/1 is doubted, since a genuine 1/1 has no print run to state; two
+  ordinary numbers that disagree ("/250 ... 1/25") are left alone, because a
+  parallel really can be a shorter run than the base; and the same run
+  stated twice is no contradiction, which keeps the Andreeva "01/10 ... /10"
+  a serial. Like a grade pair or a card number it is **stepped over, not
+  rejected outright** -- the specifics, and the photo where the photo step is
+  on, get their say before the listing is turned away -- so `settled_by_title`
+  no longer settles such a title for free and it costs one call. Measured
+  against the 182 recorded rows it changes exactly the two Gauff boasts.
 - **Custom cards are rejected before the serial is read.** A card somebody
   made themselves carries a real maker in the Manufacturer field and is nearly
   always called a 1/1, because only one exists, so neither the allow-list nor
@@ -332,6 +358,30 @@ as `known`, not as a new match. The engine is working when it says "Added 0
 new qualifying listing(s)". Judge a scan by the "Checked N listings" line and
 by the lower section of the Matches panel, not by whether anything was new.
 
+## Limitations
+
+These are things the engine cannot fix from a listing alone. They are not
+bugs to be chased; a rule that caught them would cost real cards.
+
+- **A title that states the wrong serial, with nothing to contradict it.**
+  "Dominik Koepfer RC | #01/77 Pineapple Refractor -- 2024 Topps Chrome #94"
+  at $7.95 is on the page as 001 of 77; the photo shows **21/77**. The title
+  has no gap before the slash, no card code, no second print run, and eBay's
+  specifics said nothing -- so every reading the engine has agrees with the
+  seller, and the only witness is the photograph. Nothing in the text can be
+  tightened without turning away the many honest "#01/77" titles that are
+  exactly what they say. **The remedy exists but is not on:** with
+  `ANTHROPIC_API_KEY` set, `serial_photo_reading` reads the stamp, and
+  widening its trigger from the two odd title shapes to every listing that
+  has otherwise passed would catch this -- at one Anthropic call per match
+  (not an eBay call, so it spends no eBay allowance). Judge that by the
+  number of matches a scan makes, not by the number it checks.
+- **A card is only as findable as its title.** eBay matches whole words and
+  serves the newest 1,200 listings per query, so a card whose title names
+  neither its set nor its player in the words a search uses is out of reach
+  of the wide scan, and an older listing surfaces only through a player scan.
+  See the wide-search decision above.
+
 ## Open items
 
 - How often eBay states the sport at all is still unknown: the new `Sport`
@@ -430,6 +480,19 @@ and the one-time full re-walk after the cursor format changed happened at run
   is spent and the set's mark stays put -- and only then raises, so the run
   still shows red and still says why. The one thing that must not change: a
   spent allowance is never a quiet day.
+- **The export never blanks the published board.** `build_board` hands back
+  nothing at all when the spreadsheet is missing or unreadable -- a lost
+  file, not a day with no cards -- and `export_static.py` wrote that nothing
+  straight over `results/board.json`. `scan.yml` commits with `if: always()`,
+  so the empty board would have been published and the site would have gone
+  blank with no red run to show for it. The export now keeps the board
+  already there when it has no cards to write, and says so with a
+  `::warning::` line that shows in the Actions summary; a first run, with no
+  board yet, still writes one. The file is also a script with nothing to
+  guard it, so importing it used to run the whole thing and overwrite
+  `results/` from whatever directory was current -- it now refuses to be
+  imported. `TheExportNeverBlanksThePublishedBoard` in `test_engine.py` runs
+  the real script in a temporary directory for all four cases.
 - **A digest email that will not send is a warning, not a failed scan.** It is
   sent after the scan has already saved, so raising there exited non-zero and
   stopped the steps that publish and commit -- losing a good scan over an

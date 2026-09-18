@@ -15,6 +15,11 @@ from datetime import datetime, timezone
 
 import tennis_card_engine as engine
 
+# Running this publishes: it overwrites results/. Importing it must never do
+# that by accident -- there is no main() to guard, so guard the module.
+if __name__ != "__main__":
+    raise ImportError("export_static.py is a script -- run it, do not import it.")
+
 out = sys.argv[1] if len(sys.argv) > 1 else "results"
 os.makedirs(out, exist_ok=True)
 here = os.path.dirname(os.path.abspath(__file__))
@@ -22,8 +27,20 @@ xlsx = os.path.join(here, engine.OUTPUT_XLSX)
 matches = os.path.join(here, engine.NEW_MATCHES_FILE)
 
 board = engine.build_board(xlsx, matches)
-with open(os.path.join(out, "board.json"), "w") as f:
-    json.dump({"cards": board}, f)
+board_path = os.path.join(out, "board.json")
+# An empty board over a good one blanks the published site, and the commit
+# step runs with if: always(), so it would be published. build_board returns
+# nothing at all when the spreadsheet is missing or unreadable -- which is a
+# lost file, not a day with no cards -- so in that case keep what is already
+# there and say so loudly. A first run, with no board yet, still writes one.
+board_kept = not board and os.path.exists(board_path)
+if board_kept:
+    print("::warning::The spreadsheet gave no cards, so the board already "
+          "published is kept rather than blanked. Check that "
+          f"{engine.OUTPUT_XLSX} was restored before the engine ran.")
+else:
+    with open(board_path, "w") as f:
+        json.dump({"cards": board}, f)
 
 config = engine.public_config()
 config.update({
@@ -48,8 +65,9 @@ try:
         if n:
             print(f"colour readings added to {n} row(s)")
             board = engine.build_board(xlsx, matches)
-            with open(os.path.join(out, "board.json"), "w") as f:
-                json.dump({"cards": board}, f)
+            if board:
+                with open(board_path, "w") as f:
+                    json.dump({"cards": board}, f)
 except Exception as exc:                                  # noqa: BLE001
     print(f"colour readings skipped: {exc}")
 
@@ -109,4 +127,5 @@ usage = os.path.join(here, engine.API_USAGE_FILE)
 if os.path.exists(usage):
     shutil.copy(usage, os.path.join(out, engine.API_USAGE_FILE))
 
-print(f"exported {len(board)} board card(s), {len(statuses)} listing status(es) and config to {out}/")
+wrote = "kept the board already published" if board_kept else f"exported {len(board)} board card(s)"
+print(f"{wrote}, {len(statuses)} listing status(es) and config to {out}/")
