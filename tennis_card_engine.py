@@ -153,6 +153,18 @@ BUYBACK_PROMPT = (
 # caution the page shows.
 AUTOGRAPH_WORDS = ["auto", "autos", "autograph", "autographed", "autographs",
                    "signed", "signature", "signatures"]
+# Set names that carry an autograph word without meaning one: 2005 Ace
+# Authentic Signature Series had plain base cards, and 'VINCE SPADEA "SILVER
+# BASE CARD 100 /100" ACE SIGNATURE SERIES 2005' was recorded as an autograph
+# with the Ace autograph caution because of the set's name. Taken out of the
+# text before any autograph word is looked for; an "Auto" beside it still counts.
+SET_NAME_PHRASES = ("signature series",)
+SET_NAME_RE = re.compile(r"\b(" + "|".join(re.escape(p) for p in SET_NAME_PHRASES) + r")\b", re.I)
+
+
+def without_set_names(text):
+    """The text with set-name phrases blanked out, so their words are not read as cues."""
+    return SET_NAME_RE.sub(" ", text)
 CHECKED_AUTOGRAPH_MAKERS = ("ace authentic",)
 ON_CARD_RE = re.compile(r"\bon[- ]card\b", re.I)
 STICKER_AUTO_RE = re.compile(r"\b(sticker|label)\b", re.I)
@@ -456,7 +468,7 @@ def _has_word(words, text):
 def classify_card(title, aspects=None):
     """'base', 'patch', 'auto' or 'patch_auto' from the title and item specifics."""
     aspects = aspects or {}
-    text = f" {title} ".lower()
+    text = without_set_names(f" {title} ").lower()
     features = " ".join(str(v) for vals in (aspects.get("Features") or [],) for v in vals).lower()
     signed = str((aspects.get("Autographed") or [""])[0]).strip().lower() in ("yes", "true")
     signed = signed or bool(aspects.get("Signed By")) or "autograph" in features
@@ -1091,25 +1103,99 @@ GRADE_CONTEXT_RE = re.compile(
     r"\b(psa|bgs|sgc|cgc|csg|hga|isa|gma|ksa|beckett|tag|mint|gem|mt|nm|grade|graded)\s*$", re.I)
 
 
-def is_grade_pair(title, match):
-    """Whether this N/M is a card grade over an autograph grade -- "PSA 9/9",
-    "Psa MINT 9/9", "BGS 9.5/10" -- rather than a serial position.
+# A print run stated on its own elsewhere in the title: the "/250" of
+# "Auto/250 Rare 10/10", the "/199" of "/199 Psa MINT 9/9". Not the tail of an
+# N/M or of a date (a digit or slash in front), so "9/7/2025" states nothing.
+PRINT_RUN_ELSEWHERE_RE = re.compile(r"(?<![\d/])/\s*(\d{2,5})\b")
 
-    Both numbers are grades (10 or under) and the word immediately before is
-    grade context. Only the word immediately before: in "PSA 10 1/10" that
+
+def is_grade_pair(title, match, aspects=None):
+    """Whether this N/M is a card grade over an autograph grade -- "PSA 9/9",
+    "Psa MINT 9/9", "BGS 9.5/10", "Auto/250 Rare 10/10" -- rather than a
+    serial position.
+
+    Both numbers must be grades (10 or under). Then any one of three signs:
+    the word immediately before is grade context; the title states a larger
+    print run somewhere else on its own (a card cannot be 10/10 and one of
+    250); or eBay's own Grade field says exactly the first number. Only the
+    word immediately before counts for the first sign: in "PSA 10 1/10" that
     word is "10", a number, so the 1/10 is read as the serial it is, with the
     grade stated separately in front of it. Three recorded matches were PSA 9
-    autos written "Psa MINT 9/9", each kept as the last of a run of nine."""
+    autos written "Psa MINT 9/9", each kept as the last of a run of nine; a
+    fourth, "Auto/250 Rare 10/10" at $25,000, was kept as the last of ten
+    because "Rare" is not a grader's word. Measured against the 90 rows
+    recorded by 18 Sep, the second sign changes exactly two: that card and the
+    Gauff "/199 ... Psa MINT 9/9", both genuine grade pairs."""
     n, run = int(match.group(1)), int(match.group(2))
     if n > 10 or run > 10:
         return False
-    return bool(GRADE_CONTEXT_RE.search(title[:match.start()]))
+    if GRADE_CONTEXT_RE.search(title[:match.start()]):
+        return True
+    elsewhere = title[:match.start()] + " " + title[match.end():]
+    if any(int(m.group(1)) > 10 and int(m.group(1)) != run
+           for m in PRINT_RUN_ELSEWHERE_RE.finditer(elsewhere)):
+        return True
+    grade = str(((aspects or {}).get("Grade") or [""])[0]).strip()
+    try:
+        return bool(grade) and float(grade) == n
+    except ValueError:
+        return False
 
 
 def grade_pairs_in(title):
     """The N/M strings in a title that read as grades, as "9/9" text."""
     return {f"{int(m.group(1))}/{int(m.group(2))}"
             for m in SERIAL_RE.finditer(title) if is_grade_pair(title, m)}
+
+
+# "base card" straight in front of the pair, with only a quote or "#" between.
+# On this site "base" means no autograph and no patch: a numbered insert or
+# parallel is still base, so the words alone are no sign. With a gap before
+# the slash they are: 'SILVER BASE CARD 100 /100' is card 100 of a 100-card
+# set, written as two things, where 'SILVER BASE CARD #001/100' is one
+# stamped number and stays a serial (the owner's call on both, 18 Sep).
+BASE_CARD_BEFORE_RE = re.compile(r"\bbase(?:\s+card)?\s*[#\"'\u201c\u201d]*\s*$", re.I)
+
+
+def is_card_number_pair(title, match):
+    """Whether this N/M is a checklist number beside the set's size, not a
+    serial. The sign is a gap before the slash -- the seller wrote two things
+    -- behind a word that says the first thing is the card's number:
+
+    * "#" glued to the first number: "#1 /199" is card #1 of the set, one of
+      199 copies, and says nothing about which copy. "#1/199", "# 1/10",
+      "#001/100" and "S#01/10" have no gap and stay serials; of the twelve
+      recorded titles with a "#" in front of the pair only the Alcaraz Aqua
+      Refractor had the gap, and its photo showed 148/199.
+    * "base card" straight in front: 'SILVER BASE CARD 100 /100' is card 100
+      of a 100-card set. 'SILVER BASE CARD #001/100' has no gap and is the
+      stamped serial it looks like; "BASE CARD GOLD 01/10" has neither the
+      gap nor the words directly in front.
+
+    The gap alone is not a sign: the recorded "BEN SHELTON RC 1 /5 PSA 10" is
+    a real 1/5."""
+    if not re.search(r"\d\s+/", match.group(0)):
+        return False
+    before = title[:match.start()]
+    return before.endswith("#") or bool(BASE_CARD_BEFORE_RE.search(before))
+
+
+def card_number_pairs_in(title):
+    """The N/M strings in a title that read as card number + print run."""
+    return {f"{int(m.group(1))}/{int(m.group(2))}"
+            for m in SERIAL_RE.finditer(title) if is_card_number_pair(title, m)}
+
+
+def specifics_serial(aspects):
+    """(card_number, print_run) from an N/M eBay's item specifics carry, or None.
+    The "Card Number" specific is usually the checklist number (the 162 on a
+    Bublik back) with no slash, so a bare number there is never read."""
+    for key in ("Serial Number", "Serial Numbered", "Card Number", "card number"):
+        value = str((aspects.get(key) or [""])[0])
+        m = SERIAL_RE.search(value)
+        if m:
+            return int(m.group(1)), int(m.group(2))
+    return None
 
 
 def extract_serial(title, aspects):
@@ -1120,17 +1206,13 @@ def extract_serial(title, aspects):
     never be paired with "Print Run" to fake a serial. Specifics are used
     only when they themselves carry an N/M."""
     for m in SERIAL_RE.finditer(title):
-        if is_grade_pair(title, m):
+        if is_grade_pair(title, m, aspects):
             continue                        # a grade; the serial may still follow
+        if is_card_number_pair(title, m):
+            continue                        # "#1 /199": card number and print run, no position
         return int(m.group(1)), int(m.group(2))
 
-    for key in ("Serial Number", "Serial Numbered", "Card Number", "card number"):
-        value = str((aspects.get(key) or [""])[0])
-        m = SERIAL_RE.search(value)
-        if m:
-            return int(m.group(1)), int(m.group(2))
-
-    return None, None
+    return specifics_serial(aspects) or (None, None)
 
 
 # "Signed By" and "Autographed By" are the name eBay puts on an autograph
@@ -1353,7 +1435,7 @@ def ace_authentic_check(title, manufacturer, aspects=None, images=None):
     manu_lower = manufacturer.lower()
     if not any(m in manu_lower for m in CHECKED_AUTOGRAPH_MAKERS):
         return True, "ok", ""
-    text = f"{title} {' '.join(str(v) for vals in aspects.values() for v in vals)}"
+    text = without_set_names(f"{title} {' '.join(str(v) for vals in aspects.values() for v in vals)}")
     signed = str((aspects.get("Autographed") or [""])[0]).strip().lower() in ("yes", "true")
     signed = signed or bool(aspects.get("Signed By") or aspects.get("Autograph Authentication"))
     signed = signed or _has_word(AUTOGRAPH_WORDS, text.lower())
@@ -1414,6 +1496,52 @@ def ace_photo_reading(image_urls):
     cache[key] = reading
     _save_vision_cache()
     return reading
+
+
+SERIAL_PROMPT = (
+    "These are a seller's photos of a serial-numbered tennis trading card. Read the serial "
+    "number stamped or foil-printed on the card itself, written as one number over another "
+    "such as 148/199 or 1/1 (the first is this card's position, the second the print run). "
+    "Ignore the checklist card number (such as #39 or YQE-6), any grade on a slab label "
+    "(such as PSA 10 or 9.5), and anything in the seller's added text. Answer legible 'yes' "
+    "only when every digit of both numbers is clearly readable; 'no' when the stamp cannot "
+    "be seen or read, with serial left empty."
+)
+
+
+def serial_photo_reading(image_urls):
+    """(card_number, print_run) read off the card's own stamp in the photos, or
+    None when the photo step is off, the stamp is not legible, or the call
+    failed. One question per listing, cached by the first photo, asked only of
+    a listing that has already passed every other rule -- so it costs an
+    Anthropic call per candidate match, never an eBay call."""
+    urls = [u for u in image_urls if u][:3]
+    if not urls or not vision_available():
+        return None
+    cache = _load_vision_cache()
+    key = "serial:" + urls[0]
+    if key not in cache:
+        try:
+            reading = ask_photo(urls, SERIAL_PROMPT, {
+                "type": "object",
+                "properties": {
+                    "serial": {"type": "string"},
+                    "legible": {"type": "string", "enum": ["yes", "no"]},
+                },
+                "required": ["serial", "legible"],
+                "additionalProperties": False,
+            })
+        except Exception as exc:                                  # noqa: BLE001 -- a photo step must never sink a scan
+            log.warning("Serial photo check failed for %s: %s", urls[0], exc)
+            return None
+        reading["at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        cache[key] = reading
+        _save_vision_cache()
+    reading = cache[key]
+    if reading.get("legible") != "yes":
+        return None
+    m = SERIAL_RE.search(str(reading.get("serial", "")))
+    return (int(m.group(1)), int(m.group(2))) if m else None
 
 
 def looks_custom(title, set_name=""):
@@ -1969,10 +2097,28 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
         # it could tell "Psa MINT 9/9" from a run of nine. Off the page, row kept.
         if cell(row, "Serial #") in grade_pairs_in(cell(row, "Card Description")):
             continue
+        # "#1 /199" recorded as 1/199 before the reader told a card number
+        # from a serial. Off the page, row kept.
+        if cell(row, "Serial #") in card_number_pairs_in(cell(row, "Card Description")):
+            continue
         if other_sport_in_title(cell(row, "Card Description")):
             continue
         price = cell(row, "Price")
         number = re.search(r"\d[\d,]*(?:\.\d+)?", price)
+        card_type = next((k for k, v in CARD_TYPES.items() if v == cell(row, "Card Type")), "")
+        caution = cell(row, "Caution")
+        # Recorded as an autograph because its set is called "Signature
+        # Series", with the Ace autograph caution to match. The title-only
+        # reading now says base, so the page says base and carries the
+        # caution an unsigned Ace card gets. Only a row whose title names such
+        # a set is touched; every other row keeps what the scan recorded.
+        title_now = classify_card(cell(row, "Card Description"), {})
+        if (card_type in ("auto", "patch_auto") and SET_NAME_RE.search(cell(row, "Card Description"))
+                and title_now in ("base", "patch")):
+            card_type = title_now
+            if "autograph: on-card or sticker not stated" in caution:
+                caution = re.sub(r"(\w[\w ]*) autograph: on-card or sticker not stated; check by eye",
+                                 r"\1: check the numbering is stamped, not on a circle sticker", caution)
         cards.append({
             # Recorded before the title was read for a name: fill it now, or
             # leave it "" and let the page say so quietly rather than shrug.
@@ -1991,13 +2137,13 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
             "found": cell(row, "Date Found (UTC)"),
             "listed": cell(row, "Listed (UTC)"),
             "listing": cell(row, "Listing Type"),
-            "cardType": next((k for k, v in CARD_TYPES.items() if v == cell(row, "Card Type")), ""),
+            "cardType": card_type,
             "grading": cell(row, "Grading"),
             "images": [u.strip() for u in cell(row, "Extra Images").split("|") if u.strip()],
             "parallel": cell(row, "Parallel"),
             "outfit": cell(row, "Outfit Colour"),
             "colourMatch": cell(row, "Colour Match"),
-            "caution": cell(row, "Caution"),
+            "caution": caution,
             "sport": cell(row, "Sport"),
         })
     wb.close()
@@ -2110,7 +2256,15 @@ def judge_listing(item, detail, player=None, rules=None):
     max_print_run = rules.get("max_print_run")
     card_number, print_run = extract_serial(title, aspects)
     if card_number is None or print_run is None:
-        return "reject", "no serial number (N/M) in the title or specifics", None
+        # "#1 /199" states the print run and not the position; the stamp on
+        # the card does. With the photo step on, read it -- only for this
+        # shape of title, so the call is rare -- and say where it came from.
+        seen = serial_photo_reading(photos) if card_number_pairs_in(title) else None
+        if not seen:
+            return "reject", "no serial number (N/M) in the title or specifics", None
+        card_number, print_run = seen
+        note = f"serial {card_number}/{print_run} read from the photo; the title gives only the print run"
+        caution = f"{caution} \u00b7 {note}" if caution else note
     if card_number not in (1, print_run):
         return "reject", f"{card_number}/{print_run} is neither the first nor the last of its run", None
     if not is_bookend_serial(card_number, print_run, max_print_run, rules.get("print_run_inclusive")):
@@ -2139,6 +2293,25 @@ def judge_listing(item, detail, player=None, rules=None):
     max_price = rules.get("max_price")
     if value is not None and (value < min_price or (max_price is not None and value > max_price)):
         return "filtered", f"price {price_str} outside {min_price:g}-{max_price if max_price is not None else 'open'}", None
+
+    # The title is the seller's word and can be wrong: "#1 /199" over a photo
+    # stamped 148/199 was recorded as a bookend. eBay's specifics are a second
+    # word, the photo a third. A disagreement with the specifics is a caution;
+    # a legible photo that shows a serial which is not a bookend is a reject,
+    # since the stamp on the card is the card. Without the photo step
+    # (ANTHROPIC_API_KEY unset) only the caution is possible.
+    stated = specifics_serial(aspects)
+    if stated and stated != (card_number, print_run):
+        note = (f"title says {card_number}/{print_run} but eBay's details say "
+                f"{stated[0]}/{stated[1]}; check by eye")
+        caution = f"{caution} \u00b7 {note}" if caution else note
+    seen = serial_photo_reading(photos)
+    if seen and seen != (card_number, print_run):
+        if seen[0] not in (1, seen[1]):
+            return "reject", (f"photo shows {seen[0]}/{seen[1]}, not the "
+                              f"{card_number}/{print_run} the title claims"), None
+        note = f"photo reads {seen[0]}/{seen[1]} where the title says {card_number}/{print_run}"
+        caution = f"{caution} \u00b7 {note}" if caution else note
 
     fields = {
         "player": player or get_player(aspects, title),

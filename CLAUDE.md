@@ -124,7 +124,62 @@ on a website.
   5/5" is a real bookend. `SERIAL_RE` also refuses a numerator that is the
   tail of a decimal, so 9.5/10 can no longer read as 5/10. `build_board`
   applies the same rule, so the three recorded 9/9s drop off the page while
-  their rows stay -- the same treatment as customs.
+  their rows stay -- the same treatment as customs. **Two more signs since
+  18 Sep**, after "Auto/250 Rare 10/10" at $25,000 was kept as the last of
+  ten because "Rare" is nobody's grader: a pair both 10 or under is a grade
+  when the title states a larger print run on its own elsewhere
+  (`PRINT_RUN_ELSEWHERE_RE`: a "/N" with no digit or slash in front, so a
+  Topps Now date like 9/7/2025 states nothing, and the same run twice, as in
+  the Andreeva "01/10 ... /10", is not a sign), or when eBay's `Grade`
+  specific is exactly the first number. Measured against the 90 recorded
+  rows the print-run sign changes two, that card and the Gauff "/199 ... Psa
+  MINT 9/9", both genuine grade pairs. The `Grade` sign needs the specifics,
+  so `settled_by_title` and `build_board` apply the other two only.
+- **"Signature Series" is a set name, not an autograph.** 2005 Ace Authentic
+  Signature Series had plain base cards, and 'VINCE SPADEA "SILVER BASE CARD
+  100 /100" ACE SIGNATURE SERIES 2005' was recorded as an Auto with the Ace
+  "on-card or sticker not stated" caution on the strength of the word.
+  `SET_NAME_PHRASES` are blanked from the text (`without_set_names`) before
+  `classify_card` and `ace_authentic_check` look for autograph words; an
+  "Auto" beside the set name still counts, and so does eBay's `Autographed:
+  Yes`. `build_board` relabels a recorded Auto whose title names such a set
+  and reads as base without it, and swaps the caution for the unsigned-card
+  one, so the Massu row now says Base. (The Spadea row has since left the
+  page for the reason below: its "100 /100" is a card number.)
+- **A card number beside the set's size is not a serial.** The sign is a
+  gap before the slash -- the seller wrote two things -- behind a word that
+  says the first thing is the card's number (`is_card_number_pair`). Behind
+  a "#" glued to the number: the Alcaraz Aqua Refractor "#1 /199", recorded
+  as 1/199, was card #1 of the set, one of 199, stamped 148/199 in its
+  photo; of the twelve recorded titles with a "#" in front of the pair only
+  that one had the gap, and "#1/199", "# 1/10", "#001/100" and "S#01/10"
+  stay serials. Behind "base card" (`BASE_CARD_BEFORE_RE`): 'SILVER BASE
+  CARD 100 /100' is card 100 of a 100-card set. **The words alone are no
+  sign, and neither is the gap alone.** On this site "base" means no
+  autograph and no patch, so a numbered insert or parallel is still base:
+  'SILVER BASE CARD #001/100' has no gap and is the stamped serial it looks
+  like, and stays on the page (the owner's call on both rows, 18 Sep). The
+  recorded "BEN SHELTON RC 1 /5 PSA 10" has the gap and no such word and is
+  a real 1/5. `extract_serial` steps over a card-number pair to the
+  specifics; with nothing there, `judge_listing` reads the stamp from the
+  photo when the photo step is on (only for these shapes of title, so the
+  call is rare), records what it read with a "read from the photo" caution,
+  and without it rejects for no serial. `build_board` drops the recorded
+  rows from the page (`card_number_pairs_in`); the rows stay.
+- **The title's serial is not the last word.** The same card showed the
+  wider gap: `extract_serial` believed the title and
+  compared it with nothing. Now `judge_listing`, once a listing has passed
+  every other rule, reads the specifics' own N/M (`specifics_serial`) and,
+  when it disagrees, adds a "title says 1/199 but eBay's details say
+  148/199; check by eye" caution; and with `ANTHROPIC_API_KEY` set it asks
+  one photo question (`serial_photo_reading`, `SERIAL_PROMPT`, cached by the
+  first photo like the other readings). A legible stamp that is not a
+  bookend is a reject naming both readings; a legible stamp that is a
+  different bookend is kept with both readings on the page; an unreadable
+  stamp changes nothing. It runs after the price and type filters, so a
+  filtered listing never pays for it, and it is an Anthropic call, never an
+  eBay one. Without the key only the specifics caution is possible, and a
+  card already recorded is never re-judged.
 - **Custom cards are rejected before the serial is read.** A card somebody
   made themselves carries a real maker in the Manufacturer field and is nearly
   always called a 1/1, because only one exists, so neither the allow-list nor
