@@ -1704,6 +1704,116 @@ class TheMatchesPanelIsPaged(unittest.TestCase):
         self.assertIn("`${everything.length} of ${state.board.length} match the filters`", body)
 
 
+class TheContentsPanelKeepsUp(unittest.TestCase):
+    """The panel behind the tennis ball is the map of the site, and a map
+    goes stale silently: it still listed "Method and process" as a section of
+    this page after that became a page of its own, and it offered the activity
+    log on the hosted site, where there is no activity log. These tests fail
+    when the site grows a page or loses a section and the panel is not told."""
+
+    def js(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            return f.read()
+
+    def html(self):
+        with open(os.path.join(HERE, "web", "index.html")) as f:
+            return f.read()
+
+    def entries(self):
+        """(href, title) for each entry in the panel."""
+        block = self.html().split('<ol class="contents-list">')[1].split("</ol>")[0]
+        return re.findall(r'<a href="(#[a-z-]+)">.*?<span class="c-t">([^<]+)</span>',
+                          block, re.S)
+
+    def routes(self):
+        """The hashes app.js routes to a page of their own."""
+        block = self.js().split("const VIEWS = {")[1].split("};")[0]
+        return re.findall(r'"(#[a-z-]+)":', block)
+
+    def test_every_entry_leads_somewhere_that_exists(self):
+        """A hash is either an element on the page or a routed page. Anything
+        else is a link to nowhere, which is what the panel is for."""
+        html = self.html()
+        ids = set(re.findall(r'\sid="([a-z-]+)"', html))
+        routed = set(self.routes())
+        for href, title in self.entries():
+            with self.subTest(entry=title):
+                self.assertTrue(href[1:] in ids or href in routed, f"{title} -> {href}")
+
+    def test_every_page_of_its_own_is_listed(self):
+        """Add a page and forget the panel and this fails, which is the whole
+        reason the reference entry was wrong for a day."""
+        listed = {href for href, _ in self.entries()}
+        for route in self.routes():
+            self.assertIn(route, listed, f"{route} is a page but the contents omit it")
+
+    def test_the_names_match_what_the_page_calls_them(self):
+        html = self.html()
+        titles = {href: title.strip() for href, title in self.entries()}
+        self.assertEqual(titles["#method"], html.split('id="method-link"')[1]
+                         .split(">")[1].split("<")[0].strip())
+        self.assertIn("Saved cards", titles["#saved"])
+
+    def test_the_sections_are_sorted_from_the_pages(self):
+        block = self.html().split('<ol class="contents-list">')[1].split("</ol>")[0]
+        self.assertEqual(re.findall(r'<li class="contents-group"><span>([^<]+)</span>', block),
+                         ["On this page", "Other pages"])
+
+    def test_the_activity_log_is_not_offered_where_there_is_none(self):
+        """The hosted page has no activity log -- GitHub sends no per-listing
+        events -- and the same rule that hides the panel hides its entry."""
+        block = self.html().split('<ol class="contents-list">')[1].split("</ol>")[0]
+        activity = [line for line in block.splitlines() if "#activity" in line]
+        self.assertTrue(activity and "data-local-only" in activity[0], activity)
+        with open(os.path.join(HERE, "web", "assets", "styles.css")) as f:
+            css = f.read()
+        self.assertIn(".is-hosted .contents-list li[data-local-only] { display: none; }", css)
+
+    def test_the_numbers_count_themselves(self):
+        """An entry that does not apply must not leave 04 missing between 03
+        and 05, so the numbers are a counter rather than typed in."""
+        with open(os.path.join(HERE, "web", "assets", "styles.css")) as f:
+            css = f.read()
+        self.assertIn("counter-increment: toc", css)
+        block = self.html().split('<ol class="contents-list">')[1].split("</ol>")[0]
+        self.assertNotIn('class="c-n">0', block, "a typed-in number goes stale")
+
+    def test_the_footer_says_where_it_really_runs(self):
+        """"Runs on your machine" is false on the hosted page."""
+        body = self.js().split("async function loadConfig()")[1].split("\n}\n")[0]
+        self.assertIn('$("contents-foot").textContent = HOSTED', body)
+
+
+class TheTitleIsTheWayHome(unittest.TestCase):
+    """Two pages and a long main one, and nothing said how to get back."""
+
+    def js(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            return f.read()
+
+    def test_the_title_is_a_button(self):
+        html = open(os.path.join(HERE, "web", "index.html")).read()
+        header = html.split("<header")[1].split("</header>")[0]
+        self.assertIn('id="home-btn"', header)
+        self.assertIn("aria-label", header.split('id="home-btn"')[0].rsplit("<button", 1)[1]
+                      + header.split('id="home-btn"')[1].split(">")[0])
+
+    def test_it_clears_the_page_you_are_on_and_goes_to_the_top(self):
+        body = self.js().split("function goHome()")[1].split("\n}")[0]
+        self.assertIn('showView("")', body)
+        self.assertIn("window.scrollTo({ top: 0 })", body)
+
+    def test_it_takes_the_hash_off_rather_than_setting_one(self):
+        """history.pushState fires no hashchange, which is why the view is set
+        by hand -- and it leaves the back button working."""
+        body = self.js().split("function goHome()")[1].split("\n}")[0]
+        self.assertIn("history.pushState", body)
+        self.assertIn("location.pathname", body)
+
+    def test_it_is_wired_up(self):
+        self.assertIn('$("home-btn").addEventListener("click", goHome)', self.js())
+
+
 class TheReferenceIsAPageOfItsOwn(unittest.TestCase):
     """Six parts of prose sat under every card on the main page -- nobody
     scrolled to it and everybody scrolled past it. It is a page now, reached

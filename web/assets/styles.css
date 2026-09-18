@@ -157,7 +157,15 @@ a { color: var(--gold); text-underline-offset: 3px; }
   display: flex; align-items: center; gap: 18px;
   padding-block: 14px; flex-wrap: wrap;
 }
-.brand { display: flex; align-items: center; gap: 11px; margin-right: auto; }
+/* The title is the way home: it clears whichever page you are on and puts
+   you back at the top of the board. */
+.brand {
+  display: flex; align-items: center; gap: 11px; margin-right: auto;
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: inherit; font: inherit; text-align: left;
+}
+.brand:hover .brand-name { opacity: .75; }
+.brand:focus-visible { outline: 2px solid var(--gold-lit); outline-offset: 4px; border-radius: 4px; }
 .brand-name {
   font-family: var(--display); font-size: 19px; font-weight: 400; letter-spacing: .01em;
 }
@@ -950,7 +958,17 @@ footer.site p { margin: 0 0 8px; max-width: 74ch; line-height: 1.7; }
 }
 .contents-close:hover { border-color: var(--gold-lit); color: var(--ink); transform: rotate(90deg); }
 
-.contents-list { list-style: none; margin: 0; padding: 0; counter-reset: none; }
+/* The numbers count themselves, so an entry that does not apply -- the
+   activity log on the hosted page -- does not leave a gap in the sequence. */
+.contents-list { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+/* Two of the six are pages of their own now, so the list says which is which. */
+.contents-group { border: 0 !important; padding: 20px 0 6px; }
+.contents-group:first-child { padding-top: 6px; }
+.contents-group span {
+  font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--muted); font-weight: 600;
+}
+.contents-group + li { border-top: 1px solid var(--line); }
 .contents-list li { border-top: 1px solid var(--line); }
 .contents-list li:last-child { border-bottom: 1px solid var(--line); }
 .contents-list a {
@@ -964,6 +982,7 @@ footer.site p { margin: 0 0 8px; max-width: 74ch; line-height: 1.7; }
   color: var(--gold); padding-top: 4px; letter-spacing: .06em;
   transition: color .4s var(--ease);
 }
+.c-n::before { counter-increment: toc; content: counter(toc, decimal-leading-zero); }
 .c-t { font-family: var(--display); font-size: 18px; line-height: 1.2; color: var(--ink); }
 .c-d { font-size: 11.5px; color: var(--muted); letter-spacing: .01em; }
 .contents-list a.is-here { background: var(--gold-wash); }
@@ -1374,5 +1393,8 @@ footer.site .inline-code { background: rgba(255, 255, 255, .1); border-color: rg
 /* The progress bar stays: a hosted scan is followed by its phase and the
    clock. The per-listing activity log does not, since GitHub sends none. */
 .is-hosted #activity, .is-hosted #write-outputs, .is-hosted #portraits { display: none; }
+/* The activity log only exists on the local page, so the contents must not
+   offer it on the hosted one -- the link went nowhere at all. */
+.is-hosted .contents-list li[data-local-only] { display: none; }
 .is-hosted label[for="write-outputs"], .is-hosted label[for="portraits"],
 .is-hosted label[for="write-outputs"] + .hint, .is-hosted label[for="portraits"] + .hint { display: none; }
