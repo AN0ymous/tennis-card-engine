@@ -1769,9 +1769,13 @@ class WhatTwoPlayerScansTaught(unittest.TestCase):
         self.assertIn("UFC", engine.settled_by_title(self.UFC))
         self.assertIn("custom", engine.settled_by_title("Custom Federer 1/1 Topps Chrome"))
         for kept in (self.SHAPO, "2024 Topps Chrome Coco Gauff 1/50", "2024 Topps Chrome Coco Gauff 50/50",
-                     "2024 Topps Chrome Coco Gauff Refractor", "NetPro Federer 1/0", "Topps Chrome tennis golf lot 1/50",
+                     "NetPro Federer 1/0", "Topps Chrome tennis golf lot 1/50",
                      "2024 Topps Royalty Tennis Jamie Murray On Card Auto Relic /10 Superior Signature"):
             self.assertEqual(engine.settled_by_title(kept), "", kept)
+        # A title with no sign of numbering at all is now turned away here too
+        # -- see TitlesWithNoSignOfASerial below.
+        self.assertEqual(engine.settled_by_title("2024 Topps Chrome Coco Gauff Refractor"),
+                         engine.NO_SIGN_REASON)
 
     def test_a_settled_listing_is_not_fetched_and_keeps_its_reason(self):
         items = [{"itemId": "v1|7|0", "title": "2024 Topps Chrome Coco Gauff 7/50 tennis"},
@@ -2596,6 +2600,131 @@ class ATitleThatArguesWithItself(unittest.TestCase):
             board = engine.build_board(xlsx)
         self.assertEqual([c["player"] for c in board], ["Learner Tien"])
 
+
+
+class TitlesWithNoSignOfASerial(unittest.TestCase):
+    """Two thirds of every detail call went to a title with no serial, and
+    almost all of those say nothing about numbering at all. Such a title is
+    turned away from the search result for no call -- but only if it really
+    says nothing, because the item specifics can carry a serial the title
+    does not."""
+
+    ITEM = {"itemId": "v1|9|0", "title": "2024 Topps Chrome Coco Gauff Refractor tennis"}
+    DETAIL = {"localizedAspects": [{"name": "Manufacturer", "value": "Topps"},
+                                   {"name": "Set", "value": "2024 Topps Chrome"},
+                                   {"name": "Sport", "value": "Tennis"},
+                                   {"name": "Player/Athlete", "value": "Coco Gauff"}],
+              "price": {"value": "1.00", "currency": "USD"}, "seller": {"username": "s"},
+              "buyingOptions": ["AUCTION"], "itemWebUrl": "https://www.ebay.com/itm/9"}
+
+    def test_every_recorded_card_carries_a_sign_of_numbering(self):
+        """The completeness measurement, tied to the record rather than to a
+        number that goes stale: if a card is ever recorded whose title says
+        nothing about numbering, this rule would have lost it and this fails."""
+        xlsx = os.path.join(HERE, "results", engine.OUTPUT_XLSX)
+        if not os.path.exists(xlsx):
+            self.skipTest("no spreadsheet in results/")
+        from openpyxl import load_workbook
+        ws = load_workbook(xlsx, read_only=True, data_only=True)[engine.SHEET_NAME]
+        rows = ws.iter_rows(values_only=True)
+        header = [str(h or "").strip() for h in next(rows, ())]
+        title_at = header.index("Card Description")
+        missed = [r[title_at] for r in rows if any(r)
+                  and not engine.NUMBERING_HINT_RE.search(str(r[title_at] or ""))]
+        self.assertEqual(missed, [], "a recorded card the no-sign rule would have skipped")
+
+    def test_a_title_that_hints_at_numbering_is_still_fetched(self):
+        """Generous on purpose: one recorded card in 184 carries its serial
+        only in the specifics, and ten more give no readable pair in the
+        title. Every shape below must still cost its call."""
+        for title in ("2024 Topps Royalty Jamie Murray On Card Auto Relic /10 Superior",
+                      "2025 Topps Chrome Coco Gauff Purple Geometric Refractor # /10",
+                      "2024 Topps Chrome Coco Gauff 1/50",
+                      "2024 TOPPS CHROME BEN SHELTON RC 1 /5 PSA 10",
+                      "Topps Now Sinner Black Parallel #'d/10",
+                      "Topps Chrome Sinner Gold Refractor numbered to 50",
+                      "Topps Graphite Alcaraz Blue Refractor 1 of 10",
+                      "Topps Chrome Alcaraz Superfractor one of one",
+                      "Ace Authentic Federer serial numbered parallel",
+                      "Topps Royalty Seles Auto Relic print run 25"):
+            with self.subTest(title=title):
+                self.assertEqual(engine.settled_by_title(title), "", title)
+
+    def test_a_title_that_says_nothing_about_numbering_is_turned_away(self):
+        for title in ("2024 Topps Chrome Coco Gauff Refractor",
+                      "2005 Ace Authentic Tennis Roger Federer Base Card",
+                      "2024 Topps Chrome Tennis Carlos Alcaraz Rookie RC #77 PSA 10"):
+            with self.subTest(title=title):
+                self.assertEqual(engine.settled_by_title(title), engine.NO_SIGN_REASON)
+
+    def scan(self, items, folder, audit=engine.NO_SIGN_AUDIT, detail=None):
+        asked = []
+
+        def fetch(_token, ids, **kw):
+            asked.extend(ids)
+            return {i: dict(detail or self.DETAIL) for i in ids}
+
+        with patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "NO_SIGN_AUDIT", audit), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter(items)), \
+                patch.object(engine, "get_item_details", side_effect=fetch):
+            matches, checked = engine.run_scan(None, ["Topps Chrome"])
+        return matches, checked, asked
+
+    def test_the_walk_costs_no_call_for_a_title_with_no_sign(self):
+        with tempfile.TemporaryDirectory() as folder:
+            _, checked, asked = self.scan([self.ITEM], folder, audit=0)
+        self.assertEqual(checked, 1)
+        self.assertEqual(asked, [])
+
+    def test_the_audit_fetches_a_few_of_them_and_judges_them_properly(self):
+        """The rule is measured against live listings every run rather than
+        taken on trust, and never with more calls than a twentieth of what it
+        saved -- so the proof cannot eat the saving."""
+        items = [{"itemId": f"v1|{i}|0", "title": f"2024 Topps Chrome Coco Gauff Refractor {i}"}
+                 for i in range(100)]
+        with tempfile.TemporaryDirectory() as folder:
+            _, checked, asked = self.scan(items, folder)
+        self.assertEqual(checked, 100)
+        self.assertEqual(len(asked), 5)               # a twentieth of 100, under the cap of 25
+        with tempfile.TemporaryDirectory() as folder:
+            _, _, asked = self.scan(items[:4], folder)
+        self.assertEqual(len(asked), 1)               # never none, however small the run
+
+    def test_a_skipped_listing_that_was_a_match_is_said_out_loud(self):
+        """The signal to name NO_SIGN_REASON in RECONSIDER_REASONS and bump
+        JUDGE_VERSION, which brings every skipped listing back to be judged
+        again. Nothing is silently lost."""
+        detail = dict(self.DETAIL, localizedAspects=self.DETAIL["localizedAspects"]
+                      + [{"name": "Serial Number", "value": "1/25"}])
+        said = []
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "say", side_effect=lambda m: said.append(m)):
+            matches, _, asked = self.scan([self.ITEM], folder, detail=detail)
+        self.assertEqual(len(asked), 1)
+        self.assertEqual([m["serial"] for m in matches], ["1/25"])   # kept, not lost
+        self.assertTrue(any("turned out to be matches" in m for m in said), said)
+
+    def test_the_figures_still_account_for_every_listing_checked(self):
+        """A skipped listing is counted as settled; one the audit then fetches
+        moves to the detail-call column rather than being counted twice."""
+        items = [{"itemId": f"v1|{i}|0", "title": f"2024 Topps Chrome Coco Gauff Refractor {i}"}
+                 for i in range(40)]
+        seen_event = {}
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.object(engine, "_BASE_DIR", folder), \
+                    patch.object(engine, "get_ebay_token", return_value="token"), \
+                    patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter(items)), \
+                    patch.object(engine, "get_item_details",
+                                 side_effect=lambda t, ids, **k: {i: dict(self.DETAIL) for i in ids}):
+                engine.run_scan(None, ["Topps Chrome"],
+                                on_event=lambda kind, payload: seen_event.update(payload)
+                                if kind == "done" else None)
+        self.assertEqual(seen_event["skipped"], 40)
+        self.assertEqual(seen_event["audited"], 2)
+        self.assertEqual(sum(seen_event[k] for k in ("fetched", "settled", "judged", "known")),
+                         seen_event["checked"])
 
 
 class TheExportNeverBlanksThePublishedBoard(unittest.TestCase):
