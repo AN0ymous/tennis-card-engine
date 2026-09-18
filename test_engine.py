@@ -18,6 +18,8 @@ import shutil
 import smtplib
 import tempfile
 import unittest
+import subprocess
+import sys
 import urllib.parse
 from unittest.mock import patch
 
@@ -1018,12 +1020,13 @@ class ThePanelAnswersBothQuestions(unittest.TestCase):
         xlsx = os.path.join(HERE, "results", engine.OUTPUT_XLSX)
         if os.path.exists(xlsx):
             board = engine.build_board(xlsx)
-            # Rows are left off on purpose by exactly four rules -- customs, a
+            # Rows are left off on purpose by exactly five rules -- customs, a
             # title naming another sport, a serial that is really a grade
-            # pair, and a serial that is really a card number beside a print
-            # run -- so the allowance is counted from those same rules rather
-            # than a number that goes stale as the record grows. Anything the
-            # board drops beyond what the rules account for is a lost card.
+            # pair, a serial that is really a card number beside a print run,
+            # and a serial the title itself contradicts -- so the allowance is
+            # counted from those same rules rather than a number that goes
+            # stale as the record grows. Anything the board drops beyond what
+            # the rules account for is a lost card.
             from openpyxl import load_workbook
             ws = load_workbook(xlsx, read_only=True, data_only=True)[engine.SHEET_NAME]
             rows = ws.iter_rows(values_only=True)
@@ -1042,6 +1045,7 @@ class ThePanelAnswersBothQuestions(unittest.TestCase):
                 if (engine.looks_custom(title, set_name)
                         or cell(r, "Serial #") in engine.grade_pairs_in(title)
                         or cell(r, "Serial #") in engine.card_number_pairs_in(title)
+                        or cell(r, "Serial #") in engine.contradicted_pairs_in(title)
                         or engine.other_sport_in_title(title)):
                     left_off_by_rule += 1
             dropped = min(len(recorded), engine.BOARD_LIMIT) - len(board)
@@ -2514,6 +2518,141 @@ class TheTitleIsNotTheLastWord(unittest.TestCase):
         self.judge()
         self.assertEqual(len(self.asked), 1)
 
+    def test_a_lettered_card_code_in_front_of_a_gapped_pair_is_a_card_number(self):
+        """"#CK-1 /500" is Court Kings card CK-1, one of 500 -- which copy is
+        not stated. The "#" test looked at the character in front of the
+        digit, and on a code that is the code's hyphen, so the Federer Ace
+        Authentic row was recorded as a 001-of-500 bookend."""
+        federer = "2005 Ace Authentic Signature Series - Court Kings Roger Federer #CK-1 /500"
+        self.assertEqual(engine.extract_serial(federer, {}), (None, None))
+        self.assertEqual(engine.card_number_pairs_in(federer), {"1/500"})
+        self.assertEqual(engine.extract_serial(federer, {"Serial Number": ["1/500"]}), (1, 500))
+        for title, serial in (
+                ("2005 Ace Authentic Court Kings Roger Federer #CK-1/500", (1, 500)),
+                ("SHINTARO MOCHIZUHI 2024 GSR-SMI Topps Graphite Auto/Relic card S#01/10", (1, 10)),
+                ("2024 Topps Chrome Tennis Aces Ben Shelton RC 1 /5 PSA 10", (1, 5))):
+            with self.subTest(title=title):
+                self.assertEqual(engine.extract_serial(title, {}), serial)
+                self.assertEqual(engine.card_number_pairs_in(title), set())
+
+    def test_pop_in_front_of_a_gapped_pair_is_a_population_not_a_serial(self):
+        """"Pop 1 /10" is the grader's population report beside the print run,
+        and neither number says which of the ten is in the slab."""
+        tien = "2026 Topps Now 3 LEARNER TIEN YOUNGEST Pop 1 /10 Black PSA 10"
+        self.assertEqual(engine.extract_serial(tien, {}), (None, None))
+        self.assertEqual(engine.card_number_pairs_in(tien), {"1/10"})
+        for title, serial in (
+                ("2026 Topps Now 3 LEARNER TIEN YOUNGEST Pop 1/10 Black PSA 10", (1, 10)),
+                ("2024 Topps Chrome Popovich Refractor 1 /10", (1, 10))):
+            with self.subTest(title=title):
+                self.assertEqual(engine.extract_serial(title, {}), serial)
+                self.assertEqual(engine.card_number_pairs_in(title), set())
+
+
+class ATitleThatArguesWithItself(unittest.TestCase):
+    """"# /10 ... 1/1 on eBay" was recorded as a True 1/1 at $285. "1/1 on
+    eBay" is the seller's boast -- the only one listed -- and the card is one
+    of ten, its photo stamped 09/10. A run of ten has no true 1/1 in it."""
+
+    GAUFF = "2025 Topps Chrome Coco Gauff Purple Geometric Refractor # /10 1/1 on eBay"
+
+    def test_a_one_of_one_beside_a_stated_print_run_is_not_a_serial(self):
+        self.assertEqual(engine.contradicted_pairs_in(self.GAUFF), {"1/1"})
+        self.assertEqual(engine.extract_serial(self.GAUFF, {}), (None, None))
+        self.assertEqual(engine.extract_serial(self.GAUFF, {"Serial Number": ["9/10"]}), (9, 10))
+
+    def test_the_rule_is_narrow_enough_to_leave_real_cards_alone(self):
+        """A genuine 1/1 has no print run to state. Two ordinary numbers that
+        disagree are left alone -- a parallel really can be shorter than the
+        base. The same run stated twice is no contradiction, which is what
+        keeps the recorded Andreeva "01/10 ... /10" a serial. A Topps Now date
+        states nothing."""
+        for title, serial in (
+                ("2026 Topps Now 3 LEARNER TIEN SUPERFRACTOR FOIL HOLO GOLD 1/1", (1, 1)),
+                ("Mirra Andreeva 2024 Topps Royalty BASE CARD GOLD 01/10 #39 RC Russia /10", (1, 10)),
+                ("2022 NetPro Premium Autograph Carlos Alcaraz Auto/250 Rare 1/25", (1, 25)),
+                ("2025 Topps Now Jannik Sinner 9/7/2025 Superfractor 1/1", (1, 1)),
+                ("2024 Topps Chrome Tennis Shapovalov 1st Pineapple Refractor 77/77", (77, 77))):
+            with self.subTest(title=title):
+                self.assertEqual(engine.contradicted_pairs_in(title), set())
+                self.assertEqual(engine.extract_serial(title, {}), serial)
+
+    def test_the_title_alone_no_longer_settles_it_so_the_specifics_get_a_say(self):
+        """Stepped over, not rejected outright: a listing whose specifics carry
+        the real serial is still recorded, which is why the title cannot settle
+        it for free any more."""
+        self.assertEqual(engine.settled_by_title(self.GAUFF), "")
+
+    def test_the_board_drops_the_recorded_boast(self):
+        with tempfile.TemporaryDirectory() as folder:
+            xlsx = os.path.join(folder, "sheet.xlsx")
+            wb, ws = engine.load_or_create_sheet(xlsx)
+            engine.append_row(ws, "Coco Gauff", "Topps", "2025 Topps Chrome", self.GAUFF, 1, 1,
+                              "285.00 USD", "https://www.ebay.com/itm/336726755483")
+            engine.append_row(ws, "Learner Tien", "Topps", "2026 Topps Now",
+                              "2026 Topps Now 3 LEARNER TIEN SUPERFRACTOR FOIL HOLO GOLD 1/1",
+                              1, 1, "8888.88 USD", "https://www.ebay.com/itm/336726755484")
+            wb.save(xlsx)
+            board = engine.build_board(xlsx)
+        self.assertEqual([c["player"] for c in board], ["Learner Tien"])
+
+
+
+class TheExportNeverBlanksThePublishedBoard(unittest.TestCase):
+    """build_board hands back nothing at all when the spreadsheet is missing
+    or unreadable -- a lost file, not a day with no cards -- and that nothing
+    used to go straight over results/board.json. scan.yml commits with
+    if: always(), so the blank board would be published and the site would go
+    empty. The export keeps what is there instead, and says so loudly."""
+
+    def run_export(self, out, spreadsheet=True):
+        env = dict(os.environ, EBAY_CLIENT_ID="", EBAY_CLIENT_SECRET="",
+                   ANTHROPIC_API_KEY="", SCAN_BYPASS_BUDGET="")
+        with tempfile.TemporaryDirectory() as work:
+            for name in ("tennis_card_engine.py", "export_static.py"):
+                shutil.copy(os.path.join(HERE, name), work)
+            if spreadsheet:
+                xlsx = os.path.join(work, engine.OUTPUT_XLSX)
+                wb, ws = engine.load_or_create_sheet(xlsx)
+                engine.append_row(ws, "Coco Gauff", "Topps", "2025 Topps Chrome",
+                                  "2025 Topps Chrome Coco Gauff Refractor 1/25", 1, 25,
+                                  "40.00 USD", "https://www.ebay.com/itm/206510108410")
+                wb.save(xlsx)
+            return subprocess.run([sys.executable, "export_static.py", out], cwd=work,
+                                  env=env, capture_output=True, text=True)
+
+    def board(self, out):
+        with open(os.path.join(out, "board.json")) as f:
+            return json.load(f)["cards"]
+
+    def test_a_missing_spreadsheet_keeps_the_board_already_published(self):
+        with tempfile.TemporaryDirectory() as out:
+            with open(os.path.join(out, "board.json"), "w") as f:
+                json.dump({"cards": [{"player": "Coco Gauff", "serial": "1/25"}]}, f)
+            done = self.run_export(out, spreadsheet=False)
+            self.assertEqual(done.returncode, 0, done.stderr)
+            self.assertIn("::warning::", done.stdout)
+            self.assertEqual(len(self.board(out)), 1)
+
+    def test_a_first_run_with_no_board_yet_still_writes_one(self):
+        with tempfile.TemporaryDirectory() as out:
+            self.assertEqual(self.run_export(out, spreadsheet=False).returncode, 0)
+            self.assertEqual(self.board(out), [])
+
+    def test_a_spreadsheet_with_cards_publishes_them_as_before(self):
+        with tempfile.TemporaryDirectory() as out:
+            with open(os.path.join(out, "board.json"), "w") as f:
+                json.dump({"cards": []}, f)
+            self.assertEqual(self.run_export(out).returncode, 0)
+            self.assertEqual([c["serial"] for c in self.board(out)], ["1/25"])
+
+    def test_importing_the_export_publishes_nothing(self):
+        """It has no main() to guard, and an accidental import ran the whole
+        script -- overwriting results/ from whatever directory was current."""
+        done = subprocess.run([sys.executable, "-c", "import export_static"],
+                              cwd=HERE, capture_output=True, text=True)
+        self.assertNotEqual(done.returncode, 0)
+        self.assertIn("ImportError", done.stderr)
 
 
 class PlayersReadOffTheTitle(unittest.TestCase):
