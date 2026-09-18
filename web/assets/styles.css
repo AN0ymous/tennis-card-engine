@@ -567,8 +567,9 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
 .lot-photo .new-tag, .lot-photo .sold-tag { top: auto; bottom: 13px; right: 44px; }
 /* with a flag between them, the serial steps left again */
 .mc-photo.has-flag .mc-serial-tag { right: 96px; }
-/* the saved page draws sold as a band across the photo already */
-.saved-item .sold-tag { display: none; }
+/* The saved page draws sold as a band across the photo, so it asks buildCard
+   for no pill rather than hiding one here: a pill hidden after the fact still
+   pushed the serial aside for a space nothing occupied. */
 .holo-star {
   display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 10px 14px;
   border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink);

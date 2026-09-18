@@ -347,6 +347,16 @@ on a website.
    to `44px` while doing this: the star sits at `right: 8px` and is 30 wide, so
    at 10px it covered the serial and clipped it. With a flag present the serial
    steps left again (`.mc-photo.has-flag`).
+   **That class must follow the flag that is drawn, not one that exists.** The
+   saved page hid the SOLD pill in the stylesheet while drawing its band, but
+   `buildCard` still added `has-flag`, so on every sold saved card the serial
+   stepped 96px clear of a pill that was not there and floated in the middle
+   of the photo. The saved page now asks `buildCard` for no pill
+   (`{ soldFlag: false }`) rather than hiding one after the fact, the class
+   goes on beside the flag it describes, and no stylesheet rule hides a flag
+   at all -- `TheSerialTagStepsAsideOnlyForAFlagThatIsDrawn` fails if one
+   appears again. Only the SOLD pill is suppressed there: a saved card the
+   last scan found still earns its NEW pill, and steps aside for it.
 
 10. **The Matches panel is paged, and a reload lands somewhere predictable.**
    173 cards drawn at once put a mile of scrolling between the panel and
