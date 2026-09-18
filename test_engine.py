@@ -1704,6 +1704,51 @@ class TheMatchesPanelIsPaged(unittest.TestCase):
         self.assertIn("`${everything.length} of ${state.board.length} match the filters`", body)
 
 
+class TheSerialTagStepsAsideOnlyForAFlagThatIsDrawn(unittest.TestCase):
+    """The serial shares the top-right corner with the star, and steps clear
+    when a NEW or SOLD pill sits between them. The class that steps it used to
+    follow whether a flag *existed*, not whether one was drawn -- and the saved
+    page hid the SOLD pill in the stylesheet while drawing a band instead. So
+    on every sold saved card the serial stepped 96px clear of a pill that was
+    not there and floated in the middle of the photo."""
+
+    def js(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            return f.read()
+
+    def css(self):
+        with open(os.path.join(HERE, "web", "assets", "styles.css")) as f:
+            return f.read()
+
+    def test_the_class_follows_the_flag_that_is_appended(self):
+        body = self.js().split("function buildCard(")[1].split("\n}")[0]
+        self.assertIn("const flag = flagOf();", body)
+        step = body.split("const flag = flagOf();")[1]
+        self.assertIn('photo.classList.add("has-flag")', step)
+        self.assertLess(step.index('photo.classList.add("has-flag")'),
+                        step.index("card.append(photo)"),
+                        "the class goes on inside the if, with the flag")
+
+    def test_the_saved_page_asks_for_no_pill_rather_than_hiding_one(self):
+        """Hiding it after the fact is what let the two drift apart."""
+        self.assertIn("buildCard(card, i, { soldFlag: false })", self.js())
+        self.assertNotIn(".saved-item .sold-tag { display: none; }", self.css())
+
+    def test_no_stylesheet_rule_hides_a_flag_behind_the_scripts_back(self):
+        """Any rule that hides one would put the two out of step again."""
+        for line in self.css().splitlines():
+            if ("new-tag" in line or "sold-tag" in line) and "display: none" in line:
+                self.fail(f"a hidden flag the script still counts: {line.strip()}")
+
+    def test_only_the_sold_pill_is_suppressed_there(self):
+        """A saved card the last scan found still earns its NEW pill."""
+        body = self.js().split("function buildCard(")[1].split("\n}")[0]
+        decide = body.split("const flagOf =")[1].split(";")[0]
+        self.assertIn("isSoldCard(match)", decide)
+        self.assertIn("flagFor(match)", decide)
+        self.assertNotIn("isNewCard", decide)
+
+
 class TheSavedPageAsksTheRightSide(unittest.TestCase):
     """The saved page is routed from the hash the moment the script runs --
     before loadConfig has found out whether there is a server. HOSTED starts

@@ -749,7 +749,8 @@ function renderSaved() {
   list.forEach((card, i) => {
     const item = el("div", "saved-item");
     const st = statusOf(card);
-    const cardEl = buildCard(card, i);
+    // the band across the photo says sold here, so no pill as well
+    const cardEl = buildCard(card, i, { soldFlag: false });
     if (st.status === "sold") cardEl.classList.add("is-sold");
     item.append(cardEl);
 
@@ -1497,7 +1498,10 @@ function namedPlayer(card) {
   return p.toLowerCase() === "unknown player" ? "" : p;
 }
 
-function buildCard(match, index) {
+/* opts.soldFlag false: draw no SOLD pill on this card. The saved page draws
+   sold as a band across the whole photo instead, and asking for no pill is
+   not the same as hiding one -- see the flag decision below. */
+function buildCard(match, index, opts = {}) {
   match = { ...match, player: namedPlayer(match) };
   const card = el("button", "matchcard" + (match._example ? " is-example" : ""));
   card.type = "button";
@@ -1506,6 +1510,11 @@ function buildCard(match, index) {
   card.setAttribute("aria-label", `${match.player || "Card"}, ${match.serial}. Open card.`);
 
   const photo = el("div", "mc-photo");
+  /* The flag is decided once, and "has-flag" follows the flag that is really
+     drawn. It used to follow whether one existed: the saved page hid the SOLD
+     pill in the stylesheet but the class went on anyway, so the serial stepped
+     96px clear of a pill that was not there and 1/77 floated mid-photo. */
+  const flagOf = () => (opts.soldFlag === false && isSoldCard(match) ? null : flagFor(match));
   if (match.image) {
     const img = el("img");
     img.src = match.image;
@@ -1516,7 +1525,7 @@ function buildCard(match, index) {
       photo.append(el("span", "mc-crest", initials(match.player)));
       photo.append(serialTag);
       photo.append(starFor(match));
-      const again = flagFor(match);
+      const again = flagOf();
       if (again) photo.append(again);
     });
     photo.append(img);
@@ -1526,7 +1535,7 @@ function buildCard(match, index) {
   const serialTag = el("span", "mc-serial-tag", match.serial);
   photo.append(serialTag);
   photo.append(starFor(match));
-  const flag = flagFor(match);
+  const flag = flagOf();
   if (flag) {
     // the serial shares that corner with the star; the class steps it clear
     // so the three do not stack
