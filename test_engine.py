@@ -1884,10 +1884,18 @@ class ASetNameIsNotAnAutograph(unittest.TestCase):
                               "2013 Ace Signature Series Arvane Rezai 1/15 signed auto", 1, 15, "20 USD",
                               "https://www.ebay.com/itm/276593209010", card_type="Auto",
                               caution="Ace Authentic autograph: on-card or sticker not stated; check by eye")
+            engine.append_row(ws, "Vince Spadea", "Ace Authentic", "",
+                              "VINCE SPADEA 2005 ACE SIGNATURE SERIES SILVER PARALLEL 100/100", 100, 100, "9 USD",
+                              "https://www.ebay.com/itm/276593209011", card_type="Auto",
+                              caution="Ace Authentic autograph: on-card or sticker not stated; check by eye")
             wb.save(xlsx)
             board = {c["link"][-1]: c for c in engine.build_board(xlsx)}
-        self.assertEqual(board["9"]["cardType"], "base")
-        self.assertEqual(board["9"]["caution"], "Ace Authentic: check the numbering is stamped, not on a circle sticker")
+        # The Spadea row itself now leaves the page: its "100 /100" is a card
+        # number (TheTitleIsNotTheLastWord). The relabel is shown on a row
+        # that stays: a Signature Series card with a real serial.
+        self.assertNotIn("9", board)
+        self.assertEqual(board["1"]["cardType"], "base")
+        self.assertEqual(board["1"]["caution"], "Ace Authentic: check the numbering is stamped, not on a circle sticker")
         self.assertEqual(board["0"]["cardType"], "auto")
         self.assertIn("autograph", board["0"]["caution"])
 
@@ -1937,17 +1945,36 @@ class TheTitleIsNotTheLastWord(unittest.TestCase):
 
     def test_a_hash_number_with_a_gap_before_the_slash_is_a_card_number(self):
         """The recorded Alcaraz title: card #1 of the set, one of 199, position
-        unstated. Every other recorded "#" pair has no gap and stays a serial."""
+        unstated. Every other recorded "#" pair has no gap and stays a serial,
+        and a gap without the "#" (the Shelton "RC 1 /5") is a serial too."""
         self.assertEqual(engine.extract_serial(self.TITLE, {}), (None, None))
         self.assertEqual(engine.extract_serial(self.TITLE, {"Serial Number": ["148/199"]}), (148, 199))
         self.assertEqual(engine.card_number_pairs_in(self.TITLE), {"1/199"})
         for title, serial in (
+                ("2024 TOPPS CHROME TENNIS ACES AUTO RED REFRACTOR BEN SHELTON RC 1 /5 PSA 10", (1, 5)),
                 ("2024 TOPPS CHROME TENNIS TIAFOE/SHELTON DUAL AUTO BLACK REFRACTOR #1/10 PSA 8", (1, 10)),
                 ("2026 Topps Graphite Carlos Alcaraz Full Extension White Refractor # 1/10", (1, 10)),
-                ('NICOLAS MASSU "SILVER BASE CARD #001/100" ACE SIGNATURE SERIES 2005', (1, 100)),
+                ("Camila Osorio 2026 Topps Graphite Tennis Trading Card Relic Autograph #01/25", (1, 25)),
                 ("SHINTARO MOCHIZUHI 2024 GSR-SMI Topps Graphite Auto/Relic card S#01/10 in holder", (1, 10)),
                 ("2024 Topps Graphite Tennis DENIS SHAPOVALOV Relic Patch Pink Refractor #15/15", (15, 15)),
                 ("2024 Topps Royalty Collection MONICA SELES ROYAL DECREE ON CARD AUTO # 1/25", (1, 25))):
+            with self.subTest(title=title):
+                self.assertEqual(engine.extract_serial(title, {}), serial)
+                self.assertEqual(engine.card_number_pairs_in(title), set())
+
+    def test_base_card_in_front_of_the_pair_makes_it_a_card_number(self):
+        """The two recorded Ace Signature Series rows: card 100 and card 1 of a
+        100-card base set. A colour between the words and the pair names a
+        parallel, and a parallel is numbered."""
+        for title in ('VINCE SPADEA "SILVER BASE CARD 100 /100" ACE SIGNATURE SERIES 2005',
+                      'NICOLAS MASSU "SILVER BASE CARD #001/100" ACE SIGNATURE SERIES 2005',
+                      "2024 Topps Chrome Tennis Base 5/5"):
+            with self.subTest(title=title):
+                self.assertEqual(engine.extract_serial(title, {}), (None, None))
+                self.assertEqual(len(engine.card_number_pairs_in(title)), 1)
+        for title, serial in (
+                ("Mirra Andreeva 2024 Topps Royalty Tennis BASE CARD GOLD 01/10 #39 RC Russia /10", (1, 10)),
+                ("2024 Topps Chrome Base Card Refractor 1/1", (1, 1))):
             with self.subTest(title=title):
                 self.assertEqual(engine.extract_serial(title, {}), serial)
                 self.assertEqual(engine.card_number_pairs_in(title), set())

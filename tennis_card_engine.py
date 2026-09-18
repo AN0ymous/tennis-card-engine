@@ -1148,15 +1148,32 @@ def grade_pairs_in(title):
             for m in SERIAL_RE.finditer(title) if is_grade_pair(title, m)}
 
 
+# "base card" straight in front of the pair, with only a quote or "#" between:
+# 'SILVER BASE CARD 100 /100' and 'BASE CARD #001/100' are checklist numbers
+# over a 100-card base set. A colour or insert word in between ("BASE CARD
+# GOLD 01/10") names a parallel, and a parallel is numbered.
+BASE_CARD_BEFORE_RE = re.compile(r"\bbase(?:\s+card)?\s*[#\"'\u201c\u201d]*\s*$", re.I)
+
+
 def is_card_number_pair(title, match):
-    """Whether this N/M is a checklist number beside a bare print run: "#1 /199"
-    is card #1 of the set, one of 199 copies, and says nothing about which
-    copy. The sign is the "#" glued to the first number with a gap before the
-    slash -- the seller wrote two things. "#1/199", "# 1/10", "#001/100" and
-    "S#01/10" have no gap and stay serials; of the twelve recorded titles
-    with a "#" in front of the pair, only the Alcaraz Aqua Refractor had the
-    gap, and its photo showed 148/199."""
-    return title[:match.start()].endswith("#") and bool(re.search(r"\d\s+/", match.group(0)))
+    """Whether this N/M is a checklist number beside the set's size, not a
+    serial. Two signs, either one enough:
+
+    * "#" glued to the first number with a gap before the slash: "#1 /199" is
+      card #1 of the set, one of 199 copies, and says nothing about which
+      copy -- the seller wrote two things. "#1/199", "# 1/10", "#001/100" and
+      "S#01/10" have no gap and stay serials; of the twelve recorded titles
+      with a "#" in front of the pair only the Alcaraz Aqua Refractor had the
+      gap, and its photo showed 148/199. The gap alone is not a sign: the
+      recorded "BEN SHELTON RC 1 /5 PSA 10" is a real 1/5.
+    * "base card" straight in front: a base card is never serial-numbered,
+      since a numbered card is a parallel. 'SILVER BASE CARD 100 /100' is
+      card 100 of a 100-card set. "BASE CARD GOLD 01/10" keeps its serial,
+      because "GOLD" between them names the parallel."""
+    before = title[:match.start()]
+    if before.endswith("#") and re.search(r"\d\s+/", match.group(0)):
+        return True
+    return bool(BASE_CARD_BEFORE_RE.search(before))
 
 
 def card_number_pairs_in(title):

@@ -144,21 +144,29 @@ on a website.
   "Auto" beside the set name still counts, and so does eBay's `Autographed:
   Yes`. `build_board` relabels a recorded Auto whose title names such a set
   and reads as base without it, and swaps the caution for the unsigned-card
-  one, so the two Signature Series rows now say Base. Whether "100 /100" on
-  that card is a stamped serial or a checklist number over a 100-card base
-  set the text cannot tell; the photo can, and that is what the caution asks.
-- **"#1 /199" is a card number beside a print run, not a serial.** The
-  Alcaraz Aqua Refractor recorded as 1/199 was card #1 of the set, one of
-  199, stamped 148/199 in its photo. The sign is the "#" glued to the first
-  number with a gap before the slash: the seller wrote two things
-  (`is_card_number_pair`). Of the twelve recorded titles with a "#" in front
-  of the pair, only that one had the gap; "#1/199", "# 1/10", "#001/100" and
-  "S#01/10" have none and stay serials. `extract_serial` steps over such a
-  pair to the specifics; with nothing there, `judge_listing` reads the stamp
-  from the photo when the photo step is on (only for this shape of title,
-  so the call is rare), records what it read with a "read from the photo"
+  one. (Both recorded Signature Series rows have since left the page for
+  the reason below: "100 /100" and "#001/100" behind "BASE CARD" are card
+  numbers over a 100-card set, which the owner confirmed.)
+- **A card number beside the set's size is not a serial.** Two shapes,
+  either one enough (`is_card_number_pair`). **"#1 /199"**: the Alcaraz Aqua
+  Refractor recorded as 1/199 was card #1 of the set, one of 199, stamped
+  148/199 in its photo. The sign is the "#" glued to the first number with a
+  gap before the slash: the seller wrote two things. Of the twelve recorded
+  titles with a "#" in front of the pair, only that one had the gap;
+  "#1/199", "# 1/10", "#001/100" and "S#01/10" have none and stay serials,
+  and the gap alone is not a sign (the recorded "BEN SHELTON RC 1 /5 PSA 10"
+  is a real 1/5). **"BASE CARD 100 /100"**: the two Ace Signature Series
+  rows, 'SILVER BASE CARD 100 /100' and 'SILVER BASE CARD #001/100', are
+  cards 100 and 1 of a 100-card base set; a base card is never
+  serial-numbered, because a numbered card is a parallel. The sign is "base"
+  or "base card" straight in front of the pair with at most a quote or "#"
+  between (`BASE_CARD_BEFORE_RE`); "BASE CARD GOLD 01/10" keeps its serial,
+  since "GOLD" names the parallel. `extract_serial` steps over such a pair
+  to the specifics; with nothing there, `judge_listing` reads the stamp from
+  the photo when the photo step is on (only for these shapes of title, so
+  the call is rare), records what it read with a "read from the photo"
   caution, and without it rejects for no serial. `build_board` drops the
-  recorded row from the page (`card_number_pairs_in`); the row stays.
+  recorded rows from the page (`card_number_pairs_in`); the rows stay.
 - **The title's serial is not the last word.** The same card showed the
   wider gap: `extract_serial` believed the title and
   compared it with nothing. Now `judge_listing`, once a listing has passed
