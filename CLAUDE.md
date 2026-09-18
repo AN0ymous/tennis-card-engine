@@ -549,6 +549,40 @@ on 18 Sep decompose exactly (counter deltas 432 and 307):
   `py -c "import tennis_card_engine as e; t=e.get_ebay_token(); [print(q, e.search_ebay(t, q, 1, newest_first=True)[1]) for q in ('Shapovalov Topps Chrome', 'Denis Shapovalov Topps Chrome')]"`
   -- if the second total is ever the larger, the narrower search must run
   every time again, not only past the cap.
+- **The back catalogue is not scanned, and one sweep would close it for
+  good.** A filterless scan is not the same as scanning every player, for two
+  reasons that have nothing to do with the cursors.
+  **Depth.** eBay serves `MAX_RESULTS_PER_BRAND` (1,200) per query, so the
+  wide scan reaches the newest 1,200 listings of each set and everything
+  listed after -- never further back. A surname query matches far fewer than
+  1,200 listings in total, so it reaches the back of that player's whole
+  history on eBay.
+  **Words.** For the three lines printed for every sport
+  (`MULTI_SPORT_LINES`) the wide query is `"{set} tennis"`, and eBay matches
+  every word. Measured against the recorded cards on those three lines on 18
+  Sep: **45 say "tennis" in the title and 37 do not.** Those 37 could never
+  have been matched by the wide query -- every one came in through a player
+  scan ("Iga Swiatek 2024 Topps Chrome Served! Signatures Auto 01/25 PSA
+  Card 9", "2025 Topps Chrome Autograph Rookie Card-Elina Avanesyan
+  #CA-EAN +1/75", "2021 Topps Chrome Autograph Card Tracy Austin 50/50
+  Bookend"). The other 119 recorded cards sit on lines whose query is the
+  bare set name, so they carry no word requirement and only the depth limit
+  applies. It is the same effect as the 17 Sep note in the wide-search
+  decision, where two player scans found 17 bookends no 4,800-listing wide
+  walk had ever seen.
+  **The fix is a one-off sweep of the 15 built-in players**, which lays down
+  a cursor per surname-and-set -- 105 search texts -- after which a repeat
+  player scan costs about a page per set. Run it when the allowance resets
+  (07:00 UTC, 3pm Singapore) and **in slices**, three or four players a day:
+  a first-time player scan costs roughly one detail call per never-seen
+  listing that hints at numbering, run 41 checked 605 listings for
+  Shapovalov on Topps Chrome alone, and the daily scheduled run still needs
+  its own ~500. Read `results/ebay_api_usage.json` between slices, and do
+  not bypass the ceiling for it -- eBay's own limit is the one that cannot
+  be bypassed. Nothing about it can go wrong quietly: "not a Federer card"
+  is a filtered verdict keyed to the rules fingerprint, so a player scan can
+  never hide a card from the wide scan that follows. Agreed with the owner
+  on 18 Sep, to be run when the calls reset.
 
 Done since these notes were written: `app.js` confirmed on `main` (the Matches
 fallback works), `scan.yml`'s six-hourly comment corrected, and `test_engine.py`
