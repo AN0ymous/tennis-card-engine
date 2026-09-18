@@ -1243,6 +1243,21 @@ PLAYER_NOISE = set(PARALLEL_COLOURS) | set(GRADERS) | set("""
     mini diamond fireworks galaxy nebula cosmic stardust holo hologram holographic
     sepia collection regalia decree royal prodigious ambassador influential grip
     signings debut winners rookies stars star prospect prospects icon icons
+    geometric captured pineapple youthquake aces bookend full extension superior
+""".split())
+
+# Two or three letters in capitals is usually a code, not a name -- but BEN,
+# ZOE and IGA are names, and an all-capitals title turned every one of them
+# away: "AUTOS BLACK REFRACTOR ZOE KRUGER 10/10" read as "Kruger" alone, a run
+# of one, and yielded nothing. A short run of capitals is now allowed where a
+# first name stands, immediately before a longer name, unless it is one of
+# these: the card, competition and country codes that really do sit there.
+SHORT_CODES = set("""
+    rc sp ssp au rpa nno err var mem gs sr sgc gsr tra ttt sga nm ex vg gd po fr
+    atp wta itf ufc mma wwe aew nba nfl mlb nhl pga usa gbr fra ger ita esp aus
+    rus can jpn chn sui srb gre pol cze arg bra ned den nor swe fin rsa kaz ukr
+    cro aut bel por tun ind kor tpe hun rou svk slo bul lat est ltu chi col mex
+    per uru ven egy mar isr tur nzl irl sco wal ioc usd eur gbp aud cad
 """.split())
 
 NAME_TOKEN_RE = re.compile(r"^[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F'\u2019-]*$")
@@ -1261,10 +1276,15 @@ def _brand_words():
     return _brand_words_cache
 
 
-def _name_like(tok, middle=False):
+def _name_like(tok, middle=False, before_name=False):
     """A word that could be part of a name: letters only, not noise, not a
     set code like GS-MKC or TRA-VJK, not RC / SSP / USA. A single letter is
-    allowed only as a middle initial (VICTORIA J KASINTSEVA)."""
+    allowed only as a middle initial (VICTORIA J KASINTSEVA).
+
+    `before_name` says the next word is plainly a name (four letters or more,
+    and none of the above), which is where a first name stands: BEN SHELTON,
+    ZOE KRUGER. Two or three letters in capitals are read as a name only
+    there, and only when they are not a code in SHORT_CODES."""
     if not NAME_TOKEN_RE.match(tok):
         return False
     if len(tok) == 1:
@@ -1278,7 +1298,7 @@ def _name_like(tok, middle=False):
         # "Royalty-Prodigious": a set word glued to another is still the set
         if any(part in PLAYER_NOISE or part in _brand_words() for part in low.split("-")):
             return False
-    if len(tok) <= 3 and tok.isupper():
+    if len(tok) <= 3 and tok.isupper() and (not before_name or low in SHORT_CODES):
         return False                      # RC, SSP, USA, UFC
     return True
 
@@ -1335,13 +1355,18 @@ def player_from_title(title, known=()):
             else:
                 tokens.append(piece)
     runs, run = [], []
-    for tok in tokens:
+    for k, tok in enumerate(tokens):
         if not tok:
             if run:
                 runs.append(run)
             run = []
             continue
-        if _name_like(tok) or (run and len(tok) == 1 and NAME_TOKEN_RE.match(tok)):
+        # the next word, when it is plainly a name, is what lets a short run
+        # of capitals before it be read as the first name it is
+        nxt = tokens[k + 1] if k + 1 < len(tokens) else ""
+        before_name = len(nxt) >= 4 and _name_like(nxt)
+        if (_name_like(tok, before_name=before_name)
+                or (run and len(tok) == 1 and NAME_TOKEN_RE.match(tok))):
             run.append(tok)
         else:
             if run:
