@@ -379,6 +379,23 @@ on a website.
    which is why it reloaded; otherwise the top. The marker is spent by the
    load it was written for, so the next reload goes to the top again.
 
+11. **"How it works" is a page, not the bottom of the main one.** The method
+   and process reference -- six parts of prose, about a third of the page's
+   height -- sat under every card on the board, where nobody scrolled to it
+   and everybody scrolled past it. It is now a page of its own, reached from
+   a **"How it works" button in the top bar** (`#method-link`, marked `is-on`
+   while you are on it) and left by "Back to the board", on exactly the
+   routing the saved cards already used. `VIEWS` maps `#saved` and `#method`
+   to their section and body class, and one `showView(hash)` drives both, so
+   they can never both be open. Measured in Chromium: the main page went from
+   12,653px tall to 8,427px.
+   **Two traps, both met.** `.reference` sets `display: flex`, which beats the
+   browser's own rule for the `hidden` attribute -- so the page never actually
+   went away until `#method[hidden] { display: none; }` said so. And `#limits`,
+   `#allowlist` and the rest were anchors on this page; `partOfAView()` finds
+   a hash that names an element inside a page, opens that page and goes to it,
+   so every link into the reference still works.
+
 ## Why a scan usually adds nothing, and why that is right
 
 `seen_items.json` held 5,635 judged listings on 17 Sep -- 5,577 permanent

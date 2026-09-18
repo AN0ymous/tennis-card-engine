@@ -13,6 +13,7 @@ tests below run against those too.
 """
 
 import os
+import re
 import json
 import shutil
 import smtplib
@@ -1701,6 +1702,67 @@ class TheMatchesPanelIsPaged(unittest.TestCase):
         js = self.js()
         body = js.split("function renderMatches()")[1].split("\n}")[0]
         self.assertIn("`${everything.length} of ${state.board.length} match the filters`", body)
+
+
+class TheReferenceIsAPageOfItsOwn(unittest.TestCase):
+    """Six parts of prose sat under every card on the main page -- nobody
+    scrolled to it and everybody scrolled past it. It is a page now, reached
+    from a button in the top bar, on the same routing as the saved cards."""
+
+    def js(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            return f.read()
+
+    def html(self):
+        with open(os.path.join(HERE, "web", "index.html")) as f:
+            return f.read()
+
+    def css(self):
+        with open(os.path.join(HERE, "web", "assets", "styles.css")) as f:
+            return f.read()
+
+    def test_the_button_is_in_the_top_bar(self):
+        header = self.html().split("<header")[1].split("</header>")[0]
+        self.assertIn('id="method-link"', header)
+        self.assertIn('href="#method"', header)
+
+    def test_the_reference_starts_put_away(self):
+        html = self.html()
+        opening = html.split('id="method"')[1].split(">")[0]
+        self.assertIn("hidden", opening, "it would show on the main page otherwise")
+
+    def test_the_hidden_attribute_is_not_beaten_by_the_display_rule(self):
+        """.reference sets display: flex, which overrides the browser's own
+        rule for [hidden] -- without saying so here the page never goes away,
+        which is exactly what happened the first time."""
+        css = self.css()
+        self.assertIn("#method[hidden] { display: none; }", css)
+        self.assertIn(".is-method-view main > :not(#method) { display: none; }", css)
+
+    def test_one_router_so_two_pages_cannot_both_be_open(self):
+        js = self.js()
+        self.assertIn('"#saved":', js)
+        self.assertIn('"#method":', js)
+        body = js.split("function showView(hash)")[1].split("\n}")[0]
+        self.assertIn("Object.values(VIEWS).forEach", body)
+        self.assertIn("document.body.classList.toggle(view.cls, on)", body)
+        self.assertIn("$(view.id).hidden = !on", body)
+
+    def test_a_link_to_a_part_of_the_reference_still_works(self):
+        """#limits and the rest were places on this page. They are places on
+        another page now, and a link to one has to open it."""
+        body = self.js().split("function partOfAView(hash)")[1].split("\n}")[0]
+        self.assertIn("$(v.id).contains(target)", body)
+        ids = re.findall(r'class="ref-block" id="([a-z]+)"', self.html())
+        self.assertEqual(len(ids), 6, ids)
+
+    def test_the_contents_panel_still_reaches_it(self):
+        contents = self.html().split('<ol class="contents-list">')[1].split("</ol>")[0]
+        self.assertIn('href="#method"', contents)
+
+    def test_a_page_hash_is_not_treated_as_an_anchor_to_scroll_to(self):
+        body = self.js().split("function settleScroll()")[1].split("\n}\n")[0]
+        self.assertIn("if (VIEWS[hash])", body)
 
 
 class WhereAReloadLeavesYou(unittest.TestCase):

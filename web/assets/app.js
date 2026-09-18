@@ -46,8 +46,10 @@ function settleScroll() {
     want = sessionStorage.getItem(LAND_KEY) || "";
     sessionStorage.removeItem(LAND_KEY);         // this load only
   } catch { /* ignore */ }
-  const hash = (location.hash || "").slice(1);
-  const target = document.getElementById(hash) || (want && document.getElementById(want));
+  const hash = location.hash || "";
+  if (VIEWS[hash]) { window.scrollTo({ top: 0 }); return; }   // a page, not an anchor
+  const target = document.getElementById(hash.slice(1))
+    || (want && document.getElementById(want));
   if (target) target.scrollIntoView({ block: "start" });
   else window.scrollTo({ top: 0 });
 }
@@ -750,14 +752,45 @@ function renderSaved() {
   area.append(grid);
 }
 
-function showSavedView(on) {
-  document.body.classList.toggle("is-saved-view", on);
-  $("saved-page").hidden = !on;
-  if (on) {
-    window.scrollTo({ top: 0 });
+/* ---- the two pages that are not the main one ----
+   Saved cards, and the method and process reference. Both used to be sections
+   of one very long page; both are now routed off the hash, one router so they
+   can never both be showing. #method was an anchor you scrolled to -- every
+   link to it still works, it just opens the page now. */
+const VIEWS = {
+  "#saved":  { id: "saved-page", cls: "is-saved-view" },
+  "#method": { id: "method", cls: "is-method-view" },
+};
+
+/* A link to a part of the reference -- #limits, #allowlist -- used to be a
+   link to a place on this page. It still works: it opens the page that part
+   now lives on and goes to it. */
+function partOfAView(hash) {
+  const target = hash.length > 1 && document.getElementById(hash.slice(1));
+  if (!target) return null;
+  const view = Object.values(VIEWS).find((v) => $(v.id).contains(target));
+  return view ? { view, target } : null;
+}
+
+function showView(hash) {
+  const deep = VIEWS[hash] ? null : partOfAView(hash);
+  const wanted = VIEWS[hash] || (deep && deep.view) || null;
+  Object.values(VIEWS).forEach((view) => {
+    const on = view === wanted;
+    document.body.classList.toggle(view.cls, on);
+    $(view.id).hidden = !on;
+  });
+  $("method-link").classList.toggle("is-on", wanted === VIEWS["#method"]);
+  if (deep) deep.target.scrollIntoView({ block: "start" });
+  else if (wanted) window.scrollTo({ top: 0 });
+  if (wanted === VIEWS["#saved"]) {
     renderSaved();
     refreshStatuses();
   }
+}
+
+function showSavedView(on) {
+  showView(on ? "#saved" : "");
 }
 
 function initSaved() {
@@ -785,7 +818,7 @@ function initSaved() {
     }[state.savedstatus];
     renderSaved();
   }));
-  const route = () => showSavedView(location.hash === "#saved");
+  const route = () => showView(location.hash);
   window.addEventListener("hashchange", route);
   route();
 }
