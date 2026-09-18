@@ -1,1 +1,30 @@
-[]
+[
+  {
+    "player": "Roger Federer",
+    "manufacturer": "Ace Authentic",
+    "set_name": "",
+    "brand": "Ace Authentic",
+    "title": "2008 Ace G/S II US Open Mem Dual Mat Gold #15 1/5 Federer/Berankis PSA 8 Top Pop",
+    "serial": "1/5",
+    "bookend": "001 of 5",
+    "price": "600.00 USD",
+    "link": "https://www.ebay.com/itm/168659428125",
+    "image": "https://i.ebayimg.com/images/g/ceAAAOSwm0liwM3K/s-l1600.jpg",
+    "images": [
+      "https://i.ebayimg.com/images/g/Oy4AAOSwn29iwM3T/s-l1600.jpg",
+      "https://i.ebayimg.com/images/g/9JYAAOSw4ApiwM3e/s-l1600.jpg"
+    ],
+    "listed": "2026-09-03T00:43:30.000Z",
+    "listing": "Buy It Now",
+    "bids": null,
+    "itemId": "v1|168659428125|0",
+    "cardType": "base",
+    "grading": "PSA 8",
+    "parallel": "gold",
+    "outfit": "",
+    "colourMatch": "unknown",
+    "sport": "Tennis",
+    "caution": "Ace Authentic: check the numbering is stamped, not on a circle sticker",
+    "found": "2026-09-18 02:43 UTC"
+  }
+]
