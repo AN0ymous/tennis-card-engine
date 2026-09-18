@@ -1251,6 +1251,111 @@ class ThePublishStepDrivenForReal(unittest.TestCase):
         self.assertNotIn("mine", published)
 
 
+class TheCeilingKeepsWhatItInterrupted(unittest.TestCase):
+    """The local daily ceiling used to throw away the work it interrupted.
+
+    `consume_api_call` raised from inside the detail fetch, which unwound the
+    whole fetch: every listing already fetched alongside the one that hit the
+    ceiling went with it, paid for and never judged. The next run bought them
+    again. Now the fetch keeps what it has, the run judges it, saves it, and
+    only then stops."""
+
+    ITEMS = [{"itemId": f"v1|{n}|0",
+              "title": f"2024 Topps Chrome Coco Gauff 1/{50 + n} tennis",
+              "itemCreationDate": "2026-09-18T00:00:00.000Z"} for n in range(10)]
+
+    class Resp:
+        status_code, text = 200, "{}"
+        def __init__(self, payload): self._p = payload
+        def json(self): return self._p
+
+    def fake_get(self, url, headers=None, params=None, timeout=None, **kw):
+        item_id = url.rsplit("/", 1)[-1].replace("%7C", "|")
+        return self.Resp({"itemId": item_id, "localizedAspects": [
+                              {"name": "Manufacturer", "value": "Topps"},
+                              {"name": "Set", "value": "2024 Topps Chrome"},
+                              {"name": "Sport", "value": "Tennis"},
+                              {"name": "Player/Athlete", "value": "Coco Gauff"}],
+                          "price": {"value": "1.00", "currency": "USD"},
+                          "seller": {"username": "s"}, "buyingOptions": ["AUCTION"],
+                          "itemWebUrl": f"https://www.ebay.com/itm/{item_id}"})
+
+    def ceiling_after(self, n):
+        spent = {"n": 0}
+        def consume(bucket="browse"):
+            spent["n"] += 1
+            if spent["n"] > n:
+                raise engine.EngineError("Stopped before eBay's daily limit: ceiling spent.")
+        return spent, consume
+
+    def test_the_listings_it_already_paid_for_are_judged_and_kept(self):
+        spent, consume = self.ceiling_after(4)
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "consume_api_call", side_effect=consume), \
+                patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter(self.ITEMS)), \
+                patch.object(engine, "DETAIL_WORKERS", 1), \
+                patch("requests.get", side_effect=self.fake_get):
+            with self.assertRaises(engine.EngineError):
+                engine.run_scan(None, ["Topps Chrome"])
+            seen = engine.load_state(os.path.join(folder, engine.STATE_FILE))
+            with open(os.path.join(folder, engine.NEW_MATCHES_FILE)) as f:
+                matches = json.load(f)
+
+        self.assertEqual(len(seen), 4, "a listing the run paid for was thrown away unjudged")
+        self.assertTrue(all(v == "match" for v in seen.values()))
+        self.assertEqual(len(matches), 4, "the spreadsheet lost what the run had already found")
+
+    def test_a_listing_never_asked_about_keeps_its_place_and_its_tries(self):
+        """It was not refused by eBay -- it was never put to eBay at all, so
+        nothing is known and nothing should be spent on it."""
+        spent, consume = self.ceiling_after(4)
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "consume_api_call", side_effect=consume), \
+                patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter(self.ITEMS)), \
+                patch.object(engine, "DETAIL_WORKERS", 1), \
+                patch("requests.get", side_effect=self.fake_get):
+            with self.assertRaises(engine.EngineError):
+                engine.run_scan(None, ["Topps Chrome"])
+            seen = engine.load_state(os.path.join(folder, engine.STATE_FILE))
+            cursors = engine.load_state(os.path.join(folder, engine.SCAN_CURSOR_FILE))
+
+        for item in self.ITEMS[4:]:
+            with self.subTest(item=item["itemId"]):
+                self.assertNotIn(item["itemId"], seen, "a try was spent on the ceiling")
+        self.assertEqual(cursors, {}, "the mark moved past listings never judged")
+
+    def test_the_run_still_stops_and_still_says_why(self):
+        """Keeping the work must not turn a spent allowance into a quiet day."""
+        spent, consume = self.ceiling_after(4)
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder), \
+                patch.object(engine, "get_ebay_token", return_value="token"), \
+                patch.object(engine, "consume_api_call", side_effect=consume), \
+                patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter(self.ITEMS)), \
+                patch.object(engine, "DETAIL_WORKERS", 1), \
+                patch("requests.get", side_effect=self.fake_get):
+            with self.assertRaises(engine.EngineError) as caught:
+                engine.run_scan(None, ["Topps Chrome"])
+        self.assertIn("daily limit", str(caught.exception))
+
+    def test_a_status_check_the_ceiling_stopped_keeps_its_last_reading(self):
+        """The same change must not let "we never asked" read as "gone"."""
+        spent, consume = self.ceiling_after(0)
+        ids = [f"v1|{n}|0" for n in range(3)]
+        previous = {i: {"status": "active", "checkedAt": "2026-09-18T00:00:00Z"} for i in ids}
+        with patch.object(engine, "consume_api_call", side_effect=consume), \
+                patch("requests.get", side_effect=self.fake_get):
+            statuses = engine.refresh_statuses("token", ids, previous)
+        for i in ids:
+            with self.subTest(item=i):
+                self.assertEqual(statuses[i]["status"], "active",
+                                 "a listing nobody asked about was called ended")
+
+
 class AQueuedRunStartsFromTheFreshestState(unittest.TestCase):
     """Runs 48 and 49 on 17 Sep were the same scan dispatched nine seconds
     apart. The second was checked out at the commit it was dispatched from, so

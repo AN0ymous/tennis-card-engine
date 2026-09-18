@@ -784,10 +784,37 @@ def iter_listings(token, player, brand_kw, on_page=None, should_stop=None,
 REFUSED = False
 
 
+class _Sentinel:
+    """A falsy stand-in, so `if not detail` reads the same as it always did."""
+    def __init__(self, name):
+        self.name = name
+
+    def __bool__(self):
+        return False
+
+    def __repr__(self):
+        return self.name
+
+
+# Our own daily ceiling stopped the run before this listing was ever asked
+# about. Different from REFUSED, where eBay was asked and said no: nothing was
+# spent here, so the listing keeps its place and its tries untouched.
+OUT_OF_BUDGET = _Sentinel("OUT_OF_BUDGET")
+_budget_stop = {}          # the ceiling's own words, for the run to repeat
+
+
 def get_item_detail(token, item_id):
     """One listing's full details; None when eBay no longer serves it;
-    REFUSED when the call failed and nothing is known."""
-    consume_api_call("browse")
+    REFUSED when the call failed and nothing is known; OUT_OF_BUDGET when the
+    local ceiling stopped us before asking."""
+    try:
+        consume_api_call("browse")
+    except EngineError as exc:
+        # Raising from here used to unwind the whole fetch, and every listing
+        # already fetched alongside this one went with it -- paid for and
+        # thrown away unjudged. The caller keeps what it has instead.
+        _budget_stop.setdefault("message", str(exc))
+        return OUT_OF_BUDGET
     try:
         resp = requests.get(
             f"{EBAY_API_BASE}/buy/browse/v1/item/{item_id}",
@@ -825,7 +852,7 @@ def _in_parallel(fn, jobs, workers=None):
         return list(pool.map(fn, jobs))
 
 
-def get_item_details(token, item_ids, workers=None, failures=None):
+def get_item_details(token, item_ids, workers=None, failures=None, unattempted=None):
     """Details for many listings, keyed by item id: one call each, several
     in flight at once. The single call carries localizedAspects -- the
     manufacturer, set, print run and card number the judge reads -- and
@@ -833,13 +860,21 @@ def get_item_details(token, item_ids, workers=None, failures=None):
 
     An id absent from the result is one eBay no longer serves. An id whose
     call failed instead -- nothing is known about it -- goes into `failures`
-    when a set is given, so a caller can tell "gone" from "not answered"."""
+    when a set is given, so a caller can tell "gone" from "not answered". One
+    the local ceiling stopped us from asking about at all goes into both
+    `failures` (nothing is known of it either) and `unattempted`, so a caller
+    that cares can tell "eBay said no" from "we never asked"."""
     ids = [i for i in dict.fromkeys(item_ids) if i]
     details = {}
     for item_id, detail in zip(ids, _in_parallel(
             lambda i: get_item_detail(token, i), ids, workers)):
         if detail:
             details[item_id] = detail
+        elif detail is OUT_OF_BUDGET:
+            if unattempted is not None:
+                unattempted.add(item_id)
+            if failures is not None:
+                failures.add(item_id)      # nothing is known of it either
         elif detail is REFUSED and failures is not None:
             failures.add(item_id)
     return details
@@ -2479,6 +2514,7 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
     new_match_records = []
     cancelled = False
 
+    _budget_stop.clear()
     emit("start", players=len(players) or "all", brands=len(brand_keywords),
          queries=total_queries, perBrand=MAX_RESULTS_PER_BRAND)
 
@@ -2628,7 +2664,9 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                                 if needs_judging(earlier, item.get("title", ""))]
                     fetched += len(to_fetch)
                     refused = set()
-                    details = get_item_details(token, to_fetch, failures=refused)
+                    unasked = set()
+                    details = get_item_details(token, to_fetch, failures=refused,
+                                               unattempted=unasked)
 
                     for item, earlier in triage:
                         item_id = item["itemId"]
@@ -2650,6 +2688,13 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                             continue
 
                         detail = details.get(item_id)
+                        if not detail and item_id in unasked:
+                            # The ceiling stopped the run before this listing
+                            # was asked about. Nothing is known and nothing was
+                            # spent, so it keeps its place in the record
+                            # untouched and its set's mark stays put.
+                            failed += 1
+                            continue
                         if not detail and item_id not in refused:
                             # ended, or taken down, between the search and now
                             reason = "eBay no longer serves this listing"
@@ -2671,6 +2716,15 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                             continue
 
                         record_judgement(item, detail, player, rule_key)
+
+                    if unasked:
+                        # Every later call would meet the same ceiling, so stop
+                        # here rather than walking on judging nothing. The
+                        # verdicts this window reached are already in `seen`,
+                        # and the `finally` below writes them out: the calls
+                        # they cost are not spent twice.
+                        raise EngineError(_budget_stop.get("message") or
+                                          "Stopped before eBay's daily limit.")
 
                 # Retry a query next run if even one listing detail was missing;
                 # otherwise persist its newest successfully processed timestamp.
