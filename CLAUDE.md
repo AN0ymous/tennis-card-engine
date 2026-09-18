@@ -415,6 +415,21 @@ and the one-time full re-walk after the cursor format changed happened at run
   row each time -- a call a row, far more than a repeat scan itself.
   The daily run is always past the hour. The one visible cost: a SOLD flag
   can lag by up to an hour; set the constant to 0 to re-check every run.
+- **The ceiling keeps the work it interrupts.** `consume_api_call` raised
+  from inside the detail fetch, and the exception unwound the whole fetch:
+  every listing already fetched alongside the one that met the ceiling went
+  with it, paid for and never judged, and the next run bought them again.
+  Measured on ten listings with the ceiling set to bite after four: before,
+  four calls spent and nothing saved; after, four calls spent, four cards
+  judged and four rows in the spreadsheet. `get_item_detail` now answers
+  `OUT_OF_BUDGET` instead of raising, `get_item_details` reports those ids
+  through `unattempted` (and through `failures` as well, since nothing is
+  known of them either, which is what keeps a status check from reading
+  "we never asked" as "gone"), and `run_scan` judges what came back, leaves
+  the unasked ones **with no entry at all** -- not refused by eBay, so no try
+  is spent and the set's mark stays put -- and only then raises, so the run
+  still shows red and still says why. The one thing that must not change: a
+  spent allowance is never a quiet day.
 - **A digest email that will not send is a warning, not a failed scan.** It is
   sent after the scan has already saved, so raising there exited non-zero and
   stopped the steps that publish and commit -- losing a good scan over an
@@ -595,10 +610,25 @@ and the one-time full re-walk after the cursor format changed happened at run
   fault in the counting, and "already judged" covered work the run had just
   done for free. The counters themselves were right all along. If they ever
   disagree with N again, `main()` says so out loud rather than leaving it to
-  be spotted. A refused detail call is said out loud with its count. Any
-  further saving -- for instance whether a title with no serial at all is
-  ever a match through its specifics -- is to be decided from those numbers
-  after a full walk, not guessed.
+  be spotted. A refused detail call is said out loud with its count.
+- **Skipping titles with no serial was measured and turned down (18 Sep).**
+  It is the biggest line in the bill: 2,471 of the 3,043 detail calls in the
+  full walk went to titles with no serial, and 5,827 listings in the record
+  are rejected for having none in the title or the specifics. Two things
+  settled it against. **The cost:** of the 182 recorded cards, one carries
+  its serial only in eBay's specifics (a Jamie Murray Topps Royalty relic
+  whose title says "/10" without the pair), so a blanket skip loses real
+  cards. A narrower rule -- skip only a title with no sign of numbering at
+  all, no N/M, no bare "/N", no "numbered" -- costs 0 of the 182, and that
+  measurement is sound because today's engine fetches everything, so any
+  specifics-only card in the scanned universe is already in the record.
+  **But the saving is gone anyway:** those 5,827 are permanent rejects and
+  are never fetched again, so the expensive walk does not recur. Steady
+  state is a couple of hundred detail calls a day against 5,000 (run 60:
+  245, of which 180 were no-serial). Spending five per cent of the allowance
+  to keep completeness whole is the better trade, and the owner's rule is
+  that no card may be missed for it. Leave it. Revisit only if the daily
+  figure climbs into the thousands.
 - Never commit `.env` or put any key or token in the code.
 - The scan commits to `main`, so always `git pull --rebase` before `git push`
   from your PC. Merging a pull request while a scan runs is now safe: run 31
