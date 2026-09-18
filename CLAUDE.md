@@ -551,13 +551,22 @@ and the one-time full re-walk after the cursor format changed happened at run
   and the mark moves on.
 - **A blocked seller is turned away from the search result**, which names the
   seller, before any detail call.
-- **The run says where its calls went.** After "Checked N listings" the
-  Actions log prints detail calls made, listings settled from the search
-  result with no call, listings already judged, listings already recorded as
-  matches, and the top reasons listings were turned away; the four add up to
-  N. A refused detail call is said out loud with the count. Any further saving -- for instance whether a title with
-  no serial at all is ever a match through its specifics -- is to be decided
-  from those numbers after a full walk, not guessed.
+- **The run says where its calls went, and the figures add up.** After
+  "Checked N listings" the Actions log prints detail calls made, listings the
+  title settled with no call, listings judged on an earlier run, listings
+  already recorded as matches, and the top reasons listings were turned away.
+  Every listing checked belongs to exactly one of those four, and the line
+  ends with their total against N so a reader can see it without adding up.
+  **They used to overlap:** a listing this run settled from its own title was
+  counted as settled and again as "already judged", so run 53 on 18 Sep
+  printed 39, 4 and 7 against 46 checked -- 50 -- which reads exactly like a
+  fault in the counting, and "already judged" covered work the run had just
+  done for free. The counters themselves were right all along. If they ever
+  disagree with N again, `main()` says so out loud rather than leaving it to
+  be spotted. A refused detail call is said out loud with its count. Any
+  further saving -- for instance whether a title with no serial at all is
+  ever a match through its specifics -- is to be decided from those numbers
+  after a full walk, not guessed.
 - Never commit `.env` or put any key or token in the code.
 - The scan commits to `main`, so always `git pull --rebase` before `git push`
   from your PC. Merging a pull request while a scan runs is now safe: run 31
