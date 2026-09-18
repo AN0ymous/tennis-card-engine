@@ -563,6 +563,24 @@ and the one-time full re-walk after the cursor format changed happened at run
   (search pages only; everything judged is cached) -- a real listing behind a
   hiccup is never lost. After the third miss it is a reject with that reason
   and the mark moves on.
+  **Holding the mark back was not enough on its own.** A mark is only held by
+  failures in the run that had them, so a later clean run knows nothing about
+  work left behind: the 03:41 run on 18 Sep met an exhausted allowance, eBay
+  refused every call (`113 refused` on the statuses alone), and 74 listings
+  were recorded unavailable with their marks rightly withheld -- then the
+  full seven-set walk at 07:45 never reached those 74, had no failures of its
+  own, and wrote its marks straight past them. They were left unjudged for
+  good: not rejects, not matches, invisible. So after the walk a run asks
+  about the leftovers **by id**, which needs no walk to reach them, one call
+  each and bounded by the three tries. After the walk, so the scan's own work
+  comes first and anything the walk already settled is off the list; and only
+  on a scan with no player named, since a player scan would judge them "not
+  an X card", which is a verdict about that search and settles nothing.
+  **When eBay turns away every one of them, none of their tries is spent** --
+  that is the allowance talking, not the listings, and spending tries on it
+  would reject real cards for being asked at a bad moment.
+  `record_judgement` is the one judging path the walk and this pass share, so
+  a listing settled either way is settled the same way.
 - **A blocked seller is turned away from the search result**, which names the
   seller, before any detail call.
 - **The run says where its calls went, and the figures add up.** After
