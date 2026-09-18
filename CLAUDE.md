@@ -147,8 +147,20 @@ on a website.
   one, so the two Signature Series rows now say Base. Whether "100 /100" on
   that card is a stamped serial or a checklist number over a 100-card base
   set the text cannot tell; the photo can, and that is what the caution asks.
-- **The title's serial is not the last word.** "#1 /199" over a photo stamped
-  148/199 was recorded as a bookend: `extract_serial` believed the title and
+- **"#1 /199" is a card number beside a print run, not a serial.** The
+  Alcaraz Aqua Refractor recorded as 1/199 was card #1 of the set, one of
+  199, stamped 148/199 in its photo. The sign is the "#" glued to the first
+  number with a gap before the slash: the seller wrote two things
+  (`is_card_number_pair`). Of the twelve recorded titles with a "#" in front
+  of the pair, only that one had the gap; "#1/199", "# 1/10", "#001/100" and
+  "S#01/10" have none and stay serials. `extract_serial` steps over such a
+  pair to the specifics; with nothing there, `judge_listing` reads the stamp
+  from the photo when the photo step is on (only for this shape of title,
+  so the call is rare), records what it read with a "read from the photo"
+  caution, and without it rejects for no serial. `build_board` drops the
+  recorded row from the page (`card_number_pairs_in`); the row stays.
+- **The title's serial is not the last word.** The same card showed the
+  wider gap: `extract_serial` believed the title and
   compared it with nothing. Now `judge_listing`, once a listing has passed
   every other rule, reads the specifics' own N/M (`specifics_serial`) and,
   when it disagrees, adds a "title says 1/199 but eBay's details say
@@ -160,8 +172,7 @@ on a website.
   stamp changes nothing. It runs after the price and type filters, so a
   filtered listing never pays for it, and it is an Anthropic call, never an
   eBay one. Without the key only the specifics caution is possible, and a
-  card already recorded is never re-judged -- the "#1 /199" row has to be
-  taken off the spreadsheet by hand, as the UFC row was.
+  card already recorded is never re-judged.
 - **Custom cards are rejected before the serial is read.** A card somebody
   made themselves carries a real maker in the Manufacturer field and is nearly
   always called a 1/1, because only one exists, so neither the allow-list nor

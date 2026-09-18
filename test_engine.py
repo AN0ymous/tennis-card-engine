@@ -1018,9 +1018,10 @@ class ThePanelAnswersBothQuestions(unittest.TestCase):
         xlsx = os.path.join(HERE, "results", engine.OUTPUT_XLSX)
         if os.path.exists(xlsx):
             board = engine.build_board(xlsx)
-            # Rows are left off on purpose by exactly three rules -- customs, a
-            # title naming another sport, and a serial that is really a grade
-            # pair -- so the allowance is counted from those same rules rather
+            # Rows are left off on purpose by exactly four rules -- customs, a
+            # title naming another sport, a serial that is really a grade
+            # pair, and a serial that is really a card number beside a print
+            # run -- so the allowance is counted from those same rules rather
             # than a number that goes stale as the record grows. Anything the
             # board drops beyond what the rules account for is a lost card.
             from openpyxl import load_workbook
@@ -1040,6 +1041,7 @@ class ThePanelAnswersBothQuestions(unittest.TestCase):
                 set_name = cell(r, "Manufacturer / Set").partition(" / ")[2]
                 if (engine.looks_custom(title, set_name)
                         or cell(r, "Serial #") in engine.grade_pairs_in(title)
+                        or cell(r, "Serial #") in engine.card_number_pairs_in(title)
                         or engine.other_sport_in_title(title)):
                     left_off_by_rule += 1
             dropped = min(len(recorded), engine.BOARD_LIMIT) - len(board)
@@ -1894,6 +1896,7 @@ class TheTitleIsNotTheLastWord(unittest.TestCase):
     """"#1 /199" over a photo stamped 148/199 was recorded as a bookend."""
 
     TITLE = "2025 Topps Chrome Tennis Carlos Alcaraz Aqua Refractor #1 /199"
+    SERIAL_TITLE = "2025 Topps Chrome Tennis Carlos Alcaraz Aqua Refractor 1/199"
 
     def setUp(self):
         self.asked = []
@@ -1912,12 +1915,14 @@ class TheTitleIsNotTheLastWord(unittest.TestCase):
     def photo_says(self, serial, legible="yes"):
         engine.vision_available = lambda: True
         def ask(urls, prompt, schema):
-            self.asked.append(urls)
-            return {"serial": serial, "legible": legible}
+            if prompt is engine.SERIAL_PROMPT:       # the outfit-colour question is not counted
+                self.asked.append(urls)
+                return {"serial": serial, "legible": legible}
+            return {"outfit": "unclear", "confidence": "low"}
         engine.ask_photo = ask
 
-    def judge(self, aspects=None, price="25.00", rules=None):
-        item = {"title": self.TITLE, "itemId": "v1|1|0", "buyingOptions": ["FIXED_PRICE"],
+    def judge(self, aspects=None, price="25.00", rules=None, title=None):
+        item = {"title": title or self.SERIAL_TITLE, "itemId": "v1|1|0", "buyingOptions": ["FIXED_PRICE"],
                 "image": {"imageUrl": "https://i.ebayimg.com/front.jpg"}}
         detail = {
             "localizedAspects": [{"name": k, "value": v[0]} for k, v in
@@ -1929,6 +1934,59 @@ class TheTitleIsNotTheLastWord(unittest.TestCase):
             "image": {"imageUrl": "https://i.ebayimg.com/front.jpg"},
         }
         return engine.judge_listing(item, detail, rules=rules)
+
+    def test_a_hash_number_with_a_gap_before_the_slash_is_a_card_number(self):
+        """The recorded Alcaraz title: card #1 of the set, one of 199, position
+        unstated. Every other recorded "#" pair has no gap and stays a serial."""
+        self.assertEqual(engine.extract_serial(self.TITLE, {}), (None, None))
+        self.assertEqual(engine.extract_serial(self.TITLE, {"Serial Number": ["148/199"]}), (148, 199))
+        self.assertEqual(engine.card_number_pairs_in(self.TITLE), {"1/199"})
+        for title, serial in (
+                ("2024 TOPPS CHROME TENNIS TIAFOE/SHELTON DUAL AUTO BLACK REFRACTOR #1/10 PSA 8", (1, 10)),
+                ("2026 Topps Graphite Carlos Alcaraz Full Extension White Refractor # 1/10", (1, 10)),
+                ('NICOLAS MASSU "SILVER BASE CARD #001/100" ACE SIGNATURE SERIES 2005', (1, 100)),
+                ("SHINTARO MOCHIZUHI 2024 GSR-SMI Topps Graphite Auto/Relic card S#01/10 in holder", (1, 10)),
+                ("2024 Topps Graphite Tennis DENIS SHAPOVALOV Relic Patch Pink Refractor #15/15", (15, 15)),
+                ("2024 Topps Royalty Collection MONICA SELES ROYAL DECREE ON CARD AUTO # 1/25", (1, 25))):
+            with self.subTest(title=title):
+                self.assertEqual(engine.extract_serial(title, {}), serial)
+                self.assertEqual(engine.card_number_pairs_in(title), set())
+
+    def test_a_card_number_title_is_settled_by_the_specifics_or_the_photo(self):
+        """No position anywhere: rejected. Specifics say 148/199: rejected as
+        neither end. Photo stamp says 1/199: kept, and the page says where the
+        serial came from. Without the photo step no photo is asked."""
+        verdict, reason, _ = self.judge(title=self.TITLE)
+        self.assertEqual(verdict, "reject")
+        self.assertIn("no serial number", reason)
+        self.assertEqual(self.asked, [])
+        verdict, reason, _ = self.judge({"Serial Number": ["148/199"]}, title=self.TITLE)
+        self.assertEqual(verdict, "reject")
+        self.assertIn("148/199 is neither", reason)
+        self.photo_says("1/199")
+        verdict, _, fields = self.judge(title=self.TITLE)
+        self.assertEqual(verdict, "match")
+        self.assertEqual(fields["card_number"], 1)
+        self.assertIn("read from the photo", fields["caution"])
+        self.assertEqual(len(self.asked), 1)
+        engine._vision_cache = {}
+        self.photo_says("148/199")
+        verdict, reason, _ = self.judge(title=self.TITLE)
+        self.assertEqual(verdict, "reject")
+        self.assertIn("148/199 is neither", reason)
+
+    def test_the_board_drops_the_recorded_card_number_pair(self):
+        with tempfile.TemporaryDirectory() as folder:
+            xlsx = os.path.join(folder, "sheet.xlsx")
+            wb, ws = engine.load_or_create_sheet(xlsx)
+            engine.append_row(ws, "Carlos Alcaraz", "Topps", "2025 Topps Chrome", self.TITLE, 1, 199,
+                              "25.00 USD", "https://www.ebay.com/itm/206510108410")
+            engine.append_row(ws, "Denis Shapovalov", "Topps", "2024 Topps Graphite",
+                              "2024 Topps Graphite Tennis DENIS SHAPOVALOV Relic Patch Pink Refractor #15/15",
+                              15, 15, "40.00 USD", "https://www.ebay.com/itm/206510108411")
+            wb.save(xlsx)
+            board = engine.build_board(xlsx)
+        self.assertEqual([c["serial"] for c in board], ["15/15"])
 
     def test_specifics_that_disagree_are_a_caution(self):
         verdict, _, fields = self.judge({"Serial Number": ["148/199"]})

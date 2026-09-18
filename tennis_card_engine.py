@@ -1148,6 +1148,23 @@ def grade_pairs_in(title):
             for m in SERIAL_RE.finditer(title) if is_grade_pair(title, m)}
 
 
+def is_card_number_pair(title, match):
+    """Whether this N/M is a checklist number beside a bare print run: "#1 /199"
+    is card #1 of the set, one of 199 copies, and says nothing about which
+    copy. The sign is the "#" glued to the first number with a gap before the
+    slash -- the seller wrote two things. "#1/199", "# 1/10", "#001/100" and
+    "S#01/10" have no gap and stay serials; of the twelve recorded titles
+    with a "#" in front of the pair, only the Alcaraz Aqua Refractor had the
+    gap, and its photo showed 148/199."""
+    return title[:match.start()].endswith("#") and bool(re.search(r"\d\s+/", match.group(0)))
+
+
+def card_number_pairs_in(title):
+    """The N/M strings in a title that read as card number + print run."""
+    return {f"{int(m.group(1))}/{int(m.group(2))}"
+            for m in SERIAL_RE.finditer(title) if is_card_number_pair(title, m)}
+
+
 def specifics_serial(aspects):
     """(card_number, print_run) from an N/M eBay's item specifics carry, or None.
     The "Card Number" specific is usually the checklist number (the 162 on a
@@ -1170,6 +1187,8 @@ def extract_serial(title, aspects):
     for m in SERIAL_RE.finditer(title):
         if is_grade_pair(title, m, aspects):
             continue                        # a grade; the serial may still follow
+        if is_card_number_pair(title, m):
+            continue                        # "#1 /199": card number and print run, no position
         return int(m.group(1)), int(m.group(2))
 
     return specifics_serial(aspects) or (None, None)
@@ -2057,6 +2076,10 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
         # it could tell "Psa MINT 9/9" from a run of nine. Off the page, row kept.
         if cell(row, "Serial #") in grade_pairs_in(cell(row, "Card Description")):
             continue
+        # "#1 /199" recorded as 1/199 before the reader told a card number
+        # from a serial. Off the page, row kept.
+        if cell(row, "Serial #") in card_number_pairs_in(cell(row, "Card Description")):
+            continue
         if other_sport_in_title(cell(row, "Card Description")):
             continue
         price = cell(row, "Price")
@@ -2212,7 +2235,15 @@ def judge_listing(item, detail, player=None, rules=None):
     max_print_run = rules.get("max_print_run")
     card_number, print_run = extract_serial(title, aspects)
     if card_number is None or print_run is None:
-        return "reject", "no serial number (N/M) in the title or specifics", None
+        # "#1 /199" states the print run and not the position; the stamp on
+        # the card does. With the photo step on, read it -- only for this
+        # shape of title, so the call is rare -- and say where it came from.
+        seen = serial_photo_reading(photos) if card_number_pairs_in(title) else None
+        if not seen:
+            return "reject", "no serial number (N/M) in the title or specifics", None
+        card_number, print_run = seen
+        note = f"serial {card_number}/{print_run} read from the photo; the title gives only the print run"
+        caution = f"{caution} \u00b7 {note}" if caution else note
     if card_number not in (1, print_run):
         return "reject", f"{card_number}/{print_run} is neither the first nor the last of its run", None
     if not is_bookend_serial(card_number, print_run, max_print_run, rules.get("print_run_inclusive")):
