@@ -1955,10 +1955,68 @@ class EveryCallEarnsItsKeep(unittest.TestCase):
                 contextlib.redirect_stdout(out):
             engine.main()
         text = out.getvalue()
-        self.assertIn("Detail calls: 1; settled from the search result with no call: 1", text)
+        self.assertIn("Detail calls: 1; settled from the title with no call: 1", text)
         self.assertIn("turned away:", text)
         self.assertIn("neither the first nor the last", text)
         self.assertIn("no serial number", text)
+
+    def test_the_summary_accounts_for_every_listing_checked(self):
+        """Run 53 on 18 Sep printed 39 detail calls, 4 settled and 7 already
+        judged against 46 checked, which comes to 50 and reads like a fault in
+        the counting. It was the labels: a listing settled from its own title
+        was counted again as already judged, so two of the figures overlapped
+        and "already judged" covered work this run had just done. Each listing
+        belongs to exactly one of the four."""
+        import io, contextlib, re
+        items = [
+            {"itemId": "v1|1|0", "title": "2024 Topps Chrome Coco Gauff 1/50 tennis"},      # a match
+            {"itemId": "v1|2|0", "title": "2024 Topps Chrome Coco Gauff 7/50 tennis"},      # the title settles it
+            {"itemId": "v1|3|0", "title": "2024 Topps Chrome Coco Gauff Refractor tennis"}, # needs a call
+        ]
+        detail = {"localizedAspects": [{"name": "Manufacturer", "value": "Topps"},
+                                       {"name": "Set", "value": "2024 Topps Chrome"},
+                                       {"name": "Sport", "value": "Tennis"},
+                                       {"name": "Player/Athlete", "value": "Coco Gauff"}],
+                  "price": {"value": "1.00", "currency": "USD"}, "seller": {"username": "s"},
+                  "buyingOptions": ["AUCTION"], "itemWebUrl": "https://www.ebay.com/itm/1"}
+
+        def run_once(folder):
+            out = io.StringIO()
+            with patch.object(engine, "_BASE_DIR", folder), \
+                    patch.object(engine, "get_ebay_token", return_value="token"), \
+                    patch.object(engine, "iter_listings", side_effect=lambda *a, **k: iter(items)), \
+                    patch.object(engine, "get_item_details",
+                                 side_effect=lambda t, ids, **k: {i: dict(detail) for i in ids}), \
+                    patch.object(engine, "send_digest_email"), \
+                    patch.dict(os.environ, {"SCAN_BRANDS": "Topps Chrome"}), \
+                    contextlib.redirect_stdout(out):
+                engine.main()
+            return out.getvalue()
+
+        def figures(text):
+            checked = int(re.search(r"Checked (\d+) listings", text).group(1))
+            four = [int(n) for n in re.findall(
+                r"Detail calls: (\d+); settled from the title with no call: (\d+); "
+                r"judged on an earlier run: (\d+); already recorded: (\d+)", text)[0]]
+            return checked, four, text
+
+        with tempfile.TemporaryDirectory() as folder:
+            # first time through: one match, one settled by its title, one fetched and rejected
+            checked, (fetched, settled, judged, known), text = figures(run_once(folder))
+            self.assertEqual(checked, 3)
+            self.assertEqual((fetched, settled, judged, known), (2, 1, 0, 0))
+            self.assertIn("-- 3 of the 3 checked.", text)
+
+            # second time: nothing left to pay for, and each listing in its own place
+            checked, (fetched, settled, judged, known), text = figures(run_once(folder))
+            self.assertEqual(checked, 3)
+            self.assertEqual(fetched, 0, "a listing already judged was fetched again")
+            self.assertEqual(settled, 0, "a listing settled on the first run was settled again")
+            self.assertEqual(judged, 2, "the two rejects should be the earlier runs' work")
+            self.assertEqual(known, 1, "the recorded match should be reported as known")
+            self.assertIn("-- 3 of the 3 checked.", text)
+
+        self.assertNotIn("One of the counters in run_scan is wrong", text)
 
 
 

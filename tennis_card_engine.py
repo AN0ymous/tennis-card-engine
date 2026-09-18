@@ -2558,11 +2558,13 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                             return True                       # tried, never settled
                         return not filtered_for_rules(entry, rule_key)
 
+                    settled_now = set()
                     for item, earlier in triage:
                         if needs_judging(earlier, item.get("title", "")):
                             reason = settled_by_summary(item)
                             if reason:
                                 seen[item["itemId"]] = rejected(reason)
+                                settled_now.add(item["itemId"])
                                 settled += 1
                                 reasons[reason.split(":")[0].split(",")[0]] += 1
                                 emit("reject", title=item.get("title", ""), reason=reason)
@@ -2583,7 +2585,13 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                             emit("known", title=title, link=item.get("itemWebUrl", ""))
                             continue
                         if not needs_judging(earlier, title):
-                            judged += 1             # turned down before for good; no call to eBay
+                            # A listing this run settled from its own title is
+                            # already counted as settled: counting it here too
+                            # made the summary's figures overlap, so they came
+                            # to more than the listings checked and read like a
+                            # counting bug. This one is the earlier runs' work.
+                            if item_id not in settled_now:
+                                judged += 1         # turned down before for good; no call to eBay
                             continue
 
                         detail = details.get(item_id)
@@ -2749,10 +2757,18 @@ def main():
     scope = "all players" if not players else f"{len(players)} players"
     print(f"Checked {checked} listings across {scope} x {len(brand_keywords)} sets.")
     if summary:
-        # where the calls went, so the next saving can be decided on numbers
-        print(f"Detail calls: {summary.get('fetched', 0)}; settled from the search result "
-              f"with no call: {summary.get('settled', 0)}; already judged: {summary.get('judged', 0)}; "
-              f"already recorded: {summary.get('known', 0)}.")
+        # Where the calls went, so the next saving can be decided on numbers.
+        # Every listing checked falls into exactly one of these four, and the
+        # total is printed so a reader can see that at a glance rather than
+        # adding them up and wondering: they used to overlap, and 39 + 4 + 7
+        # against 46 checked read like a fault in the counting.
+        parts = [summary.get(k, 0) for k in ("fetched", "settled", "judged", "known")]
+        print(f"Detail calls: {parts[0]}; settled from the title with no call: {parts[1]}; "
+              f"judged on an earlier run: {parts[2]}; already recorded: {parts[3]} "
+              f"-- {sum(parts)} of the {checked} checked.")
+        if sum(parts) != checked:
+            say(f"The run's own figures account for {sum(parts)} listings, but it checked "
+                f"{checked}. One of the counters in run_scan is wrong.")
         for reason, n in summary.get("reasons") or []:
             print(f"  turned away: {n:>5}  {reason}")
         if summary.get("failed"):
