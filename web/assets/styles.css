@@ -511,6 +511,19 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
 .mc-type { font-size: 11px; margin-top: 4px; }
 
 /* saved cards: stars, the saved page, listing status */
+/* "How it works" in the top bar. The method and process reference used to sit
+   at the bottom of the main page: six parts of prose under every card on the
+   board, which nobody scrolled to and everybody scrolled past. It is a page of
+   its own now, on the same routing as the saved cards. */
+.bar-link {
+  display: inline-flex; align-items: center; text-decoration: none; color: var(--ink);
+  font: 600 13px/1 var(--ui); padding: 7px 12px; border: 1px solid var(--line);
+  border-radius: 999px; background: var(--surface); white-space: nowrap;
+  transition: border-color .3s var(--ease);
+}
+.bar-link:hover { border-color: var(--gold-lit); }
+.bar-link.is-on { border-color: var(--gold-lit); color: var(--gold); }
+
 .saved-link {
   display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--ink);
   font: 600 13px/1 var(--ui); padding: 7px 11px; border: 1px solid var(--line); border-radius: 999px;
@@ -572,6 +585,12 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
 .status.is-ended { color: var(--ink); opacity: .7; }
 .is-saved-view main > :not(#saved-page) { display: none; }
 .is-saved-view #saved-page { display: block; }
+.is-method-view main > :not(#method) { display: none; }
+.is-method-view #method { display: flex; }
+/* .reference sets display: flex, which beats the browser's own rule for the
+   hidden attribute -- so say it here, or the page is never actually put away. */
+#method[hidden] { display: none; }
+#method .saved-back { display: inline-block; margin-bottom: 18px; }
 .matchcard.is-sold .mc-photo::after {
   content: "SOLD"; position: absolute; inset: auto 0 0 0; padding: 6px; text-align: center;
   background: var(--clay); color: #FFFFFF; font: 700 11px/1 var(--ui); letter-spacing: .2em;
