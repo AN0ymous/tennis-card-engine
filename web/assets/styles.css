@@ -926,10 +926,13 @@ footer.site p { margin: 0 0 8px; max-width: 74ch; line-height: 1.7; }
 /* ==========================================================================
    Contents -- a vertical index, opened by the ball
    ========================================================================== */
+/* The page behind the contents is dimmed, not covered: it used to be an
+   opaque wall of colour, which made the panel feel like a different page
+   rather than a layer over this one. */
 .contents-veil {
   position: fixed; inset: 0; z-index: 60;
-  background: color-mix(in srgb, var(--ground) 52%, #000 48%);
-  backdrop-filter: blur(5px);
+  background: color-mix(in srgb, #050B1C 46%, transparent);
+  backdrop-filter: blur(3px) saturate(.85);
   animation: veil .45s var(--ease) both;
 }
 .contents-veil[hidden] { display: none; }
@@ -985,8 +988,6 @@ footer.site p { margin: 0 0 8px; max-width: 74ch; line-height: 1.7; }
 .c-n::before { counter-increment: toc; content: counter(toc, decimal-leading-zero); }
 .c-t { font-family: var(--display); font-size: 18px; line-height: 1.2; color: var(--ink); }
 .c-d { font-size: 11.5px; color: var(--muted); letter-spacing: .01em; }
-.contents-list a.is-here { background: var(--gold-wash); }
-.contents-list a.is-here .c-n { color: var(--ink); }
 .contents-foot {
   margin: 26px 0 0; padding-top: 18px; border-top: 1px solid var(--line);
   font-size: 11.5px; color: var(--muted); line-height: 1.7;
@@ -1382,7 +1383,6 @@ h1, h2, h3, .display, .hero-title, .masthead-title, .board-title, .ref-block > h
 .contents-head .eyebrow { color: var(--gold); }
 .c-t { font-size: 20px; }
 .c-n { color: var(--gold); }
-.contents-list a.is-here { background: var(--gold-wash); }
 
 /* footer */
 footer.site { background: var(--navy); border-top: 4px solid var(--ball); color: rgba(255, 255, 255, .72); }

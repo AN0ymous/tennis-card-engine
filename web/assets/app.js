@@ -2221,20 +2221,6 @@ function initContents() {
   });
   // jumping to a section closes the index and leaves focus at the destination
   links.forEach((a) => a.addEventListener("click", () => close(false)));
-
-  // mark where the reader currently is
-  const targets = links
-    .map((a) => ({ a, section: document.querySelector(a.getAttribute("href")) }))
-    .filter((t) => t.section);
-  if ("IntersectionObserver" in window) {
-    const spy = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        targets.forEach((t) => t.a.classList.toggle("is-here", t.section === entry.target));
-      });
-    }, { rootMargin: "-90px 0px -62% 0px" });
-    targets.forEach((t) => spy.observe(t.section));
-  }
 }
 
 /* -------------------------------------------------------------- hologram */

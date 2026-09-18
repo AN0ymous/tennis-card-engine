@@ -1778,6 +1778,22 @@ class TheContentsPanelKeepsUp(unittest.TestCase):
         block = self.html().split('<ol class="contents-list">')[1].split("</ol>")[0]
         self.assertNotIn('class="c-n">0', block, "a typed-in number goes stale")
 
+    def test_no_entry_is_marked_as_where_you_are(self):
+        """The panel used to light the section the reader was looking at. On a
+        page of its own that section is the only thing on screen, so "How it
+        works" stayed lit for good. The marking is gone, not patched."""
+        self.assertNotIn("is-here", self.js())
+        with open(os.path.join(HERE, "web", "assets", "styles.css")) as f:
+            self.assertNotIn("is-here", f.read())
+
+    def test_the_page_behind_the_panel_shows_through(self):
+        """It was an opaque wall of colour, which made the panel read as a
+        different page rather than a layer over this one."""
+        with open(os.path.join(HERE, "web", "assets", "styles.css")) as f:
+            veil = f.read().split(".contents-veil {")[1].split("}")[0]
+        self.assertIn("transparent", veil, "the veil must let the page through")
+        self.assertIn("backdrop-filter", veil)
+
     def test_the_footer_says_where_it_really_runs(self):
         """"Runs on your machine" is false on the hosted page."""
         body = self.js().split("async function loadConfig()")[1].split("\n}\n")[0]
