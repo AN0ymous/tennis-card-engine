@@ -1884,15 +1884,15 @@ class ASetNameIsNotAnAutograph(unittest.TestCase):
                               "2013 Ace Signature Series Arvane Rezai 1/15 signed auto", 1, 15, "20 USD",
                               "https://www.ebay.com/itm/276593209010", card_type="Auto",
                               caution="Ace Authentic autograph: on-card or sticker not stated; check by eye")
-            engine.append_row(ws, "Vince Spadea", "Ace Authentic", "",
-                              "VINCE SPADEA 2005 ACE SIGNATURE SERIES SILVER PARALLEL 100/100", 100, 100, "9 USD",
+            engine.append_row(ws, "Nicolas Massu", "Ace Authentic", "",
+                              'NICOLAS MASSU "SILVER BASE CARD #001/100" ACE SIGNATURE SERIES 2005', 1, 100, "9 USD",
                               "https://www.ebay.com/itm/276593209011", card_type="Auto",
                               caution="Ace Authentic autograph: on-card or sticker not stated; check by eye")
             wb.save(xlsx)
             board = {c["link"][-1]: c for c in engine.build_board(xlsx)}
-        # The Spadea row itself now leaves the page: its "100 /100" is a card
-        # number (TheTitleIsNotTheLastWord). The relabel is shown on a row
-        # that stays: a Signature Series card with a real serial.
+        # The Spadea row itself leaves the page: its "100 /100" is a card
+        # number (TheTitleIsNotTheLastWord). The relabel shows on the Massu
+        # row, which stays: no gap, so #001/100 is the stamped serial.
         self.assertNotIn("9", board)
         self.assertEqual(board["1"]["cardType"], "base")
         self.assertEqual(board["1"]["caution"], "Ace Authentic: check the numbering is stamped, not on a circle sticker")
@@ -1962,19 +1962,19 @@ class TheTitleIsNotTheLastWord(unittest.TestCase):
                 self.assertEqual(engine.extract_serial(title, {}), serial)
                 self.assertEqual(engine.card_number_pairs_in(title), set())
 
-    def test_base_card_in_front_of_the_pair_makes_it_a_card_number(self):
-        """The two recorded Ace Signature Series rows: card 100 and card 1 of a
-        100-card base set. A colour between the words and the pair names a
-        parallel, and a parallel is numbered."""
-        for title in ('VINCE SPADEA "SILVER BASE CARD 100 /100" ACE SIGNATURE SERIES 2005',
-                      'NICOLAS MASSU "SILVER BASE CARD #001/100" ACE SIGNATURE SERIES 2005',
-                      "2024 Topps Chrome Tennis Base 5/5"):
-            with self.subTest(title=title):
-                self.assertEqual(engine.extract_serial(title, {}), (None, None))
-                self.assertEqual(len(engine.card_number_pairs_in(title)), 1)
+    def test_base_card_in_front_of_a_gapped_pair_makes_it_a_card_number(self):
+        """The Spadea row: card 100 of a 100-card set, written as two things.
+        The Massu row beside it has no gap and stays the stamped serial it
+        looks like -- on this site "base" means no auto and no patch, and a
+        numbered insert or parallel is still base."""
+        spadea = 'VINCE SPADEA "SILVER BASE CARD 100 /100" ACE SIGNATURE SERIES 2005'
+        self.assertEqual(engine.extract_serial(spadea, {}), (None, None))
+        self.assertEqual(engine.card_number_pairs_in(spadea), {"100/100"})
         for title, serial in (
+                ('NICOLAS MASSU "SILVER BASE CARD #001/100" ACE SIGNATURE SERIES 2005', (1, 100)),
                 ("Mirra Andreeva 2024 Topps Royalty Tennis BASE CARD GOLD 01/10 #39 RC Russia /10", (1, 10)),
-                ("2024 Topps Chrome Base Card Refractor 1/1", (1, 1))):
+                ("2024 Topps Chrome Tennis Base 5/5", (5, 5)),
+                ("2024 Topps Chrome Base Card Refractor 1 /1", (1, 1))):
             with self.subTest(title=title):
                 self.assertEqual(engine.extract_serial(title, {}), serial)
                 self.assertEqual(engine.card_number_pairs_in(title), set())

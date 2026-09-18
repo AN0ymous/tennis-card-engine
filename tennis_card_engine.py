@@ -1148,32 +1148,36 @@ def grade_pairs_in(title):
             for m in SERIAL_RE.finditer(title) if is_grade_pair(title, m)}
 
 
-# "base card" straight in front of the pair, with only a quote or "#" between:
-# 'SILVER BASE CARD 100 /100' and 'BASE CARD #001/100' are checklist numbers
-# over a 100-card base set. A colour or insert word in between ("BASE CARD
-# GOLD 01/10") names a parallel, and a parallel is numbered.
+# "base card" straight in front of the pair, with only a quote or "#" between.
+# On this site "base" means no autograph and no patch: a numbered insert or
+# parallel is still base, so the words alone are no sign. With a gap before
+# the slash they are: 'SILVER BASE CARD 100 /100' is card 100 of a 100-card
+# set, written as two things, where 'SILVER BASE CARD #001/100' is one
+# stamped number and stays a serial (the owner's call on both, 18 Sep).
 BASE_CARD_BEFORE_RE = re.compile(r"\bbase(?:\s+card)?\s*[#\"'\u201c\u201d]*\s*$", re.I)
 
 
 def is_card_number_pair(title, match):
     """Whether this N/M is a checklist number beside the set's size, not a
-    serial. Two signs, either one enough:
+    serial. The sign is a gap before the slash -- the seller wrote two things
+    -- behind a word that says the first thing is the card's number:
 
-    * "#" glued to the first number with a gap before the slash: "#1 /199" is
-      card #1 of the set, one of 199 copies, and says nothing about which
-      copy -- the seller wrote two things. "#1/199", "# 1/10", "#001/100" and
-      "S#01/10" have no gap and stay serials; of the twelve recorded titles
-      with a "#" in front of the pair only the Alcaraz Aqua Refractor had the
-      gap, and its photo showed 148/199. The gap alone is not a sign: the
-      recorded "BEN SHELTON RC 1 /5 PSA 10" is a real 1/5.
-    * "base card" straight in front: a base card is never serial-numbered,
-      since a numbered card is a parallel. 'SILVER BASE CARD 100 /100' is
-      card 100 of a 100-card set. "BASE CARD GOLD 01/10" keeps its serial,
-      because "GOLD" between them names the parallel."""
+    * "#" glued to the first number: "#1 /199" is card #1 of the set, one of
+      199 copies, and says nothing about which copy. "#1/199", "# 1/10",
+      "#001/100" and "S#01/10" have no gap and stay serials; of the twelve
+      recorded titles with a "#" in front of the pair only the Alcaraz Aqua
+      Refractor had the gap, and its photo showed 148/199.
+    * "base card" straight in front: 'SILVER BASE CARD 100 /100' is card 100
+      of a 100-card set. 'SILVER BASE CARD #001/100' has no gap and is the
+      stamped serial it looks like; "BASE CARD GOLD 01/10" has neither the
+      gap nor the words directly in front.
+
+    The gap alone is not a sign: the recorded "BEN SHELTON RC 1 /5 PSA 10" is
+    a real 1/5."""
+    if not re.search(r"\d\s+/", match.group(0)):
+        return False
     before = title[:match.start()]
-    if before.endswith("#") and re.search(r"\d\s+/", match.group(0)):
-        return True
-    return bool(BASE_CARD_BEFORE_RE.search(before))
+    return before.endswith("#") or bool(BASE_CARD_BEFORE_RE.search(before))
 
 
 def card_number_pairs_in(title):
