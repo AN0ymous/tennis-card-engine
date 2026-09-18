@@ -423,7 +423,25 @@ on a website.
    tint with a small `backdrop-filter` blur, so the page shows through in both
    themes.
 
-13. **The title in the top bar is the way home.** Two pages and a long main
+14. **Nothing asks eBay before it knows whether there is a server to ask.**
+   `HOSTED` starts false and only turns true once `loadConfig` has failed to
+   reach one -- but the saved page is routed off the hash the moment the
+   script runs, well before that. So opening the hosted site straight at
+   `#saved` (or reloading while on it, which the reload rule now makes
+   likely) had `refreshStatuses` ask `api/status` on GitHub Pages, which
+   answered with its own 404 **HTML** page, and the reader got "Couldn't
+   check eBay (Unexpected token '<', "<!DOCTYPE "... is not valid JSON)"
+   over a page whose statuses were sitting in `results/status.json` all
+   along. `modeSettled` says whether `HOSTED` can be believed yet;
+   `refreshStatuses` waits rather than guessing, and `settleMode()` -- called
+   from **every** way out of `loadConfig`, including the unreachable-server
+   one -- calls it back when the answer is in. `readJson()` also turns a
+   response that is not JSON into "the server answered 502" rather than a
+   parser error. `TheSavedPageAsksTheRightSide` in `test_engine.py` pins all
+   of it, including that the guard sits before the branch and that waiting is
+   not worded as a failure.
+
+15. **The title in the top bar is the way home.** Two pages and a long main
    one, and nothing said how to get back except the browser. `#home-btn`
    (`goHome()`) puts the main page back and goes to the top, whichever page
    you are on. It takes the hash **off** the URL with `history.pushState`
