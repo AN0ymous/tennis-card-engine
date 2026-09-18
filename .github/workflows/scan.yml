@@ -69,8 +69,27 @@ jobs:
       - name: Bring back last run's results
         # The engine dedups against seen_items.json and appends to the
         # spreadsheet, so both come back from the results folder first.
+        #
+        # From whatever main has become, not from this run's checkout. A run
+        # dispatched while another is still going is checked out at the commit
+        # it was dispatched from, so by the time it starts its results/ can be
+        # a scan out of date: runs 48 and 49 on 17 Sep were the same scan nine
+        # seconds apart, and the second re-fetched all 949 listings the first
+        # had just judged, then stood down at publish having spent them for
+        # nothing. RESULTS_BASE remembers where the state came from, so the
+        # publish step knows what this run's results were built on.
         run: |
           mkdir -p results
+          results_base="$(git rev-parse HEAD)"
+          if git fetch -q --depth=1 origin +refs/heads/main:refs/remotes/origin/main \
+             && git checkout -q origin/main -- results; then
+            git reset -q -- results            # the files, not a staged commit
+            results_base="$(git rev-parse origin/main)"
+            echo "State files taken from main at ${results_base}."
+          else
+            echo "Could not read main; using the results in this checkout."
+          fi
+          echo "RESULTS_BASE=$results_base" >> "$GITHUB_ENV"
           for f in tennis_cards_verified.xlsx seen_items.json scan_cursors.json ebay_api_usage.json vision_cache.json; do
             [ -f "results/$f" ] && cp "results/$f" . || true
           done
@@ -132,11 +151,30 @@ jobs:
           # files that stop the next scan paying for the same listings again.
           # So keep this run's results aside and rebuild the commit on top of
           # whatever main has become.
-          base="$(git rev-parse HEAD)"
           keep="$(mktemp -d)"
           cp -a results "$keep/results"
+          loaded="$(git rev-parse "${RESULTS_BASE:-HEAD}:results" 2>/dev/null || echo none)"
 
           for attempt in 1 2 3 4 5; do
+            if ! git fetch -q --depth=1 origin +refs/heads/main:refs/remotes/origin/main; then
+              echo "Could not reach GitHub (attempt $attempt); trying again."
+              sleep $(( attempt * 5 ))
+              continue
+            fi
+            # Another scan that published after this one loaded its state has
+            # judged listings this run never saw, so its results are not ours
+            # to overwrite: stand down and let the next scan carry on from
+            # theirs. Results that have not moved since we loaded them are
+            # ours to build on -- what we hold is theirs plus what we judged
+            # -- so a pull request merging mid-scan is no reason to stop.
+            current="$(git rev-parse origin/main:results 2>/dev/null || echo none)"
+            if [ "$loaded" != "$current" ]; then
+              echo "Another run published its results after this one started, so this run stands down."
+              echo "Nothing is lost from the spreadsheet; the next scan picks up the rest."
+              exit 0
+            fi
+
+            git reset --hard -q origin/main
             rm -rf results
             cp -a "$keep/results" results
             git add results
@@ -151,22 +189,8 @@ jobs:
               exit 0
             fi
 
-            echo "main moved while this scan ran; catching up (attempt $attempt)."
-            git reset --hard -q "$base"
+            echo "main moved while this scan was publishing; catching up (attempt $attempt)."
             sleep $(( attempt * 5 ))
-            git fetch -q origin main
-
-            # If whatever landed first was itself a scan, its results are newer
-            # than this run's, which were worked out from an older base. Keep
-            # theirs: running this scan again only costs calls, while
-            # overwriting theirs would lose cards they recorded.
-            if ! git diff --quiet "$base" origin/main -- results; then
-              echo "Another run published its results first, so this run stands down."
-              echo "Nothing is lost from the spreadsheet; the next scan picks up the rest."
-              exit 0
-            fi
-            git reset --hard -q origin/main
-            base="$(git rev-parse HEAD)"
           done
 
           echo "::error::Could not publish the results after 5 attempts."

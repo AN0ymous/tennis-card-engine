@@ -1096,10 +1096,195 @@ class PublishingSurvivesAMovingMain(unittest.TestCase):
         self.assertIn('cp -a "$keep/results" results', step)
 
     def test_it_stands_down_rather_than_overwrite_another_run(self):
-        """Another scan's results are newer than this run's, which were worked
-        out from an older base. Re-running costs calls; overwriting loses
-        recorded cards."""
-        self.assertIn('git diff --quiet "$base" origin/main -- results', self.step())
+        """A scan that published after this one loaded its state knows
+        listings this run never saw, so overwriting it would lose recorded
+        cards. The comparison is against what this run actually loaded, not
+        against the commit it was checked out at: a run queued behind another
+        starts from that other run's results, so its own are a superset and
+        publishing them loses nothing."""
+        step = self.step()
+        self.assertIn('loaded="$(git rev-parse "${RESULTS_BASE:-HEAD}:results"', step)
+        self.assertIn('current="$(git rev-parse origin/main:results', step)
+        self.assertIn('if [ "$loaded" != "$current" ]; then', step)
+        self.assertIn("stands down", step)
+
+    def test_a_remote_it_cannot_reach_is_tried_again_then_said_out_loud(self):
+        """Standing down silently on a network failure would publish nothing
+        and still go green. Five tries, then red."""
+        step = self.step()
+        self.assertIn("Could not reach GitHub", step)
+        self.assertIn("::error::Could not publish the results after 5 attempts.", step)
+        self.assertIn("exit 1", step)
+
+
+class ThePublishStepDrivenForReal(unittest.TestCase):
+    """The restore and publish steps, run as bash against a real git repo.
+
+    Reading the step's text only proves the words are there. This drives the
+    step's own script through the four things that actually happen to it, so
+    a change that reads fine and behaves wrongly is caught: run 31 lost a
+    whole scan to this step, and run 49 spent about 950 eBay calls on work it
+    then threw away.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        import subprocess
+        for tool in ("bash", "git"):
+            if not shutil.which(tool):
+                raise unittest.SkipTest(f"needs {tool}")
+        cls.subprocess = subprocess
+        with open(os.path.join(HERE, ".github", "workflows", "scan.yml")) as f:
+            yml = f.read()
+        cls.restore = cls._script(yml, "Bring back last run's results", "- name: Run the engine")
+        cls.publish = cls._script(yml, "Keep the results in the repo", "- name: Offer the spreadsheet")
+
+    @staticmethod
+    def _script(yml, name, until):
+        """The `run: |` block of one step, with its YAML indent taken off."""
+        step = yml[yml.index(name):yml.index(until, yml.index(name))]
+        body = step[step.index("run: |") + len("run: |"):]
+        lines = [l for l in body.splitlines() if l.strip()]
+        indent = min(len(l) - len(l.lstrip()) for l in lines)
+        return "\n".join(l[indent:] for l in body.splitlines())
+
+    def git(self, cmd, cwd):
+        return self.subprocess.run(
+            cmd, shell=True, cwd=cwd, capture_output=True, text=True,
+            env=dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t",
+                     GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t"))
+
+    def run_step(self, script, cwd, env):
+        return self.subprocess.run(
+            ["bash", "-e", "-c", script], cwd=cwd, capture_output=True, text=True,
+            env=dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@t",
+                     GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@t", **env))
+
+    def a_scan(self, *, theirs_first=False, code_merges=False, theirs_after=False):
+        """One run of the two steps, with main moving around it. Returns what
+        the run loaded, what it said, and what main ended up holding."""
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        origin, seed, work = f"{root}/origin.git", f"{root}/seed", f"{root}/work"
+        self.git(f"git init -q --bare -b main {origin}", root)
+        self.git(f"git clone -q {origin} seed", root)
+        os.makedirs(f"{seed}/results")
+        state = {"judged-before": "reject"}
+        with open(f"{seed}/results/seen_items.json", "w") as f:
+            json.dump(state, f)
+        with open(f"{seed}/engine.py", "w") as f:
+            f.write("v1\n")
+        self.git("git add -A && git commit -q -m seed && git push -q origin main", seed)
+        first = self.git("git rev-parse HEAD", seed).stdout.strip()
+
+        def their_scan(key):
+            with open(f"{seed}/results/seen_items.json") as f:
+                s = json.load(f)
+            s[key] = "reject"
+            with open(f"{seed}/results/seen_items.json", "w") as f:
+                json.dump(s, f)
+            self.git(f'git add -A && git commit -q -m "their scan" && git push -q origin main', seed)
+
+        if theirs_first:
+            their_scan("theirs")
+
+        # this run is checked out at the commit it was dispatched from
+        self.git(f"git clone -q {origin} work", root)
+        self.git(f"git checkout -q {first} && git checkout -q -B main", work)
+
+        envfile = f"{root}/env"
+        open(envfile, "w").close()
+        self.run_step(self.restore, work, {"GITHUB_ENV": envfile})
+        with open(f"{work}/results/seen_items.json") as f:
+            loaded = json.load(f)
+        with open(envfile) as f:
+            env = dict(l.split("=", 1) for l in f.read().splitlines() if "=" in l)
+
+        # the scan itself: one more listing judged on top of whatever it loaded
+        loaded_plus = dict(loaded, mine="match")
+        with open(f"{work}/results/seen_items.json", "w") as f:
+            json.dump(loaded_plus, f)
+
+        if code_merges:
+            with open(f"{seed}/engine.py", "w") as f:
+                f.write("v2\n")
+            self.git('git add -A && git commit -q -m "a PR" && git push -q origin main', seed)
+        if theirs_after:
+            their_scan("late")
+
+        said = self.run_step(self.publish, work, env)
+        self.git("git fetch -q origin main", seed)
+        published = json.loads(self.git("git show FETCH_HEAD:results/seen_items.json", seed).stdout)
+        code = self.git("git show FETCH_HEAD:engine.py", seed).stdout.strip()
+        return loaded, said, published, code
+
+    def test_a_plain_run_publishes_what_it_found(self):
+        loaded, said, published, _ = self.a_scan()
+        self.assertEqual(said.returncode, 0, said.stderr)
+        self.assertIn("mine", published)
+
+    def test_a_pull_request_merging_mid_scan_no_longer_stops_it(self):
+        """Run 31's lesson: the results are rebuilt on the new main, and the
+        merged code stays merged."""
+        _, said, published, code = self.a_scan(code_merges=True)
+        self.assertEqual(said.returncode, 0, said.stderr)
+        self.assertIn("mine", published, "the scan's own results were lost")
+        self.assertEqual(code, "v2", "the merged pull request was rolled back")
+
+    def test_a_run_queued_behind_another_starts_from_its_results(self):
+        """Runs 48 and 49: the second must load the first's state rather than
+        re-judging the same listings, and its results are then a superset, so
+        publishing them loses nothing."""
+        loaded, said, published, _ = self.a_scan(theirs_first=True)
+        self.assertIn("theirs", loaded, "it started from a stale record")
+        self.assertEqual(said.returncode, 0, said.stderr)
+        self.assertIn("theirs", published, "it overwrote the other run's results")
+        self.assertIn("mine", published, "its own results were thrown away")
+
+    def test_it_stands_down_for_a_scan_that_published_after_it_loaded(self):
+        """That scan judged listings this run never saw; overwriting it would
+        lose them."""
+        _, said, published, _ = self.a_scan(theirs_after=True)
+        self.assertEqual(said.returncode, 0, said.stderr)
+        self.assertIn("stands down", said.stdout)
+        self.assertIn("late", published, "another run's cards were overwritten")
+        self.assertNotIn("mine", published)
+
+
+class AQueuedRunStartsFromTheFreshestState(unittest.TestCase):
+    """Runs 48 and 49 on 17 Sep were the same scan dispatched nine seconds
+    apart. The second was checked out at the commit it was dispatched from, so
+    it restored state files the first run had already superseded, paid eBay
+    for all 949 listings again, found the same 7 cards, and then stood down at
+    publish because the first had landed. About 950 calls for nothing."""
+
+    def step(self):
+        with open(os.path.join(HERE, ".github", "workflows", "scan.yml")) as f:
+            yml = f.read()
+        start = yml.index("Bring back last run's results")
+        end = yml.index("- name: Run the engine", start)
+        return yml[start:end]
+
+    def test_the_state_comes_from_main_not_from_this_checkout(self):
+        step = self.step()
+        self.assertIn("git fetch -q --depth=1 origin +refs/heads/main:refs/remotes/origin/main", step)
+        self.assertIn("git checkout -q origin/main -- results", step)
+
+    def test_where_the_state_came_from_is_passed_on(self):
+        """The publish step needs to know what this run built on, or it cannot
+        tell a superset of another run's results from a rival to them."""
+        step = self.step()
+        self.assertIn('echo "RESULTS_BASE=$results_base" >> "$GITHUB_ENV"', step)
+        self.assertIn('results_base="$(git rev-parse origin/main)"', step)
+
+    def test_a_main_it_cannot_read_leaves_the_checkout_in_place(self):
+        """No network is a reason to scan from an older record, never a reason
+        not to scan."""
+        step = self.step()
+        self.assertIn('results_base="$(git rev-parse HEAD)"', step)
+        self.assertIn("using the results in this checkout", step)
+        for name in ("tennis_cards_verified.xlsx", "seen_items.json", "scan_cursors.json"):
+            self.assertIn(name, step, f"{name} is no longer restored")
 
 
 class TheScanSetupIsTheFilter(unittest.TestCase):
@@ -2095,6 +2280,52 @@ class PlayersReadOffTheTitle(unittest.TestCase):
         for title, want in self.RECORDED.items():
             with self.subTest(title=title[:50]):
                 self.assertEqual(engine.player_from_title(title), want)
+
+    # a parallel or insert name standing in front of the player's own name
+    INSERTS = {
+        "2025 TOPPS CHROME TENNIS PURPLE GEOMETRIC CAPTURED MARTA KOSTYUK #10/10": "Marta Kostyuk",
+        "2026 Topps Graphite Carlos Alcaraz Full Extension White Refractor # 1/10": "Carlos Alcaraz",
+        "2025 Topps Chrome Youthquake Mirra Andreeva 1/50": "Mirra Andreeva",
+        "2024 Topps Chrome Pineapple Refractor Coco Gauff 77/77": "Coco Gauff",
+    }
+
+    def test_an_insert_name_does_not_stand_in_for_the_player(self):
+        """The Kostyuk card run 52 recorded with no player at all: "GEOMETRIC
+        CAPTURED MARTA KOSTYUK" is a run of four, which is not trusted, so the
+        name in plain sight was thrown away."""
+        for title, want in self.INSERTS.items():
+            with self.subTest(title=title[:50]):
+                self.assertEqual(engine.player_from_title(title), want)
+
+    # two or three letters in capitals, and a real first name
+    SHORT_FIRST_NAMES = {
+        "2024 TOPPS CHROME TENNIS ACES AUTO RED REFRACTOR BEN SHELTON RC 1 /5 PSA 10": "Ben Shelton",
+        "2024 TOPPS CHROME TENNIS AUTOS BLACK REFRACTOR ZOE KRUGER 10/10 PSA 8": "Zoe Kruger",
+        "IGA SWIATEK 2025 TOPPS CHROME PURPLE REFRACTOR 1/25": "Iga Swiatek",
+    }
+
+    def test_a_short_first_name_in_capitals_is_still_a_name(self):
+        """BEN, ZOE and IGA are names, but the rule that turns away RC and SSP
+        turned them away too, leaving a run of one that yields nothing. Two
+        cards in the record read this way."""
+        for title, want in self.SHORT_FIRST_NAMES.items():
+            with self.subTest(title=title[:50]):
+                self.assertEqual(engine.player_from_title(title), want)
+
+    def test_a_code_in_that_same_place_is_still_a_code(self):
+        """The reason the rule was blunt: USA and UFC sit exactly where a
+        first name does. They are named, so they stay out, and a title that
+        offers nothing else yields nothing rather than a guess."""
+        for title in ("2025 TOPPS CHROME TENNIS USA SHELTON REFRACTOR 1/25",
+                      "2024 TOPPS CHROME UFC KOSTYUK RC 1/10",
+                      "2024 TOPPS CHROME GBR MURRAY AUTO 1/10"):
+            with self.subTest(title=title[:50]):
+                self.assertEqual(engine.player_from_title(title), "")
+
+    def test_two_players_on_one_card_still_name_neither(self):
+        """A run of four is two people, and the card belongs to both."""
+        self.assertEqual(engine.player_from_title(
+            "Coco Gauff Venus Williams 2025 Topps Chrome Tennis DUAL REFRACTOR 25/25 Auto"), "")
 
     def test_ebays_own_field_still_wins(self):
         self.assertEqual(engine.get_player({"Player/Athlete": ["Iga Swiatek"]},

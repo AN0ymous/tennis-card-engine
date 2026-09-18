@@ -112,6 +112,24 @@ on a website.
   "Unknown player" as blank too, since `results/board.json` carries the old
   string until the next scan rewrites it. `build_board` fills a blank from the
   title using every name already on the sheet as the known list.
+  **Two things stood in front of a name and hid it.** An insert or parallel
+  name the noise list did not know ("PURPLE GEOMETRIC CAPTURED MARTA
+  KOSTYUK", "Carlos Alcaraz Full Extension") makes the run four words long,
+  which is not trusted, so the name in plain sight was thrown away -- run 52
+  recorded the Kostyuk card with no player at all. `geometric captured
+  pineapple youthquake aces bookend full extension superior` are named now;
+  a word that rides on cards of several different players is card vocabulary,
+  not a name, which is how to spot the next one. Separately, the rule that
+  turns away RC, SSP and USA turned away **BEN, ZOE and IGA**: two or three
+  letters in capitals. An all-capitals title left a run of one and yielded
+  nothing, which is why "AUTOS BLACK REFRACTOR ZOE KRUGER" had no player.
+  Such a word is now read as the first name it is **only where a first name
+  stands** -- immediately before a plain name of four letters or more -- and
+  never when it is one of `SHORT_CODES` (the card, competition and country
+  codes that really do sit there: USA, UFC, GBR, ATP, RC, SSP). Measured
+  against the 102 recorded rows: 6 titles the reader could not place became
+  2, and both of those are cards with two players on them, where naming
+  neither is right.
 - **A card grade over an autograph grade is not a serial.** "PSA 9/9",
   "Psa MINT 9/9" and "BGS 9.5/10" read exactly like N/M, and three PSA 9
   autos were recorded as the last of a run of nine. `is_grade_pair` steps
@@ -548,6 +566,25 @@ and the one-time full re-walk after the cursor format changed happened at run
   state files that stop the next scan re-paying for the same listings. The
   "Keep the results in the repo" step now keeps its results aside, rebuilds the
   commit on top of whatever `main` has become and tries again, up to five
-  times. If what landed first was another scan's results it stands down and
-  keeps theirs, since those are newer than its own: re-running a scan costs
-  calls, overwriting theirs would lose recorded cards.
+  times.
+- **A queued run starts from the freshest state, and may publish it.** A run
+  dispatched while another is still going is checked out at the commit it was
+  dispatched from, so its `results/` can be a whole scan out of date by the
+  time it starts. Runs 48 and 49 on 17 Sep were the same Alcaraz scan nine
+  seconds apart: the second restored the state files the first had already
+  superseded, paid eBay for all 949 listings again, found the same 7 cards,
+  and then stood down at publish because the first had landed -- about 950
+  calls for nothing. "Bring back last run's results" now takes the state
+  files from `main` rather than from the checkout, and passes on where they
+  came from as `RESULTS_BASE`. The publish step compares that against
+  `main`'s results **tree** rather than the checked-out commit: unchanged
+  since this run loaded them means what it holds is theirs plus what it
+  judged, so it rebuilds on `main` and pushes (a pull request merging
+  mid-scan is no longer a reason to stop); changed means another scan
+  published after this one started and knows listings it never saw, so it
+  stands down and keeps theirs. A `main` it cannot reach is tried five times
+  and then said out loud as a failed run, never a silent stand-down. All
+  four cases are driven through a real git repo by
+  `ThePublishStepDrivenForReal` in `test_engine.py`, which runs the step's
+  own script text through bash -- reading the words in the YAML only proves
+  they are there. It skips itself where there is no bash.
