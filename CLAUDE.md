@@ -514,10 +514,23 @@ on 18 Sep decompose exactly (counter deltas 432 and 307):
   call per recorded card, so it grows with the spreadsheet. It is skipped
   entirely when the last scan was under `STATUS_FRESH_SECONDS` (an hour) ago,
   which makes a scan within the hour the cheapest way to test anything.
-- Before the no-sign rule: a scan within the hour cost 10-150; a couple of
-  hours, 300-450; the daily scheduled run, roughly 3,100. The no-sign rule
-  takes roughly two thirds off the detail-call line; the next run's own
-  "Skipped for carrying no sign of a serial" figure is the real number.
+- **Measured after the no-sign rule and the status savings.** Run 62 (43 min
+  gap) cost 20 calls; run 63 (two new players, 10 new cursors, 1,196 listings
+  checked) cost 375 -- 170 detail, 189 status, 16 search. The no-sign rule
+  saved 583 detail calls on run 63 alone. With statuses now refreshed once a
+  day rather than once an hour, a repeat scan costs its search pages plus a
+  detail call for each never-seen listing that hints at numbering, and
+  nothing else:
+
+  | when you scan | search | detail | status | total |
+  |---|---|---|---|---|
+  | within 20 h of the last | 7-16 | 10-170 | **0** | **~20-190** |
+  | the daily scheduled run | 70-115 | 230-370 | ~182 | **~480-670** |
+
+  A first-time player scan is the expensive shape: each new name is a new
+  search text per set, so the walk goes to the back of every one of them
+  rather than stopping at a mark. Run 63 checked 1,196 listings for it. A
+  repeat of the same players costs a page per set.
 
 ## Open items
 
@@ -597,11 +610,35 @@ and the one-time full re-walk after the cursor format changed happened at run
   by single calls in run 43 (all 55 live). The export prints "statuses: asked
   eBay about N ... M refused ... K no longer served" every time, so "nothing
   changed" can be told from "nothing was asked".
-- **An active status younger than `STATUS_FRESH_SECONDS` (an hour) is not
-  asked about again.** Several scans in an hour used to re-check every unsold
-  row each time -- a call a row, far more than a repeat scan itself.
-  The daily run is always past the hour. The one visible cost: a SOLD flag
-  can lag by up to an hour; set the constant to 0 to re-check every run.
+- **The status refresh was the biggest line in the bill, and it was buying
+  nothing.** Once the no-sign rule had taken two thirds off the detail calls
+  it was the largest single cost of a scan -- 181 of run 61's 307 calls, 189
+  of run 63's 375 -- and **across those two runs 370 status calls changed not
+  one reading**. Three things now stop it paying for that:
+  **`STATUS_FRESH_SECONDS` is 20 hours, not one.** The daily scheduled run is
+  24 hours after the last, so it still refreshes every listing exactly as
+  before -- nothing about the scheduled behaviour changes -- while a scan
+  started by hand during the day pays **nothing at all** for statuses instead
+  of re-checking every unsold row to be told nothing. Measured against the
+  published results: a scan 2, 6 or 12 hours after the last one went from 194
+  status calls to 0. **The one invariant that must hold: the constant stays
+  under 24 hours**, or the daily run stops refreshing and the SOLD flag
+  quietly dies -- `test_the_daily_run_still_refreshes_every_listing` fails if
+  it ever does. Set it to 0 to re-check on every run.
+  **A row the board drops is asked about by nobody.** A custom, a grade pair,
+  a card number, a title that argues with itself: shown nowhere on the site,
+  so the export asks about the board's own cards rather than every row in the
+  spreadsheet -- 12 calls a run at 199 rows, and it grows. Their last
+  readings are **kept, not dropped**, so a card starred before a rule dropped
+  its row still shows what was last known of it.
+  **A card the run has just recorded is not asked about again.** It came from
+  a live search result and a detail call that answered seconds ago, so the
+  export seeds it as active from `new_matches.json`: the one call in a run
+  that can be *known* to say nothing new. It never overwrites a settled
+  reading.
+  Together the daily run went from 194 status calls to 182, and every repeat
+  scan in between from 194 to 0. The saved page's "Check eBay now" still asks
+  at once, so a card you care about is never more than a click from fresh.
 - **The ceiling keeps the work it interrupts.** `consume_api_call` raised
   from inside the detail fetch, and the exception unwound the whole fetch:
   every listing already fetched alongside the one that met the ceiling went

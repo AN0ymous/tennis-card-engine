@@ -94,17 +94,48 @@ statuses = previous
 report = {}
 if engine.budget_bypassed():
     print("The safety ceiling is bypassed for this run's status checks too.")
+# Two things are not worth a call.
+#
+# A row the board drops -- a custom, a grade pair, a card number, a title that
+# argues with itself -- is shown nowhere on the site, so its status is read by
+# nobody. Asking about the board's own cards rather than every row in the
+# spreadsheet stops that, and the readings those rows already have are kept
+# rather than dropped, so nothing on the page goes blanker than it was.
+#
+# And a card this scan has only just recorded came from a live search result
+# and a detail call that answered seconds ago. It is active, and asking eBay
+# again to be told so is the one call in the run we can be certain says
+# nothing new.
+board_ids = [i for i in dict.fromkeys(engine.item_id_from_link(c.get("link", ""))
+                                      for c in board) if i]
+just_found = set()
+if os.path.exists(matches):
+    try:
+        with open(matches) as f:
+            just_found = {i for i in (engine.item_id_from_link(m.get("link", ""))
+                                      for m in json.load(f) or []) if i}
+    except (json.JSONDecodeError, OSError, AttributeError, TypeError):
+        just_found = set()
+seeded = dict(previous)
+now_stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+for item_id in just_found:
+    if not engine.status_settled(seeded.get(item_id)):
+        seeded[item_id] = {"status": "active", "checkedAt": now_stamp}
+ids = board_ids
 try:
-    ids = engine.item_ids_in_spreadsheet(xlsx)
     if ids:
-        statuses = engine.refresh_statuses(engine.get_ebay_token(), ids, previous, report=report)
+        statuses = engine.refresh_statuses(engine.get_ebay_token(), ids, seeded, report=report)
 except Exception as exc:                                  # noqa: BLE001 -- keep the last file
     print(f"status refresh skipped: {exc}")
+    statuses = seeded
 if report:
     # said every time, so a status that never changes can be told from one
     # that was never asked about (run 42 on 17 Sep: 55 asked, 55 refused, 0 said)
-    print(f"statuses: asked eBay about {report['asked']} of {len(ids)} listing(s); "
-          f"{report['refused']} refused (last reading kept); {report['gone']} no longer served")
+    spare = len(engine.item_ids_in_spreadsheet(xlsx)) - len(ids)
+    print(f"statuses: asked eBay about {report['asked']} of {len(ids)} listing(s) on the board; "
+          f"{report['refused']} refused (last reading kept); {report['gone']} no longer served"
+          + (f"; {len(just_found)} taken from this run's own fetches" if just_found else "")
+          + (f"; {spare} row(s) the board drops were not asked about" if spare > 0 else ""))
 with open(status_path, "w") as f:
     json.dump({"checkedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                "statuses": statuses}, f)
