@@ -1635,6 +1635,109 @@ class ARefusedSearchIsNotSilent(unittest.TestCase):
         self.assertIn("covered less than usual", stderr)
 
 
+class TheMatchesPanelIsPaged(unittest.TestCase):
+    """173 cards drawn at once put a mile of scrolling between the Matches
+    panel and everything under it -- the scan controls, the activity log, the
+    reference. Each section now shows one page, and the head says how big."""
+
+    def js(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            return f.read()
+
+    def html(self):
+        with open(os.path.join(HERE, "web", "index.html")) as f:
+            return f.read()
+
+    def test_the_picker_sits_in_the_matches_head_not_the_scan_setup(self):
+        html = self.html()
+        head = html.split('<section class="panel" id="matches">')[1].split("</div>")[0]
+        self.assertIn('id="page-size"', head)
+        controls = html.split('<aside class="panel controls">')[1].split("</aside>")[0]
+        self.assertNotIn('id="page-size"', controls)
+
+    def test_the_sizes_offered_are_the_sizes_the_code_accepts(self):
+        import re
+        offered = [int(v) for v in re.findall(r'<option value="(\d+)"',
+                    self.html().split('id="page-size"')[1].split("</select>")[0])]
+        accepted = [int(n) for n in re.findall(r"-?\d+",
+                    self.js().split("const PAGE_SIZES = [")[1].split("]")[0])]
+        self.assertEqual(offered, accepted)
+        self.assertIn(0, accepted, "0 is All")
+
+    def test_the_default_is_a_page_you_can_scroll_past(self):
+        js = self.js()
+        default = int(js.split("const PAGE_DEFAULT = ")[1].split(";")[0])
+        self.assertIn(default, (12, 24, 48))
+        self.assertIn(f"pageSize: {default}", js, "state must start on the same default")
+
+    def test_nothing_saved_does_not_read_as_all(self):
+        """Number(null) is 0, and 0 is a size in the list -- read carelessly,
+        a first visit would show every card, which is what paging is for."""
+        body = self.js().split("function initPageSize()")[1].split("\n}")[0]
+        self.assertIn("kept !== null", body)
+
+    def test_both_sections_are_paged_from_the_same_size(self):
+        js = self.js()
+        self.assertIn('section(area, "fresh", "New this scan"', js)
+        self.assertIn('section(area, "board", "Everything found so far"', js)
+        body = js.split("function pageOf(")[1].split("\n}")[0]
+        self.assertIn("state.pageSize", body)
+        self.assertIn("Math.min(Math.max(1,", body, "a page past the end must clamp")
+
+    def test_a_changed_filter_starts_again_at_page_one(self):
+        js = self.js()
+        body = js.split("function renderMatches()")[1].split("\n}")[0]
+        self.assertIn("filterSignature()", body)
+        self.assertIn("state.page.fresh = 1", body)
+        self.assertIn("state.page.board = 1", body)
+        sig = js.split("function filterSignature()")[1].split("\n}")[0]
+        for part in ("state.price.min", "state.listing", "state.sort", "state.bookend",
+                     "state.window", "state.cardtype", "state.condition", "state.colourmatch",
+                     'chosen("player")', 'chosen("brand")', '$("max-print-run")'):
+            self.assertIn(part, sig, f"{part} changes what is shown, so it must reset the page")
+
+    def test_the_counts_beside_the_headings_are_the_whole_section(self):
+        """The pill says how many match, not how many this page draws."""
+        js = self.js()
+        body = js.split("function renderMatches()")[1].split("\n}")[0]
+        self.assertIn("`${everything.length} of ${state.board.length} match the filters`", body)
+
+
+class WhereAReloadLeavesYou(unittest.TestCase):
+    """A finished hosted scan reloads the page, and the browser put it back at
+    the old page's scroll offset -- measured against a height this page does
+    not have until the board, the matches and their photos arrive. It landed
+    somewhere different every time."""
+
+    def js(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            return f.read()
+
+    def test_the_browser_is_told_not_to_guess(self):
+        self.assertIn('history.scrollRestoration = "manual"', self.js())
+
+    def test_the_page_settles_itself_once_the_cards_are_in(self):
+        js = self.js()
+        self.assertIn(".then(loadBoard).then(settleScroll)", js)
+        body = js.split("function settleScroll()")[1].split("\n}\n")[0]
+        self.assertIn("if (settled) return;", body, "it must run once, not on every step")
+        self.assertIn("location.hash", body)
+        self.assertIn("scrollIntoView", body)
+        self.assertIn("window.scrollTo({ top: 0 })", body)
+
+    def test_a_scan_reload_lands_on_the_results_it_reloaded_for(self):
+        js = self.js()
+        body = js.split("async function checkForNewResults(")[1].split("\n}")[0]
+        self.assertIn('landOnAfterReload("matches")', body)
+        self.assertLess(body.index('landOnAfterReload("matches")'),
+                        body.index("window.location.reload()"),
+                        "the marker has to be written before the reload")
+
+    def test_the_marker_is_spent_by_the_load_it_was_written_for(self):
+        body = self.js().split("function settleScroll()")[1].split("\n}\n")[0]
+        self.assertIn("sessionStorage.removeItem(LAND_KEY)", body)
+
+
 class AnAddedChipCanBeTakenOut(unittest.TestCase):
     """A name typed in used to be a chip for ever: remembered in localStorage,
     rebuilt on every load, with nothing on the page to remove it."""
