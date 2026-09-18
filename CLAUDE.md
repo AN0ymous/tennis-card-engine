@@ -382,6 +382,33 @@ bugs to be chased; a rule that caught them would cost real cards.
   of the wide scan, and an older listing surfaces only through a player scan.
   See the wide-search decision above.
 
+## What a scan costs, measured
+
+Read `results/ebay_api_usage.json` before and after a run for the exact
+figure; the "eBay calls today" panel is eBay's own and lags. Runs 60 and 61
+on 18 Sep decompose exactly (counter deltas 432 and 307):
+
+| | run 60 (1 h 44 m gap) | run 61 (1 h 07 m gap) |
+|---|---|---|
+| listings checked | 275 | 159 |
+| search pages | 7 | 7 |
+| detail calls | 245 | 119 |
+| status calls | 180 | 181 |
+| **total** | **432** | **307** |
+
+- **Cost follows the gap since the last scan, not the number of scans.** Both
+  walked one page per set (7 calls) and paid only for what was listed since.
+  Listings arrive at **2.4 to 2.6 a minute -- about 150 an hour** across the
+  seven queries, measured twice.
+- **The status refresh is the biggest fixed cost of a repeat scan** -- one
+  call per recorded card, so it grows with the spreadsheet. It is skipped
+  entirely when the last scan was under `STATUS_FRESH_SECONDS` (an hour) ago,
+  which makes a scan within the hour the cheapest way to test anything.
+- Before the no-sign rule: a scan within the hour cost 10-150; a couple of
+  hours, 300-450; the daily scheduled run, roughly 3,100. The no-sign rule
+  takes roughly two thirds off the detail-call line; the next run's own
+  "Skipped for carrying no sign of a serial" figure is the real number.
+
 ## Open items
 
 - How often eBay states the sport at all is still unknown: the new `Sport`
@@ -582,11 +609,13 @@ and the one-time full re-walk after the cursor format changed happened at run
   is no batch call any more. The old 420-calls-a-scan figure was wrong. What does
   save calls: `seen_items.json` (a judged listing is never fetched again), the
   cursor (a repeat wide scan fetches only what was listed since), and
-  `settled_by_title` (a custom, another sport, or a serial that is not a
-  bookend is rejected from the title with no call at all; a title with no
-  serial is still fetched, because the specifics may carry one). A first-time
-  player scan still costs roughly one call per listing eBay returns for the
-  name, so a common surname is expensive.
+  `settled_by_title` (a custom, another sport, a serial that is not a
+  bookend, or -- since 18 Sep -- a title that says nothing about numbering at
+  all, each rejected from the title with no call; a title that hints at
+  numbering without giving a readable pair is still fetched, because the
+  specifics may carry it). A first-time player scan still costs roughly one
+  call per listing eBay returns for the name, so a common surname is
+  expensive.
 - **A reject is only as permanent as its rule.** A reject carries the
   `JUDGE_VERSION` it was made under. When a permanent rule changes in a way
   that could reverse old rejects, bump the version and name the old reason's
@@ -674,24 +703,39 @@ and the one-time full re-walk after the cursor format changed happened at run
   done for free. The counters themselves were right all along. If they ever
   disagree with N again, `main()` says so out loud rather than leaving it to
   be spotted. A refused detail call is said out loud with its count.
-- **Skipping titles with no serial was measured and turned down (18 Sep).**
-  It is the biggest line in the bill: 2,471 of the 3,043 detail calls in the
-  full walk went to titles with no serial, and 5,827 listings in the record
-  are rejected for having none in the title or the specifics. Two things
-  settled it against. **The cost:** of the 182 recorded cards, one carries
-  its serial only in eBay's specifics (a Jamie Murray Topps Royalty relic
-  whose title says "/10" without the pair), so a blanket skip loses real
-  cards. A narrower rule -- skip only a title with no sign of numbering at
-  all, no N/M, no bare "/N", no "numbered" -- costs 0 of the 182, and that
-  measurement is sound because today's engine fetches everything, so any
-  specifics-only card in the scanned universe is already in the record.
-  **But the saving is gone anyway:** those 5,827 are permanent rejects and
-  are never fetched again, so the expensive walk does not recur. Steady
-  state is a couple of hundred detail calls a day against 5,000 (run 60:
-  245, of which 180 were no-serial). Spending five per cent of the allowance
-  to keep completeness whole is the better trade, and the owner's rule is
-  that no card may be missed for it. Leave it. Revisit only if the daily
-  figure climbs into the thousands.
+- **A title that says nothing about numbering at all is turned away for no
+  call, and the rule is audited every run.** It is the biggest line in the
+  bill: two thirds of every detail call goes to a title with no serial (run
+  61: 103 of 152), and 5,930 listings in the record are rejected for having
+  none in the title or the specifics.
+  **A blanket skip would lose real cards** -- eleven of the 184 recorded give
+  no readable serial in the title, one of them (a Jamie Murray Topps Royalty
+  relic) carrying it only in eBay's specifics. So the sign is generous
+  (`NUMBERING_HINT_RE`): any digit beside a slash ("1/10", "/10", "# /10",
+  "1 /10"), the "#'d" sellers write, a spelled-out "1 of 10", or any of the
+  words a numbered card is described with. **Measured against all 184
+  recorded cards, every one carries a sign, including all eleven** --
+  `test_every_recorded_card_carries_a_sign_of_numbering` re-measures that
+  against the live spreadsheet on every run of the suite, so the day a card
+  is recorded that the rule would have skipped, the tests fail.
+  **And it is not taken on trust.** Each run fetches a few of the listings it
+  skipped and judges them properly anyway (`NO_SIGN_AUDIT`, at most 25 and
+  never more than a twentieth of what was skipped, always at least one), so
+  the rule is measured against live listings rather than against the rows it
+  was written from. One that turns out to be a match is kept -- it is judged
+  by the same `record_judgement` as everything else -- and `say()`s out loud
+  that the rule is losing cards. That is the signal to name `NO_SIGN_REASON`
+  in `RECONSIDER_REASONS` and bump `JUDGE_VERSION`, which brings **every**
+  skipped listing back to be judged again. Nothing is lost quietly and
+  nothing is lost for good.
+  The run prints how many it skipped and how many it audited, so the real
+  saving is on the Actions log rather than estimated here.
+  **Why now, when 18 Sep turned it down:** that note said "steady state is a
+  couple of hundred detail calls a day", which was a figure for one run an
+  hour after another, not for a day. Measured across runs 60 and 61, listings
+  arrive at about 150 an hour across the seven queries, so a once-a-day
+  filterless scan checks roughly 3,000 and spends roughly 2,900 detail calls
+  -- two thirds of the 4,500 ceiling, and growing. The saving was never gone.
 - Never commit `.env` or put any key or token in the code.
 - The scan commits to `main`, so always `git pull --rebase` before `git push`
   from your PC. Merging a pull request while a scan runs is now safe: run 31

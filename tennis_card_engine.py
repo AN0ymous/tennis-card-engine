@@ -46,6 +46,7 @@ import base64
 import collections
 import hashlib
 import logging
+import random
 import smtplib
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -956,12 +957,45 @@ def settled_by_summary(item):
     return settled_by_title(item.get("title", ""))
 
 
+# A title with no sign of numbering anywhere in it. Deliberately generous,
+# because the item specifics can carry a serial the title does not: any digit
+# beside a slash ("1/10", "/10", "# /10", "1 /10"), the "#'d" sellers write,
+# a spelled-out "1 of 10", or any of the words a numbered card is described
+# with. Measured against the 184 recorded cards, every one carries a sign --
+# including all eleven whose title alone gives no readable serial -- so
+# nothing in the record would have been lost.
+NUMBERING_HINT_RE = re.compile(r"""
+    \d\s*/ | /\s*\d
+  | \#\s*[\u2019']?d\b
+  | \b(?:numbered|numbering|number|serial|serialised|serialized|serially|sn
+       |print\s*run|limited\s*to|out\s*of)\b
+  | \b\d+\s*of\s*\d+\b
+  | \b(?:one|1)\s*of\s*(?:one|1)\b
+""", re.I | re.X)
+
+# The reason such a listing is turned away. Named here because it is the one
+# to add to RECONSIDER_REASONS if the rule is ever reversed -- one
+# JUDGE_VERSION bump then brings every one of them back to be judged again.
+NO_SIGN_REASON = "title carries no sign of a serial number"
+
+# The rule above is checked against live listings rather than trusted: some of
+# the listings a run skipped are fetched and judged properly anyway, chosen at
+# random, and a skipped listing that turns out to be a match is said out loud.
+# At most this many, and never more than a twentieth of what was skipped, so
+# the proof can never eat the saving -- a daily run skipping fifteen hundred
+# pays twenty-five, a repeat scan skipping sixty pays three. Always at least
+# one, so the rule is never left entirely untested. Set to 0 to turn it off.
+NO_SIGN_AUDIT = 25
+
+
 def settled_by_title(title):
     """A reject the title proves on its own, so the listing costs no detail
     call: a custom, another sport, or a serial that is not a bookend. The
     serial is read exactly as the judge reads it (the title first), so this
-    never turns away a card the judge would have kept. A title with no serial
-    is not settled -- the specifics may carry one -- and is fetched as before.
+    never turns away a card the judge would have kept. A title that gives no
+    readable serial but hints at one -- a bare "/10", "numbered", "1 of 10" --
+    is still fetched, because the specifics may carry the pair it left out;
+    only a title that says nothing about numbering at all is turned away.
     Measured on 17 Sep: a never-seen listing costs one call, so every listing
     settled here is a call kept."""
     custom = looks_custom(title, "")
@@ -973,6 +1007,13 @@ def settled_by_title(title):
     card_number, print_run = extract_serial(title, {})
     if card_number is not None and print_run is not None and card_number not in (1, print_run):
         return f"{card_number}/{print_run} is neither the first nor the last of its run"
+    # Two thirds of every detail call went to a title with no serial, and
+    # almost all of those carry no sign of one anywhere. A title that says
+    # nothing about numbering at all is turned away here; one that hints at it
+    # is still fetched, because the specifics may carry the pair the title
+    # left out. NO_SIGN_AUDIT checks the rule against live listings each run.
+    if not NUMBERING_HINT_RE.search(title):
+        return NO_SIGN_REASON
     return ""
 
 
@@ -2573,6 +2614,8 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
     settled = 0                  # turned away from the search result alone, no call
     reasons = collections.Counter()   # why listings were turned away, for the summary
     new_match_records = []
+    skipped_no_sign = []         # (item, player, rule_key) for the audit below
+    audited = 0                  # how many of them were fetched and judged anyway
     cancelled = False
 
     _budget_stop.clear()
@@ -2718,6 +2761,8 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                                 seen[item["itemId"]] = rejected(reason)
                                 settled_now.add(item["itemId"])
                                 settled += 1
+                                if reason == NO_SIGN_REASON:
+                                    skipped_no_sign.append((item, player, rule_key))
                                 reasons[reason.split(":")[0].split(",")[0]] += 1
                                 emit("reject", title=item.get("title", ""), reason=reason)
                     triage = [(item, seen.get(item["itemId"])) for item, _ in triage]
@@ -2804,6 +2849,40 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
         # for good. So they are asked about by id, which needs no walk to
         # reach them. After the walk, so the scan's own work comes first and
         # anything the walk already settled is no longer on the list.
+        # The no-sign rule is not taken on trust. A handful of the listings
+        # this run skipped are fetched and judged properly anyway, chosen at
+        # random, so the rule is measured against live listings every run
+        # instead of against the 184 rows it was written from. One that turns
+        # out to be a match is said out loud -- that is the signal to name
+        # NO_SIGN_REASON in RECONSIDER_REASONS and bump JUDGE_VERSION, which
+        # brings every skipped listing back to be judged again. At twenty-five
+        # calls against the fifteen hundred or so the rule saves, the proof
+        # costs under two per cent of the saving.
+        if write_outputs and not cancelled and skipped_no_sign and NO_SIGN_AUDIT:
+            how_many = min(NO_SIGN_AUDIT, max(1, len(skipped_no_sign) // 20),
+                           len(skipped_no_sign))
+            sample = random.sample(skipped_no_sign, how_many)
+            emit("info", message=f"Checking {len(sample)} of the {len(skipped_no_sign)} "
+                                 "listing(s) skipped for carrying no sign of a serial.")
+            details = get_item_details(token, [item["itemId"] for item, _, _ in sample])
+            surprises = []
+            for item, player, rule_key in sample:
+                detail = details.get(item["itemId"])
+                if not detail:
+                    continue                      # refused or gone: the skip stands
+                audited += 1
+                settled -= 1                      # it was counted as settled; now it is fetched
+                fetched += 1
+                reasons[NO_SIGN_REASON] -= 1      # judged properly; not skipped after all
+                record_judgement(item, detail, player, rule_key)
+                if seen.get(item["itemId"]) == "match":
+                    surprises.append(item.get("title", ""))
+            if surprises:
+                say(f"{len(surprises)} listing(s) skipped for carrying no sign of a serial "
+                    "turned out to be matches, so the rule is losing cards. Name "
+                    f"NO_SIGN_REASON in RECONSIDER_REASONS and bump JUDGE_VERSION. First: "
+                    f"{surprises[0]!r}")
+
         stranded = ([i for i, v in seen.items()
                      if isinstance(v, dict) and v.get("verdict") == "unavailable"]
                     if write_outputs and not cancelled and not players else [])
@@ -2851,7 +2930,8 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
 
     emit("done", checked=checked, matches=len(new_match_records), known=known,
          judged=judged, failed=failed, cancelled=cancelled, fetched=fetched,
-         settled=settled, reasons=reasons.most_common(8))
+         settled=settled, reasons=reasons.most_common(8),
+         skipped=len(skipped_no_sign), audited=audited)
     return new_match_records, checked
 
 
@@ -2941,7 +3021,12 @@ def main():
             say(f"The run's own figures account for {sum(parts)} listings, but it checked "
                 f"{checked}. One of the counters in run_scan is wrong.")
         for reason, n in summary.get("reasons") or []:
-            print(f"  turned away: {n:>5}  {reason}")
+            if n:
+                print(f"  turned away: {n:>5}  {reason}")
+        if summary.get("skipped"):
+            print(f"Skipped for carrying no sign of a serial: {summary['skipped']} "
+                  f"(detail calls saved: {summary['skipped'] - summary.get('audited', 0)}); "
+                  f"{summary.get('audited', 0)} of them fetched and judged anyway as a check.")
         if summary.get("failed"):
             say(f"eBay refused {summary['failed']} detail call(s); those listings are tried "
                 "again next run, and the mark of each set they sit in was held back")
