@@ -526,6 +526,20 @@ and the one-time full re-walk after the cursor format changed happened at run
   "reason": ...}`; older entries are the bare string). To see why a listing
   was passed over, take the number from its eBay URL (`/itm/336797712136`)
   and look up `v1|336797712136|0` in `results/seen_items.json`.
+- **The local counter and eBay's own figure count different stretches, and
+  eBay's can be zeroed without warning.** On 17 Sep they tracked each other
+  closely all morning (13:10 UTC: local 4,500, eBay 4,340, the gap being
+  eBay's lag). At 13:26 eBay's figure went from 4,340 to **0** while it still
+  reported `resets` as 18 Sep 07:00, so eBay restarted its count four hours
+  into the window and said nothing. The local counter kept its running total
+  to the end of its own Pacific day, which is why it read 8,790 against
+  eBay's 5,000 that night: the same calls, two different starting points, and
+  neither figure wrong. When they drift like that, eBay's is the one to
+  believe and the local one can be set to match by hand -- done once at 02:54
+  on 18 Sep. Both then reset together at 07:00 UTC (3pm Singapore), since
+  Pacific midnight is the same moment. Do not make the engine trust eBay's
+  figure automatically: it lags, and a lagging figure that relaxes the local
+  ceiling is how a day's allowance gets spent twice.
 - **A `log.warning` does not appear in the Actions log.** `logging.basicConfig`
   sends it to `engine_run.log`, a file on whichever machine ran the scan, and
   that file is gitignored. Anything a reader must see goes through `say()`,
