@@ -702,6 +702,42 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
 .section-head + .matchgrid { padding-top: 14px; }
 .section-head + .empty p { text-align: left; margin-left: 0; }
 
+/* ---------- per-page picker and pager ----------
+   The record runs to hundreds of cards, and rendering all of them buried
+   everything below the Matches panel under a mile of scrolling. The panel
+   shows one page at a time; this picks how big a page is. */
+.pagesize {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ink-2); font-weight: 600;
+}
+.pagesize select {
+  font-family: var(--mono); font-size: 12px; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line-2);
+  border-radius: var(--radius); padding: 5px 9px; cursor: pointer;
+  letter-spacing: normal; text-transform: none; font-weight: 400;
+  transition: border-color .3s var(--ease);
+}
+.pagesize select:hover { border-color: var(--gold-lit); }
+.pagesize select:focus-visible { border-color: var(--gold-lit); outline: none; }
+
+.pager {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  flex-wrap: wrap; padding: 0 20px 20px;
+}
+.pager-btn {
+  font-family: var(--ui); font-size: 12.5px; color: var(--ink);
+  background: var(--surface-2); border: 1px solid var(--line-2);
+  border-radius: var(--radius); padding: 8px 14px; cursor: pointer;
+  transition: border-color .3s var(--ease), opacity .3s var(--ease);
+}
+.pager-btn:hover:not(:disabled) { border-color: var(--gold-lit); }
+.pager-btn:disabled { opacity: .35; cursor: default; }
+.pager-at {
+  font-family: var(--mono); font-size: 11.5px; color: var(--ink-2);
+  min-width: 13ch; text-align: center;
+}
+
 /* ---------- match grid ---------- */
 .matchgrid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));

@@ -348,6 +348,37 @@ on a website.
    at 10px it covered the serial and clipped it. With a flag present the serial
    steps left again (`.mc-photo.has-flag`).
 
+10. **The Matches panel is paged, and a reload lands somewhere predictable.**
+   173 cards drawn at once put a mile of scrolling between the panel and
+   everything under it -- the scan controls on a phone, the activity log, the
+   reference, the footer -- and made a phone lay out hundreds of cards nobody
+   had asked to see. Each section of the panel now draws one page:
+   `PAGE_SIZES` (12, 24, 48, 96, and 0 meaning All) with `PAGE_DEFAULT` 24,
+   picked from a dropdown **in the Matches panel head, not the scan setup**,
+   and remembered per device (`tce.pageSize`). Both sections page from the
+   same size, each with its own counter in `state.page` and its own Previous
+   / Next bar, shown only when there is more than one page; turning a page
+   puts you at the top of that section. `pageOf` clamps a page into range, so
+   a list that shrank under you lands on its last page and never on an empty
+   one, and `filterSignature()` -- every filter that changes what is shown --
+   starts again at page one when it changes, because landing on page 5 of a
+   list you have just narrowed to two cards is not what filtering means. The
+   counts beside the headings and in the pill are still the whole record, not
+   the page. **One trap worth remembering:** `Number(null)` is 0 and 0 is a
+   size in that list, so reading the remembered value carelessly made a first
+   visit show every card -- `initPageSize` checks for `null` before
+   converting.
+   **Where a reload leaves you.** The browser restores a reloaded page to its
+   old scroll offset, measured against a height this page does not have until
+   the board, the matches and their photos arrive -- so it landed somewhere
+   different every time, and a finished hosted scan reloads the page on every
+   run. `history.scrollRestoration` is now `"manual"` and `settleScroll()`
+   (once, after `loadBoard`) decides: a `#section` in the URL wins, then a
+   marker a finished scan left (`tce.landOn` in sessionStorage, written by
+   `checkForNewResults` **before** it reloads) puts you on the Matches panel,
+   which is why it reloaded; otherwise the top. The marker is spent by the
+   load it was written for, so the next reload goes to the top again.
+
 ## Why a scan usually adds nothing, and why that is right
 
 `seen_items.json` held 5,635 judged listings on 17 Sep -- 5,577 permanent

@@ -17,6 +17,41 @@ const portraits = new Map();          // player -> portrait payload, fetched onc
 
 let HOSTED = false;                  // true when there is no server: GitHub Pages
 
+/* ---- where a reload leaves you ----
+   The browser puts a reloaded page back where it was scrolled to, which is
+   measured against the old page's height. This page is taller a second later
+   than it is at load -- the board, the matches and their photos all arrive
+   after it -- so restoring the offset landed somewhere arbitrary, and a
+   finished hosted scan reloads the page every time. So the browser is told
+   not to guess, and the page settles itself once the cards are in:
+
+     a plain load                     -> the top
+     a reload a finished scan asked for -> the Matches panel, which is why it reloaded
+     a link with a #section           -> that section
+
+   Deterministic in all three cases, which is the point. */
+const LAND_KEY = "tce.landOn";
+try { history.scrollRestoration = "manual"; } catch { /* older browsers: as before */ }
+
+function landOnAfterReload(where) {
+  try { sessionStorage.setItem(LAND_KEY, where); } catch { /* ignore */ }
+}
+
+let settled = false;
+function settleScroll() {
+  if (settled) return;
+  settled = true;
+  let want = "";
+  try {
+    want = sessionStorage.getItem(LAND_KEY) || "";
+    sessionStorage.removeItem(LAND_KEY);         // this load only
+  } catch { /* ignore */ }
+  const hash = (location.hash || "").slice(1);
+  const target = document.getElementById(hash) || (want && document.getElementById(want));
+  if (target) target.scrollIntoView({ block: "start" });
+  else window.scrollTo({ top: 0 });
+}
+
 const state = {
   config: null,
   matches: [],
@@ -34,6 +69,9 @@ const state = {
   savedstatus: "all",
   statusCheckedAt: null,
   showingExamples: false,
+  pageSize: 24,              // cards per page in the Matches panel; 0 means all
+  page: { fresh: 1, board: 1 },
+  filterSig: null,           // what the filters were last render, to spot a change
   hostedScan: null,          // {startedAt, phase, phaseAt} while a GitHub scan is watched
   since: 0,
   polling: null,
@@ -1175,8 +1213,9 @@ function sectionHead(title, count) {
   return head;
 }
 
-function cardGrid(cards, offset = 0) {
+function cardGrid(cards, offset = 0, which = "") {
   const grid = el("div", "matchgrid");
+  if (which) grid.dataset.section = which;       // which list this page belongs to
   cards.forEach((card, i) => grid.append(buildCard(card, offset + i)));
   return grid;
 }
@@ -1186,6 +1225,105 @@ function noteLine(text, padding = "16px 20px") {
   note.style.padding = padding;
   note.append(el("p", null, text));
   return note;
+}
+
+/* ---- pages, because the record is long ----
+   The board is 173 cards and climbing. Drawing every one of them put a mile
+   of scrolling between the Matches panel and everything under it -- the
+   activity log, the reference, the footer -- and made a phone work hard for
+   cards nobody had asked to see. Each section of the panel now shows one page
+   at a time, and the picker in the panel head says how big a page is.
+   24 is the default: three or four rows on a laptop, enough to browse without
+   burying the rest of the page. */
+const PAGE_KEY = "tce.pageSize";
+const PAGE_SIZES = [12, 24, 48, 96, 0];          // 0 is "All"
+const PAGE_DEFAULT = 24;
+
+function initPageSize() {
+  const box = $("page-size");
+  let saved = PAGE_DEFAULT;
+  try {
+    // Nothing saved must not read as "All": Number(null) is 0, and 0 is a
+    // size in this list.
+    const kept = localStorage.getItem(PAGE_KEY);
+    if (kept !== null && PAGE_SIZES.includes(Number(kept))) saved = Number(kept);
+  } catch { /* private mode: the default stands for this session */ }
+  state.pageSize = saved;
+  box.value = String(saved);
+  box.addEventListener("change", () => {
+    const size = Number(box.value);
+    state.pageSize = PAGE_SIZES.includes(size) ? size : PAGE_DEFAULT;
+    try { localStorage.setItem(PAGE_KEY, String(state.pageSize)); } catch { /* ignore */ }
+    state.page.fresh = 1;                        // a new page size has new pages
+    state.page.board = 1;
+    renderMatches();
+  });
+}
+
+/* Everything that changes which cards are shown. When it changes, the pages
+   are counted afresh from the first one -- landing on page 5 of a list you
+   have just narrowed to two cards is not what anyone means by filtering. */
+function filterSignature() {
+  return JSON.stringify([
+    state.price.min, state.price.max, state.listing, state.sort, state.bookend,
+    state.window, state.cardtype, state.condition, state.colourmatch,
+    $("all-players") && $("all-players").checked, chosen("player"), chosen("brand"),
+    $("max-print-run") && $("max-print-run").value,
+    $("inclusive") && $("inclusive").checked,
+  ]);
+}
+
+function pageCount(total) {
+  return state.pageSize ? Math.max(1, Math.ceil(total / state.pageSize)) : 1;
+}
+
+/* The slice of a list this page shows, with the page clamped into range --
+   a list that shrank under you lands on its last page, never on an empty one. */
+function pageOf(list, which) {
+  if (!state.pageSize) return { cards: list, page: 1, pages: 1, from: 0 };
+  const pages = pageCount(list.length);
+  const page = Math.min(Math.max(1, state.page[which] || 1), pages);
+  state.page[which] = page;
+  const from = (page - 1) * state.pageSize;
+  return { cards: list.slice(from, from + state.pageSize), page, pages, from };
+}
+
+/* Previous / Next under a section, shown only when there is more than one
+   page. Turning a page puts you at the top of that section rather than
+   leaving you at the bottom of the page you just left. */
+function pager(which, slice, anchorId) {
+  const bar = el("div", "pager");
+  const step = (label, to, enabled) => {
+    const b = el("button", "pager-btn", label);
+    b.type = "button";
+    b.disabled = !enabled;
+    b.addEventListener("click", () => {
+      state.page[which] = to;
+      renderMatches();
+      const head = document.getElementById(anchorId);
+      if (head) head.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+    return b;
+  };
+  bar.append(step("\u2039 Previous", slice.page - 1, slice.page > 1));
+  bar.append(el("span", "pager-at", `Page ${slice.page} of ${slice.pages}`));
+  bar.append(step("Next \u203a", slice.page + 1, slice.page < slice.pages));
+  return bar;
+}
+
+/* A section: its heading, one page of its cards, and a pager when it needs
+   one. The count beside the heading is the whole section, not the page. */
+function section(area, which, title, count, cards, anchorId) {
+  const head = sectionHead(title, count);
+  head.id = anchorId;
+  area.append(head);
+  const slice = pageOf(cards, which);
+  area.append(cardGrid(slice.cards, 0, which));
+  if (slice.pages > 1) {
+    const bar = pager(which, slice, anchorId);
+    bar.dataset.section = which;
+    area.append(bar);
+  }
 }
 
 /* Two sections, because they answer two different questions.
@@ -1207,6 +1345,13 @@ function renderMatches() {
   const everything = sortCards(state.board.filter(passesFilters));
   state.showingExamples = !state.matches.length && !state.board.length;
 
+  const sig = filterSignature();
+  if (state.filterSig !== null && sig !== state.filterSig) {
+    state.page.fresh = 1;                        // a changed filter is a new list
+    state.page.board = 1;
+  }
+  state.filterSig = sig;
+
   area.innerHTML = "";
 
   if (state.showingExamples) {
@@ -1224,29 +1369,34 @@ function renderMatches() {
     ? `${state.board.length} found`
     : `${everything.length} of ${state.board.length} match the filters`;
 
-  area.append(sectionHead("New this scan", fresh.length ? `${fresh.length}` : ""));
   if (fresh.length) {
-    area.append(cardGrid(fresh));
+    section(area, "fresh", "New this scan", `${fresh.length}`, fresh, "sec-fresh");
   } else if (state.matches.length) {
+    area.append(sectionHead("New this scan", ""));
     area.append(noteLine("The last scan found "
       + `${state.matches.length} new card${state.matches.length === 1 ? "" : "s"}, `
       + "but none of them match the filters below."));
   } else if (state.config && state.config.lastRunOk === false) {
+    area.append(sectionHead("New this scan", ""));
     area.append(noteLine("Nothing new, because the last scan failed before it could look: "
       + "eBay refused its calls, or the run was cut short. The GitHub Actions run says "
       + "which. Everything found so far is below."));
   } else {
+    area.append(sectionHead("New this scan", ""));
     area.append(noteLine("Nothing new. Every listing on eBay right now has already "
       + "been judged on an earlier scan, so there was nothing left to add \u2014 which is "
       + "normal, and not the filters. Everything found so far is below."));
   }
 
-  area.append(sectionHead("Everything found so far",
-    `${everything.length}${everything.length === state.board.length ? "" : ` of ${state.board.length}`}`));
-  area.append(everything.length ? cardGrid(everything, fresh.length)
-    : noteLine("Nothing recorded matches the scan setup. Widen the players, sets, "
+  const count = `${everything.length}${everything.length === state.board.length ? "" : ` of ${state.board.length}`}`;
+  if (everything.length) {
+    section(area, "board", "Everything found so far", count, everything, "sec-board");
+  } else {
+    area.append(sectionHead("Everything found so far", count));
+    area.append(noteLine("Nothing recorded matches the scan setup. Widen the players, sets, "
       + "print-run ceiling, card type, graded or raw, price, listing type, bookend "
       + "or listed-within choice."));
+  }
 }
 
 function initials(name) {
@@ -1692,6 +1842,7 @@ async function checkForNewResults(before) {
       forgetWatch();                        // before reloading, so it cannot loop
       setHostedPhase("done");
       paintHostedProgress();
+      landOnAfterReload("matches");         // the results are why this reloads
       window.location.reload();
     }
   } catch { /* try again on the next tick */ }
@@ -2621,11 +2772,13 @@ async function stopScan() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initSaved();
-  loadConfig().then(loadSavedMatches).then(loadBoard).then(loadStatuses)
+  initPageSize();
+  loadConfig().then(loadSavedMatches).then(loadBoard).then(settleScroll).then(loadStatuses)
     .then(resumeLocalScan)
     // a startup step that fails must not take the meter, and the bypass
     // toggle that lives in it, down with it
     .catch((e) => console.warn("a startup step failed:", e))
+    .then(settleScroll)                 // a startup step that failed still settles it
     .then(loadAllowance);
   initRail();
   initWakeChecks();
