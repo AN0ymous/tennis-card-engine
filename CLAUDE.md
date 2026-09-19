@@ -13,9 +13,21 @@ on a website.
 ## How it runs
 
 - **GitHub (main setup):** public repo `tennis-card-engine`, branch `main`.
-  - `.github/workflows/scan.yml` runs the engine once a day at `17 23 * * *`
-    (7:17am Singapore time), timeout 60 minutes, then `export_static.py results`
-    and commits `results/`.
+  - `.github/workflows/scan.yml` runs the engine once a day at `30 9 * * *`
+    (09:30 UTC, 5:30pm Singapore time), timeout 60 minutes, then
+    `export_static.py results` and commits `results/`.
+    **The hour is chosen against the call budget, not the clock at home.**
+    The local counter runs on Pacific days and starts again at Pacific
+    midnight -- 07:00 UTC in summer, 08:00 UTC in winter -- so 09:30 clears
+    the reset whichever way the clocks have gone. It used to be 23:17 UTC,
+    which is 16:17 Pacific: the tail of the counter's own day, so the one run
+    that has to be comprehensive was left whatever the day's hand-started
+    scans had not spent. On 19 Sep it was left nothing -- run 66 checked 0
+    listings and failed on its first call, with 450 calls still free on
+    eBay's side. Any morning-Singapore slot is the tail of the Pacific day by
+    construction, so waking up to fresh results costs a run that can fail for
+    want of allowance. `TheDailyRunStartsOnAFullAllowance` in
+    `test_engine.py` fails if the hour drifts back.
   - `.github/workflows/pages.yml` publishes `web/` plus `results/` to GitHub Pages.
   - Secrets set: `EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET` (Production keyset),
     and possibly `ANTHROPIC_API_KEY` (optional photo checks).
@@ -130,6 +142,18 @@ on a website.
   against the 102 recorded rows: 6 titles the reader could not place became
   2, and both of those are cards with two players on them, where naming
   neither is right.
+  **Dots put a first name outside the pattern altogether.** "2024 Topps
+  Chrome Tennis J.J. Wolf 1st Gold Refractor 50/50" left a run of one and so
+  no player at all -- the one blank on a 252-card board, and enough to fail
+  the suite against live data on 19 Sep. `INITIALS_RE` reads dotted initials
+  as the first name they are, on exactly the BEN/ZOE terms: only immediately
+  before a plain name, never as a run of their own, **two initials only**
+  (three is nearly always a competition -- A.T.P., I.T.F., U.S.A.), and never
+  when the letters are one of `SHORT_CODES`, which is what keeps R.C. out.
+  `_as_written` puts back the trailing dot the tokeniser peels, so it reads
+  "J.J. Wolf". **A blank player is a decision, not a gap**, so the board test
+  no longer demands one; what it does forbid is the old literal "Unknown
+  player", which the page would print as a name.
 - **A card grade over an autograph grade is not a serial.** "PSA 9/9",
   "Psa MINT 9/9" and "BGS 9.5/10" read exactly like N/M, and three PSA 9
   autos were recorded as the last of a run of nine. `is_grade_pair` steps
@@ -219,7 +243,14 @@ on a website.
   ordinary numbers that disagree ("/250 ... 1/25") are left alone, because a
   parallel really can be a shorter run than the base; and the same run
   stated twice is no contradiction, which keeps the Andreeva "01/10 ... /10"
-  a serial. Like a grade pair or a card number it is **stepped over, not
+  a serial. **A run of five states itself in one digit** (`PRINT_RUN_ANY_RE`,
+  19 Sep): "2024 Topps Chrome Tennis Rookie /5 Mirra Andreeva eBay 1/1" at
+  $6,000 was recorded as a true 1/1 because the sign this rule shared with
+  the grade rule asks for two digits, and a run of five has no true 1/1 in it
+  either. The grade rule keeps the two-digit sign, since it wants a run over
+  ten and one digit can never be that. Measured against the 252 cards on the
+  board that day, widening it changes exactly that one.
+  Like a grade pair or a card number it is **stepped over, not
   rejected outright** -- the specifics, and the photo where the photo step is
   on, get their say before the listing is turned away -- so `settled_by_title`
   no longer settles such a title for free and it costs one call. Measured
@@ -534,10 +565,15 @@ on 18 Sep decompose exactly (counter deltas 432 and 307):
 
 ## Open items
 
-- How often eBay states the sport at all is still unknown: the new `Sport`
-  column answers it after the next scan. If nearly every listing states it, the
-  "check by eye" caution below can become a rejection; if many leave it blank,
-  it has to stay a caution. Sort the spreadsheet by `Sport` after the next run.
+- **Answered 19 Sep: the "check by eye" caution has to stay a caution.**
+  Measured on the 252-card board, **198 state a sport and 54 (21%) leave it
+  blank**. A blanket rejection of a listing that says nothing would drop a
+  fifth of the record. Two things worth knowing about the column: eBay hands
+  back `TENNIS` beside `Tennis`, and multi-sport strings like "Auto Racing,
+  Baseball, ... Tennis", so sort on it loosely; and one recorded Nadal Topps
+  Graphite "Break Point" card carries `Sport: Breaking`, kept only because
+  Graphite is in `TENNIS_ONLY_SETS` -- a seller's wrong field, and evidence
+  for why those lists exist.
 - **Does the surname search really return everything the full-name search
   does?** Run 41 (both searches) checked 605 Shapovalov Topps Chrome
   listings; run 42, 47 minutes later (surname only), checked 579. Listings

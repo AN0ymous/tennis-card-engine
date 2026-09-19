@@ -231,8 +231,14 @@ class BoardForTheWebsite(unittest.TestCase):
         self.assertIsInstance(board, list)
         for card in board:
             with self.subTest(card=card.get("title", "?")):
-                for field in ("player", "title", "serial", "link"):
+                for field in ("title", "serial", "link"):
                     self.assertTrue(card.get(field), f"{field} is empty")
+                # The player is deliberately allowed to be empty: get_player
+                # returns "" rather than guess between two names, and the page
+                # shows "Player not named" for it. What must never appear is
+                # the old literal, which the page would print as a name.
+                self.assertNotEqual((card.get("player") or "").strip().lower(),
+                                    "unknown player")
                 self.assertTrue(engine.item_id_from_link(card["link"]),
                                 "link gives no item id, so its status can never be looked up")
 
@@ -2968,6 +2974,23 @@ class ATitleThatArguesWithItself(unittest.TestCase):
                 self.assertEqual(engine.contradicted_pairs_in(title), set())
                 self.assertEqual(engine.extract_serial(title, {}), serial)
 
+    def test_a_run_of_five_states_itself_in_one_digit(self):
+        """"2024 Topps Chrome Tennis Rookie /5 Mirra Andreeva eBay 1/1" at
+        $6,000 was recorded as a true 1/1 on 19 Sep, because the sign the rule
+        read asked for two digits and a run of five has one. A run of five has
+        no true 1/1 in it either. Measured against the 252 cards on the board
+        that day, widening it changes exactly this one."""
+        andreeva = "2024 Topps Chrome Tennis Rookie /5 Mirra Andreeva eBay 1/1"
+        self.assertEqual(engine.contradicted_pairs_in(andreeva), {"1/1"})
+        self.assertEqual(engine.extract_serial(andreeva, {}), (None, None))
+        self.assertEqual(engine.extract_serial(andreeva, {"Serial Number": ["3/5"]}), (3, 5))
+
+    def test_a_one_of_one_beside_a_run_of_one_is_no_contradiction(self):
+        """"/1" states a run of one, which is what a 1/1 is."""
+        self.assertEqual(
+            engine.contradicted_pairs_in("2024 Topps Royalty Agassi Platinum Auto /1 1/1"),
+            set())
+
     def test_the_title_alone_no_longer_settles_it_so_the_specifics_get_a_say(self):
         """Stepped over, not rejected outright: a listing whose specifics carry
         the real serial is still recorded, which is why the title cannot settle
@@ -3193,6 +3216,39 @@ class EveryStatusCallHasToEarnItself(unittest.TestCase):
         self.assertIn("engine.status_settled(seeded.get(item_id))", seed)
 
 
+class TheDailyRunStartsOnAFullAllowance(unittest.TestCase):
+    """The scheduled run is the one that has to be comprehensive, so it must
+    not be scheduled on the leftovers of the call budget's own day. The local
+    counter runs on Pacific days and starts again at Pacific midnight: 07:00
+    UTC in summer, 08:00 UTC in winter. At 23:17 UTC the run began at 16:17
+    Pacific, seven hours from the end of a day the hand-started scans had
+    already spent -- and on 19 Sep it checked 0 listings and failed on its
+    first call with 450 calls still free on eBay's side."""
+
+    def cron(self):
+        with open(os.path.join(HERE, ".github", "workflows", "scan.yml")) as f:
+            found = re.findall(r'- cron:\s*"([^"]+)"', f.read())
+        self.assertEqual(len(found), 1, "expected exactly one schedule")
+        minute, hour = found[0].split()[:2]
+        return int(hour), int(minute)
+
+    def test_the_schedule_sits_after_the_allowance_resets(self):
+        """Nine to twelve UTC: past 08:00, the later of the two resets, so it
+        is on the right side of it whichever way the clocks have gone, and
+        still early enough in the Pacific day to leave room behind it."""
+        hour, _ = self.cron()
+        self.assertGreaterEqual(hour, 9, "the run would start before the winter reset")
+        self.assertLessEqual(hour, 12, "the run would start late in the Pacific day")
+
+    def test_the_schedule_is_still_a_day_apart(self):
+        """The status saving rests on the scheduled runs being 24 hours apart:
+        one run a day, every day, or STATUS_FRESH_SECONDS starts swallowing
+        the refresh the SOLD flag depends on."""
+        with open(os.path.join(HERE, ".github", "workflows", "scan.yml")) as f:
+            cron = re.findall(r'- cron:\s*"([^"]+)"', f.read())[0]
+        self.assertEqual(cron.split()[2:], ["*", "*", "*"], "not once a day any more")
+
+
 class TheExportNeverBlanksThePublishedBoard(unittest.TestCase):
     """build_board hands back nothing at all when the spreadsheet is missing
     or unreadable -- a lost file, not a day with no cards -- and that nothing
@@ -3304,6 +3360,34 @@ class PlayersReadOffTheTitle(unittest.TestCase):
         for title, want in self.SHORT_FIRST_NAMES.items():
             with self.subTest(title=title[:50]):
                 self.assertEqual(engine.player_from_title(title), want)
+
+    # initials standing where a first name stands
+    INITIALS = {
+        "2024 Topps Chrome Tennis J.J. Wolf 1st Gold Refractor 50/50": "J.J. Wolf",
+        "2024 Topps Chrome A.J. Kruger Blue Refractor Auto 1/25": "A.J. Kruger",
+        "2025 TOPPS GRAPHITE TENNIS T.J. SHELBAYH ON CARD AUTO 1/15": "T.J. Shelbayh",
+    }
+
+    def test_initials_are_read_as_the_first_name_they_are(self):
+        """"2024 Topps Chrome Tennis J.J. Wolf 1st Gold Refractor 50/50" left
+        a run of one and so no player at all -- the dots put the token outside
+        the name pattern. It is the BEN and ZOE case with punctuation, and it
+        made the suite fail against the live board on 19 Sep."""
+        for title, want in self.INITIALS.items():
+            with self.subTest(title=title[:50]):
+                self.assertEqual(engine.player_from_title(title), want)
+
+    def test_initials_still_need_a_name_to_stand_in_front_of(self):
+        """Read only where a first name stands, never as a run of their own,
+        so a competition's initials do not become a player. "U.S." is followed
+        by "Open", which is card vocabulary, not a name; A.T.P. is three
+        initials, which a first name is not; and R.C. is a SHORT_CODE, kept
+        out by the same rule that keeps USA and UFC out."""
+        for title in ("2025 Topps Chrome Tennis U.S. Open Refractor 1/25",
+                      "2024 TOPPS NOW A.T.P. FINALS 5/5",
+                      "2024 Topps Chrome R.C. Shelton Auto 1/10"):
+            with self.subTest(title=title[:50]):
+                self.assertEqual(engine.player_from_title(title), "")
 
     def test_a_code_in_that_same_place_is_still_a_code(self):
         """The reason the rule was blunt: USA and UFC sit exactly where a
