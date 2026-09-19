@@ -36,7 +36,7 @@ against a card that got through, and each is documented in `CLAUDE.md`.
 ## Where it runs
 
 **On GitHub, which is the main setup.** `.github/workflows/scan.yml` runs the
-engine once a day at 23:17 UTC (7:17am Singapore), exports the results and
+engine once a day at 09:30 UTC (5:30pm Singapore), exports the results and
 commits them to `results/`. `.github/workflows/pages.yml` then publishes `web/`
 plus `results/` to GitHub Pages, so the site is a static page anyone can open
 from a phone with nothing switched on at home.

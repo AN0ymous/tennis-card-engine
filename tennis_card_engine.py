@@ -1194,6 +1194,13 @@ GRADE_CONTEXT_RE = re.compile(
 # N/M or of a date (a digit or slash in front), so "9/7/2025" states nothing.
 PRINT_RUN_ELSEWHERE_RE = re.compile(r"(?<![\d/])/\s*(\d{2,5})\b")
 
+# The same sign, down to a single digit: the "/5" of "2024 Topps Chrome Tennis
+# Rookie /5 Mirra Andreeva eBay 1/1", $6,000, recorded as a true 1/1 on 19 Sep
+# because the rule above asks for two digits and a run of five states itself in
+# one. Only is_contradicted_pair reads this one; is_grade_pair wants a run over
+# ten, which one digit can never be, so widening it there would change nothing.
+PRINT_RUN_ANY_RE = re.compile(r"(?<![\d/])/\s*(\d{1,5})\b")
+
 
 def is_grade_pair(title, match, aspects=None):
     """Whether this N/M is a card grade over an autograph grade -- "PSA 9/9",
@@ -1305,7 +1312,8 @@ def is_contradicted_pair(title, match):
     09/10. A card from a run of ten cannot also be a true 1/1.
 
     Deliberately narrow: only a 1/1 is turned away, and only when the title
-    itself states a run of two or more elsewhere. A genuine 1/1 has no such
+    itself states a run of two or more elsewhere -- down to a single digit,
+    since "Rookie /5 ... eBay 1/1" is the same boast as "# /10 ... 1/1". A genuine 1/1 has no such
     number to state, and two ordinary numbers that disagree ("/250 ... 1/25")
     are left alone -- a parallel really can be a shorter run than the base.
     Stating the same run twice is no contradiction either, which is what
@@ -1317,7 +1325,7 @@ def is_contradicted_pair(title, match):
     if (int(match.group(1)), int(match.group(2))) != (1, 1):
         return False
     elsewhere = title[:match.start()] + " " + title[match.end():]
-    return any(int(m.group(1)) > 1 for m in PRINT_RUN_ELSEWHERE_RE.finditer(elsewhere))
+    return any(int(m.group(1)) > 1 for m in PRINT_RUN_ANY_RE.finditer(elsewhere))
 
 
 def contradicted_pairs_in(title):
@@ -1404,6 +1412,15 @@ SHORT_CODES = set("""
 
 NAME_TOKEN_RE = re.compile(r"^[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F'\u2019-]*$")
 
+# Dotted initials standing where a first name stands: the "J.J." of "2024 Topps
+# Chrome Tennis J.J. Wolf 1st Gold Refractor 50/50", which left a run of one
+# and so no player at all. The tokeniser has already peeled the outer dot by
+# the time this is asked, so "J.J." arrives as "J.J".
+# Two initials only, which is the shape a first name takes -- J.J., A.J., T.J.
+# Three is nearly always a competition (A.T.P., I.T.F., U.S.A.), and the same
+# SHORT_CODES that keep USA and UFC out of a name keep R.C. out as well.
+INITIALS_RE = re.compile(r"^[A-Za-z]\.[A-Za-z]$")
+
 _brand_words_cache = None
 
 
@@ -1428,7 +1445,11 @@ def _name_like(tok, middle=False, before_name=False):
     ZOE KRUGER. Two or three letters in capitals are read as a name only
     there, and only when they are not a code in SHORT_CODES."""
     if not NAME_TOKEN_RE.match(tok):
-        return False
+        # Initials are read the way BEN and ZOE are: only immediately before a
+        # plain name, never as a run of their own, and never when the letters
+        # are one of the codes that sit in exactly that place.
+        return bool(before_name and INITIALS_RE.match(tok)
+                    and tok.replace(".", "").lower() not in SHORT_CODES)
     if len(tok) == 1:
         return middle
     low = tok.lower()
@@ -1446,7 +1467,11 @@ def _name_like(tok, middle=False, before_name=False):
 
 
 def _as_written(tok):
-    """Keep McEnroe as McEnroe; only shouted or lower-cased words are recased."""
+    """Keep McEnroe as McEnroe; only shouted or lower-cased words are recased.
+    Initials keep their capitals and their dots, with the trailing one the
+    tokeniser peeled off put back, so J.J. is written as J.J."""
+    if INITIALS_RE.match(tok):
+        return tok.upper() + "."
     if tok.isupper() or tok.islower():
         return tok[:1].upper() + tok[1:].lower()
     return tok

@@ -1,10 +1,21 @@
-# Runs the engine on GitHub's machines once a day and keeps the results in
-# the repo, so nothing of yours has to be switched on. See IPAD_SETUP.md.
+# Runs the engine on GitHub's machines once a day, just after the daily call
+# allowance resets, and keeps the results in the repo, so nothing of yours has
+# to be switched on. See IPAD_SETUP.md.
 name: Scan eBay for bookend cards
 
 on:
   schedule:
-    - cron: "17 23 * * *"      # 23:17 UTC = 7:17am Singapore
+    # After the allowance resets, which is Pacific midnight -- 07:00 UTC in
+    # summer, 08:00 UTC in winter -- so 09:30 UTC clears it either way and
+    # daylight saving cannot quietly move the run to the wrong side of it.
+    # It used to be 23:17 UTC: 16:17 Pacific, the tail of the counter's day,
+    # so the one run that has to be comprehensive was left whatever the day's
+    # hand-started scans had not spent. On 19 Sep it was left nothing -- the
+    # run checked 0 listings and failed on its first call, with 450 calls
+    # still free on eBay's own side. Waking up to fresh results is not worth
+    # waking up to a failed run: any morning-Singapore slot is the tail of
+    # the Pacific day by construction.
+    - cron: "30 9 * * *"       # 09:30 UTC = 5:30pm Singapore
   # ...and the "Run workflow" button, or the website's "Run a scan", which
   # sends whatever the scan settings were set to. Every input is optional: a
   # scheduled run sends none of them and the engine keeps its own defaults.
