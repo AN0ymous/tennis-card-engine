@@ -1616,6 +1616,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 2
   },
+  "v1|117419571798|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
   "v1|124131417992|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -5596,9 +5601,9 @@
   "v1|144002385698|0": "reject",
   "v1|144013146556|0": "reject",
   "v1|144017093300|443306399216": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|144017093300|443306399222": {
     "verdict": "reject",
@@ -5630,9 +5635,9 @@
   "v1|144289925971|0": "reject",
   "v1|144289937881|0": "reject",
   "v1|144353448359|443668825034": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|144360399016|443674970111": {
     "verdict": "reject",
@@ -13317,6 +13322,11 @@
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 2
   },
+  "v1|168698843642|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
   "v1|173880100026|0": "reject",
   "v1|173880100031|0": "reject",
   "v1|174236896323|0": "reject",
@@ -15837,6 +15847,11 @@
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 2
   },
+  "v1|178509197704|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
   "v1|184250715090|0": "reject",
   "v1|184426653553|692186574327": {
     "verdict": "filtered",
@@ -15860,7 +15875,7 @@
   },
   "v1|184811998939|0": {
     "verdict": "filtered",
-    "rules": "0575838cb8d34417",
+    "rules": "56d6e2fbc987e652",
     "reason": "1/2000: print run not under the ceiling of 500"
   },
   "v1|184875925742|0": {
@@ -16693,9 +16708,9 @@
     "judge": 2
   },
   "v1|188641908663|0": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|188649531328|0": {
     "verdict": "filtered",
@@ -20722,9 +20737,9 @@
     "judge": 2
   },
   "v1|205735260542|506500860746": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|205780685772|0": "reject",
   "v1|205800934847|0": {
@@ -21870,6 +21885,11 @@
     "reason": "9/30 is neither the first nor the last of its run",
     "judge": 2
   },
+  "v1|206565850851|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
   "v1|223616764670|0": "reject",
   "v1|223779511776|522520294158": {
     "verdict": "filtered",
@@ -21887,9 +21907,9 @@
     "reason": "not a Shelton card"
   },
   "v1|224153896300|0": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|224182470404|0": {
     "verdict": "reject",
@@ -21904,9 +21924,9 @@
     "judge": 2
   },
   "v1|224390333582|0": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|224390346799|0": {
     "verdict": "reject",
@@ -22045,9 +22065,9 @@
     "judge": 2
   },
   "v1|225924028886|0": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|225934492402|525025928813": {
     "verdict": "reject",
@@ -23775,6 +23795,26 @@
     "reason": "title says WWE, not tennis",
     "judge": 2
   },
+  "v1|227527509784|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|227528166286|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|227528167470|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|227528168065|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
   "v1|233807725021|0": "reject",
   "v1|233807732188|0": "reject",
   "v1|233922835975|0": {
@@ -24043,9 +24083,9 @@
     "judge": 2
   },
   "v1|236152321214|536701951236": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|236155311411|0": {
     "verdict": "reject",
@@ -24184,9 +24224,9 @@
   },
   "v1|236623966484|537144463202": "reject",
   "v1|236623966484|537150903008": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|236623966484|537151921904": {
     "verdict": "reject",
@@ -24242,9 +24282,9 @@
     "judge": 2
   },
   "v1|236682890133|537182769881": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|236682890133|537182769940": {
     "verdict": "reject",
@@ -33053,6 +33093,11 @@
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 2
   },
+  "v1|237075103187|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
   "v1|237075105250|0": {
     "verdict": "reject",
     "reason": "listing says Football, not tennis",
@@ -34256,6 +34301,21 @@
     "reason": "342/499 is neither the first nor the last of its run",
     "judge": 2
   },
+  "v1|237076421845|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|237076421853|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|237077142098|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
   "v1|254597341734|0": "reject",
   "v1|254768996343|0": {
     "verdict": "reject",
@@ -34318,9 +34378,9 @@
     "judge": 2
   },
   "v1|255249882265|0": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|255268514457|0": "reject",
   "v1|255345364227|0": {
@@ -43042,6 +43102,11 @@
     "reason": "blocked set: The NetPro Trading Card Company base",
     "judge": 2
   },
+  "v1|257749639100|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
   "v1|257749651816|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -44942,6 +45007,41 @@
     "reason": "64/499 is neither the first nor the last of its run",
     "judge": 2
   },
+  "v1|257751018592|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|257751234831|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|257751332488|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|257751332500|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|257751332515|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|257751679643|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|257751803938|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
   "v1|264974187839|0": {
     "verdict": "reject",
     "reason": "383/549 is neither the first nor the last of its run",
@@ -45773,9 +45873,9 @@
   "v1|267671050027|0": "reject",
   "v1|267671053739|0": "reject",
   "v1|267671058897|0": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|267671068751|0": {
     "verdict": "reject",
@@ -46377,6 +46477,11 @@
   "v1|267788483439|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|267788661780|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 2
   },
   "v1|274050911576|0": {
@@ -47961,6 +48066,11 @@
   "v1|278385720549|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|278385749943|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 2
   },
   "v1|278385782498|0": {
@@ -51947,6 +52057,11 @@
     "judge": 2
   },
   "v1|298685251941|0": "match",
+  "v1|298686219169|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
   "v1|303746780274|0": "reject",
   "v1|303753589755|0": {
     "verdict": "reject",
@@ -53696,6 +53811,16 @@
     "reason": "title says WWE, not tennis",
     "judge": 2
   },
+  "v1|307181739954|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|307181739975|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
   "v1|307181760319|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -54155,6 +54280,11 @@
   "v1|307185762886|0": {
     "verdict": "reject",
     "reason": "203/250 is neither the first nor the last of its run",
+    "judge": 2
+  },
+  "v1|307186147520|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 2
   },
   "v1|313292663506|612164104700": {
@@ -54702,9 +54832,9 @@
     "judge": 2
   },
   "v1|317909109654|616531274703": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|317917141430|0": {
     "verdict": "filtered",
@@ -68699,6 +68829,41 @@
     "reason": "title carries no sign of a serial number",
     "judge": 2
   },
+  "v1|336800217597|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|336800222888|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|336800403435|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|336800411462|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|336800412473|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 2
+  },
+  "v1|336800456609|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|336800525126|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
   "v1|353269329544|0": "reject",
   "v1|353479769182|0": {
     "verdict": "reject",
@@ -69598,9 +69763,9 @@
   },
   "v1|363752072325|632968608139": "reject",
   "v1|363752072325|632968608172": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|363761387252|632976855959": "reject",
   "v1|363813490899|0": "reject",
@@ -69831,9 +69996,9 @@
   "v1|365823219044|635610304687": "reject",
   "v1|365823223768|635610360635": "reject",
   "v1|365823223768|635610360636": {
-    "verdict": "filtered",
-    "rules": "0575838cb8d34417",
-    "reason": "not a Roger Federer card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
   },
   "v1|365823223774|635610087328": "reject",
   "v1|365827090738|635613350298": "reject",
@@ -73699,6 +73864,11 @@
     "reason": "manufacturer not in allow-list: 'NA'",
     "judge": 2
   },
+  "v1|377506333283|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
   "v1|381338553871|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -74514,6 +74684,11 @@
   "v1|394459224227|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|394525018056|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 2
   },
   "v1|394590408729|0": {
@@ -76242,6 +76417,16 @@
     "judge": 2
   },
   "v1|398407276121|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 2
+  },
+  "v1|398408682253|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 2
+  },
+  "v1|398408682254|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 2
@@ -78614,6 +78799,11 @@
   "v1|407225701515|0": {
     "verdict": "reject",
     "reason": "title says WWE, not tennis",
+    "judge": 2
+  },
+  "v1|407226041891|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 2
   },
   "v1|800019409228|0": "reject",
