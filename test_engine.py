@@ -3216,6 +3216,63 @@ class EveryStatusCallHasToEarnItself(unittest.TestCase):
         self.assertIn("engine.status_settled(seeded.get(item_id))", seed)
 
 
+class AFieldEbayShoutsBack(unittest.TestCase):
+    """eBay hands back Player and Sport however the seller typed them, and a
+    shouted one stood out on the board beside every other card: "HOLGER RUNE"
+    among the Holger Runes, "TENNIS" among the Tennises. Cosmetic only -- the
+    page's player filter lower-cases both sides before comparing, so nothing
+    it decides changes."""
+
+    def test_a_shouted_field_is_written_the_way_the_page_reads(self):
+        for shouted, want in (("HOLGER RUNE", "Holger Rune"),
+                              ("TENNIS", "Tennis"),
+                              ("ALTUG CELIKBILEK", "Altug Celikbilek"),
+                              ("erika andreeva, mirra andreeva",
+                               "Erika Andreeva, Mirra Andreeva")):
+            with self.subTest(shouted=shouted):
+                self.assertEqual(engine.as_typed(shouted), want)
+
+    def test_punctuation_separates_rather_than_swallows(self):
+        """Each run of letters is capitalised on its own, so the dots of an
+        initial, an apostrophe and a hyphen all survive."""
+        for shouted, want in (("J.J. WOLF", "J.J. Wolf"),
+                              ("O'BRIEN", "O'Brien"),
+                              ("SAINT-DENIS", "Saint-Denis")):
+            with self.subTest(shouted=shouted):
+                self.assertEqual(engine.as_typed(shouted), want)
+
+    def test_anything_mixed_is_somebody_elses_spelling_and_is_left_alone(self):
+        """McEnroe, a sport column listing several sports, a name with no
+        cased letters at all: none of these was shouted, so none is touched."""
+        for text in ("John McEnroe", "Tennis, Tennis (\u7f51\u7403)", "Iga Swiatek",
+                     "Auto Racing, Baseball, Basketball, Soccer, Tennis, Volleyball, Wrestling",
+                     "\u90d1\u94a6\u6587", ""):
+            with self.subTest(text=text):
+                self.assertEqual(engine.as_typed(text), text)
+
+    def test_ebays_own_field_still_wins_it_is_only_recased(self):
+        self.assertEqual(engine.get_player({"Player/Athlete": ["HOLGER RUNE"]}, "a title"),
+                         "Holger Rune")
+        self.assertEqual(engine.get_player({"Player/Athlete": ["Iga Swiatek"]}, "a title"),
+                         "Iga Swiatek")
+
+    def test_the_board_recases_a_row_recorded_before_the_rule(self):
+        """No rescan needed: build_board does it, so the 266 rows already in
+        the spreadsheet read right on the next export."""
+        with tempfile.TemporaryDirectory() as folder:
+            xlsx = os.path.join(folder, "sheet.xlsx")
+            wb, ws = engine.load_or_create_sheet(xlsx)
+            engine.append_row(ws, "HOLGER RUNE", "Topps", "2025 Topps Chrome",
+                              "2025 TOPPS CHROME TENNIS CHROME AUTO ORANGE GEOMETRIC "
+                              "HOLGER RUNE 25/25 PSA 9", 25, 25,
+                              "1.25 USD", "https://www.ebay.com/itm/117419302960",
+                              sport="TENNIS")
+            wb.save(xlsx)
+            board = engine.build_board(xlsx)
+        self.assertEqual([(c["player"], c["sport"]) for c in board],
+                         [("Holger Rune", "Tennis")])
+
+
 class TheDailyRunStartsOnAFullAllowance(unittest.TestCase):
     """The scheduled run is the one that has to be comprehensive, so it must
     not be scheduled on the leftovers of the call budget's own day. The local

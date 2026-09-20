@@ -1477,6 +1477,27 @@ def _as_written(tok):
     return tok
 
 
+# A run of letters in a field the seller shouted. Everything else -- a dot, an
+# apostrophe, a hyphen, a comma -- is a separator, so each run is capitalised
+# on its own: "J.J. WOLF" is J.J. Wolf, "O'BRIEN" is O'Brien, "SAINT-DENIS" is
+# Saint-Denis.
+SHOUTED_WORD_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
+
+
+def as_typed(text):
+    """A field eBay hands back in capitals, written the way the rest of the
+    page reads: "HOLGER RUNE" is Holger Rune, "TENNIS" is Tennis. Only a value
+    that is all capitals or all lower case is touched -- anything mixed is
+    somebody's own spelling ("John McEnroe", "Tennis, Tennis (\u7f51\u7403)",
+    "Auto Racing, Baseball, ... Tennis") and is left exactly as it came. A
+    shouted McEnroe comes back as Mcenroe, which is the price of the rule and
+    still reads better than MCENROE."""
+    stripped = (text or "").strip()
+    if not stripped or not (stripped.isupper() or stripped.islower()):
+        return text
+    return SHOUTED_WORD_RE.sub(lambda m: m.group(0)[:1].upper() + m.group(0)[1:].lower(), text)
+
+
 def player_from_title(title, known=()):
     """The player a listing title names, or "" when it cannot be told.
 
@@ -1557,7 +1578,9 @@ def get_player(aspects, title="", known=PLAYERS):
     for key in PLAYER_ASPECTS:
         values = (aspects or {}).get(key)
         if values and str(values[0]).strip():
-            return str(values[0]).strip()
+            # eBay hands this back however the seller typed it, and a shouted
+            # name stood out on the board beside every other one.
+            return as_typed(str(values[0]).strip())
     return player_from_title(title, known)
 
 
@@ -2318,8 +2341,11 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
         cards.append({
             # Recorded before the title was read for a name: fill it now, or
             # leave it "" and let the page say so quietly rather than shrug.
-            "player": (cell(row, "Player") if cell(row, "Player") not in ("", "Unknown player")
-                       else player_from_title(cell(row, "Card Description"), known)),
+            # as_typed so a row recorded before the rule existed reads the
+            # same as one recorded after it, with no scan needed.
+            "player": as_typed(cell(row, "Player")
+                               if cell(row, "Player") not in ("", "Unknown player")
+                               else player_from_title(cell(row, "Card Description"), known)),
             "manufacturer": manufacturer,
             "set_name": set_name,
             "brand": brand_of(manufacturer, set_name, cell(row, "Card Description")),
@@ -2340,7 +2366,7 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
             "outfit": cell(row, "Outfit Colour"),
             "colourMatch": cell(row, "Colour Match"),
             "caution": caution,
-            "sport": cell(row, "Sport"),
+            "sport": as_typed(cell(row, "Sport")),
         })
     wb.close()
     # newest listing first; rows from before the Listed column fall back to
@@ -2527,7 +2553,10 @@ def judge_listing(item, detail, player=None, rules=None):
         "bids": detail.get("bidCount"),
         "cardType": card_type,
         "grading": grading,
-        "sport": sport,
+        # as_typed here and not at sport_named: the reject reason above quotes
+        # the sport as eBay wrote it, and those reasons are kept in
+        # seen_items.json, where a changed spelling would read as a new reason.
+        "sport": as_typed(sport),
         "caution": caution,
     }
     fields["parallel"], fields["outfit"], fields["colourMatch"] = colour_reading(
