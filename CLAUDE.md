@@ -154,6 +154,22 @@ on a website.
   "J.J. Wolf". **A blank player is a decision, not a gap**, so the board test
   no longer demands one; what it does forbid is the old literal "Unknown
   player", which the page would print as a name.
+  **A field eBay shouts back is written the way the page reads** (`as_typed`,
+  20 Sep). eBay hands back Player and Sport however the seller typed them, so
+  "HOLGER RUNE" sat among the Holger Runes and "TENNIS" among the Tennises --
+  13 player names and 3 sports on a 266-card board. Only a value that is all
+  capitals or all lower case is touched; anything mixed is somebody's own
+  spelling ("John McEnroe", "Tennis, Tennis (\u7f51\u7403)", the seven-sport
+  strings) and is left exactly as it came. Each run of letters is capitalised
+  on its own, so J.J. Wolf, O'Brien and Saint-Denis all survive; a shouted
+  MCENROE comes back Mcenroe, which is the price of the rule. It runs in
+  `get_player` and on the match record, and again in `build_board`, so rows
+  recorded before the rule read right with no scan needed. **Cosmetic only:**
+  the page's player filter lower-cases both sides before comparing (`words()`
+  in `app.js`), so nothing it decides changes. Deliberately **not** applied in
+  `sport_named`, because the reject reason quotes the sport as eBay wrote it
+  and those reasons live in `seen_items.json`, where a changed spelling would
+  read as a new reason.
 - **A card grade over an autograph grade is not a serial.** "PSA 9/9",
   "Psa MINT 9/9" and "BGS 9.5/10" read exactly like N/M, and three PSA 9
   autos were recorded as the last of a run of nine. `is_grade_pair` steps
