@@ -777,6 +777,81 @@ class SportGate(unittest.TestCase):
         self.assertEqual(engine.sport_named({}), "")
         self.assertEqual(engine.sport_named({"Sport": ["  "]}), "")
 
+    SEVEN = "Auto Racing, Baseball, Basketball, Soccer, Tennis, Volleyball, Wrestling"
+
+    def test_a_field_that_ticks_every_sport_settles_nothing(self):
+        """Five recorded rows carry this exact string; one of them is a
+        Colorado Rockies card. One sport said twice is still one sport."""
+        self.assertEqual(engine.sport_settled({"Sport": [self.SEVEN]}), "")
+        self.assertEqual(engine.sport_settled({"Sport": ["Baseball"]}), "Baseball")
+        self.assertEqual(engine.sport_settled({"Sport": ["Tennis, Tennis (\u7f51\u7403)"]}), "Tennis")
+        self.assertEqual(engine.sport_settled({}), "")
+        self.assertEqual(engine.sport_named({"Sport": [self.SEVEN]}), self.SEVEN)   # recorded as found
+
+    def test_a_baseball_card_behind_every_sport_ticked_is_kept_but_marked(self):
+        """The Yanquiel Fernandez row from 20 Sep: the word Tennis in a
+        seven-sport field let it through clean. The title has to vouch now,
+        and it does not, so the caution says why. The field is recorded as
+        the seller wrote it."""
+        verdict, _, fields = self.judge(
+            "2026 TOPPS CHROME TEAL REFRACTOR YANQUIEL FERNANDEZ RC AUTO #299/299",
+            {**self.TOPPS, "Set": ["2026 Topps Chrome"], "Sport": [self.SEVEN]})
+        self.assertEqual(verdict, "match")
+        self.assertIn("ticks 7 sports", fields["caution"])
+        self.assertEqual(fields["sport"], self.SEVEN)
+
+    def test_a_tennis_title_behind_every_sport_ticked_is_clean(self):
+        """The other four rows with that field say TENNIS in the title."""
+        verdict, _, fields = self.judge(
+            "2025 TOPPS CHROME TENNIS RED REFRACTOR OMAR JASIKA RC 1ST #1/5",
+            {**self.TOPPS, "Set": ["2025 Topps Chrome"], "Sport": [self.SEVEN]})
+        self.assertEqual(verdict, "match")
+        self.assertEqual(fields["caution"], "")
+        verdict, _, fields = self.judge(
+            "2025 Topps Chrome Coco Gauff Gold Refractor Auto 01/50",
+            {**self.TOPPS, "Set": ["2025 Topps Chrome"], "Sport": ["Tennis, Tennis (\u7f51\u7403)"]})
+        self.assertEqual(verdict, "match")
+        self.assertEqual(fields["caution"], "")
+
+    def test_several_sports_never_reject(self):
+        """A reject needs one named sport; a list that happens to lack tennis
+        is still a seller ticking boxes, so it is the caution, not the door."""
+        verdict, _, fields = self.judge(
+            "2025 Topps Chrome Aaron Judge Refractor 1/25",
+            {**self.TOPPS, "Set": ["2025 Topps Chrome"], "Sport": ["Baseball, Basketball"]})
+        self.assertEqual(verdict, "match")
+        self.assertIn("ticks 2 sports", fields["caution"])
+
+    def test_the_board_gives_old_rows_the_caution_a_scan_would_give_today(self):
+        """Nine rows from 16-17 Sep, before the rule, and the seven-sport row.
+        A tennis-only set needs none; a row that already has it is not given
+        it twice; another caution is kept beside it."""
+        with tempfile.TemporaryDirectory() as folder:
+            xlsx = os.path.join(folder, "sheet.xlsx")
+            wb, ws = engine.load_or_create_sheet(xlsx)
+            row = lambda n, title, set_name, **kw: engine.append_row(
+                ws, "Someone", "Topps", set_name, title, 1, 5, "10 USD",
+                f"https://www.ebay.com/itm/27659320900{n}", **kw)
+            row(1, "2024 Topps Royalty Rookie Jumbo Relic Card - Nastasja Schunk 1/5", "2024 Topps Royalty")
+            row(2, "2026 TOPPS CHROME TEAL REFRACTOR YANQUIEL FERNANDEZ RC AUTO 1/5", "2026 Topps Chrome", sport=self.SEVEN)
+            row(3, "2024 Topps Graphite Mirra Andreeva Patch Auto 1/5", "2024 Topps Graphite")
+            row(4, "2025 Topps Chrome Tennis Coco Gauff Refractor 1/5", "2025 Topps Chrome")
+            row(5, "2021 Topps Chrome Autograph Card Tracy Austin 1/5", "2021 Topps Chrome",
+                caution="nothing on the listing says what sport this is; check by eye")
+            row(6, "2013 Ace Authentic Someone Auto 1/5", "", caution="Ace Authentic autograph: on-card or sticker not stated; check by eye")
+            row(7, "2024 Topps Chrome Someone Auto 1/5", "2024 Topps Chrome", caution="title says 1/5 but eBay's details say 3/5; check by eye")
+            wb.save(xlsx)
+            board = {c["link"][-1]: c["caution"] for c in engine.build_board(xlsx)}
+        self.assertEqual(board["1"], "nothing on the listing says what sport this is; check by eye")
+        self.assertEqual(board["2"], "listing ticks 7 sports, which settles nothing; check by eye")
+        self.assertEqual(board["3"], "")
+        self.assertEqual(board["4"], "")
+        self.assertEqual(board["5"], "nothing on the listing says what sport this is; check by eye")
+        self.assertEqual(board["6"], "Ace Authentic autograph: on-card or sticker not stated; check by eye")
+        self.assertEqual(board["7"], "title says 1/5 but eBay's details say 3/5; check by eye \u00b7 "
+                                     "nothing on the listing says what sport this is; check by eye")
+        self.assertEqual(len(board), 7, "a caution never drops a card")
+
     def test_the_spreadsheet_keeps_a_sport_column(self):
         """So the next run answers how often eBay states it at all, and whether
         the caution above can ever become a rejection."""

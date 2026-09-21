@@ -105,7 +105,20 @@ on a website.
   Panini Instant, which every sport is printed in), a listing whose `Sport`
   specific names another sport is rejected outright, and a listing that states
   nothing is kept with a "check by eye" caution. A wrong card is one glance to
-  dismiss; a missed one is gone for good.
+  dismiss; a missed one is gone for good. **A Sport field that ticks several
+  sports says nothing** (`sport_settled`, 21 Sep): "Auto Racing, Baseball,
+  Basketball, Soccer, Tennis, Volleyball, Wrestling" sat on five recorded
+  rows, four of them tennis and one a Colorado Rockies card (Yanquiel
+  Fernandez, 20 Sep) that the word Tennis in that string let through with no
+  caution. Now only a field naming one sport settles anything: one that is
+  not tennis rejects, several sports fall back to the title and the
+  tennis-only lines, and a card nothing vouches for is kept with "listing
+  ticks 7 sports, which settles nothing; check by eye". One sport said twice
+  ("Tennis, Tennis (网球)") is one sport. `sport_named` still records the
+  field as the seller wrote it. `sport_caution` is shared by the judge and
+  `build_board`, so the nine rows recorded on 16-17 Sep before the rule
+  existed, and the Rockies row, carry on the page the caution a scan would
+  give them today; a caution never drops a card.
 - **A card's player is read off the title when eBay's field is blank.**
   12 of 75 recorded cards read "Unknown player" with the name in plain sight
   ("VINCE SPADEA \"SILVER BASE CARD 100 /100\" ACE SIGNATURE SERIES 2005").

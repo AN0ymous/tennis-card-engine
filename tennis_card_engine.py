@@ -1871,6 +1871,27 @@ def sport_named(aspects):
     return ""
 
 
+def sports_listed(aspects):
+    """The sports the Sport field names, one per comma-separated entry."""
+    return [p.strip() for p in sport_named(aspects).split(",") if p.strip()]
+
+
+def sport_settled(aspects):
+    """The one sport the listing settles on, or "" when it states none or
+    several. A seller who ticks every sport in eBay's list has said nothing:
+    "Auto Racing, Baseball, Basketball, Soccer, Tennis, Volleyball, Wrestling"
+    sat on five recorded rows, four of them tennis and one a Colorado Rockies
+    card (Yanquiel Fernandez, 20 Sep) that the word "Tennis" in that string
+    let through with no caution. Entries that all say tennis -- "Tennis,
+    Tennis (网球)" -- are one sport said twice."""
+    parts = sports_listed(aspects)
+    if not parts:
+        return ""
+    if len(parts) == 1 or all("tennis" in p.lower() for p in parts):
+        return parts[0]
+    return ""
+
+
 # Words that put a card in another sport when the title says them and not
 # "tennis". Whole words, so "golf" cannot hit "Golfo".
 OTHER_SPORT_WORDS = ("ufc", "mma", "baseball", "mlb", "basketball", "nba", "wnba",
@@ -1898,11 +1919,24 @@ def is_tennis_listing(title, aspects=None):
     text = title.lower()
     if "tennis" in text:
         return True
-    if "tennis" in sport_named(aspects).lower():
-        return True
+    if "tennis" in sport_settled(aspects).lower():
+        return True                 # settled on tennis; several sports settle nothing
     maker = " ".join(str(v) for k in ("Manufacturer", "Card Manufacturer", "Set") for v in aspects.get(k) or []).lower()
     return any(m in maker or m in text
                for m in TENNIS_ONLY_MAKERS + TENNIS_ONLY_SETS)
+
+
+def sport_caution(title, aspects=None):
+    """The caution a kept listing earns for its sport, or "" when something on
+    it says tennis. Shared by the judge and the board, so a row recorded
+    before the rule existed reads the same as one recorded today."""
+    aspects = aspects or {}
+    if is_tennis_listing(title, aspects):
+        return ""
+    listed = sports_listed(aspects)
+    if len(listed) > 1:
+        return f"listing ticks {len(listed)} sports, which settles nothing; check by eye"
+    return "nothing on the listing says what sport this is; check by eye"
 
 
 def matches_player(title, player, aspects=None):
@@ -2338,6 +2372,13 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
             if "autograph: on-card or sticker not stated" in caution:
                 caution = re.sub(r"(\w[\w ]*) autograph: on-card or sticker not stated; check by eye",
                                  r"\1: check the numbering is stamped, not on a circle sticker", caution)
+        # Recorded before the sport rule existed (16-17 Sep), or under a Sport
+        # field that ticked every sport: the caution a scan would give it
+        # today, so old and new rows read alike. Nothing is dropped here.
+        note = sport_caution(cell(row, "Card Description"),
+                             {"Sport": [cell(row, "Sport")], "Set": [set_name], "Manufacturer": [manufacturer]})
+        if note and note not in caution:
+            caution = f"{caution} \u00b7 {note}" if caution else note
         cards.append({
             # Recorded before the title was read for a name: fill it now, or
             # leave it "" and let the page say so quietly rather than shrug.
@@ -2458,17 +2499,19 @@ def judge_listing(item, detail, player=None, rules=None):
     # marks rather than rejects -- a wrong card is one glance to dismiss, a
     # missed one is gone for good. Recording the sport is what will settle
     # whether this can ever become a rejection.
-    sport = sport_named(aspects) or other_sport_in_title(title)
+    sport = sport_named(aspects) or other_sport_in_title(title)   # recorded as found
     if not is_tennis_listing(title, aspects):
-        if sport:
+        settled = sport_settled(aspects) or other_sport_in_title(title)
+        if settled:
             # The listing was asked and answered: this is somebody else's
             # sport. No tennis card is lost by believing it.
-            return "reject", f"listing says {sport}, not tennis", None
-        # Nothing on the listing says either way, and that is the common case:
-        # of the matches recorded so far, 21 say "tennis" nowhere and every one
-        # is a real tennis card. So this marks rather than rejects -- a wrong
-        # card is one glance to dismiss, a missed one is gone for good.
-        note = "nothing on the listing says what sport this is; check by eye"
+            return "reject", f"listing says {settled}, not tennis", None
+        # Nothing on the listing says either way -- blank, or every sport in
+        # eBay's list ticked at once -- and that is the common case: of the
+        # matches recorded so far, 21 say "tennis" nowhere and every one is a
+        # real tennis card. So this marks rather than rejects -- a wrong card
+        # is one glance to dismiss, a missed one is gone for good.
+        note = sport_caution(title, aspects)
         caution = f"{caution} \u00b7 {note}" if caution else note
 
     seller = (detail.get("seller", {}) or {}).get("username", "").lower()
