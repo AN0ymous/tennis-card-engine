@@ -3558,6 +3558,165 @@ class PlayersReadOffTheTitle(unittest.TestCase):
     def test_set_codes_and_abbreviations_are_not_names(self):
         self.assertEqual(engine.player_from_title("GS-MKC TRA-VJK RC SSP USA 1/10"), "")
 
+    def test_a_one_letter_slip_snaps_to_a_known_name(self):
+        """Three recorded cards carried the seller's typo as the player."""
+        known = ["Denis Shapovalov", "Shintaro Mochizuki", "Nastasja Schunk", "Mirra Andreeva",
+                 "Erika Andreeva", "Kayla Day", "Madison Keys"]
+        for written, want in (("Denis Shapovolov", "Denis Shapovalov"),
+                              ("Shintaro Mochizuhi", "Shintaro Mochizuki"),
+                              ("Nastasja Scunk", "Nastasja Schunk"),
+                              ("mirra andreeva", "Mirra Andreeva"),
+                              ("Erika Andreeva", "Erika Andreeva"),   # a real other player, not a slip
+                              ("Kayla Dax", "Kayla Dax"),             # short surname: left as written
+                              ("Madison Kyes", "Madison Kyes"),
+                              ("", "")):
+            with self.subTest(written=written):
+                self.assertEqual(engine.snap_to_known(written, known), want)
+
+
+class TitleRecognitionBaseline(unittest.TestCase):
+    """What the experiment's title-only baseline reads, on the recorded cards
+    it used to get wrong. The engine's own judge is not changed by these."""
+
+    def test_a_colour_before_the_kind_of_card_is_the_parallel(self):
+        for title, want in (("2024 Topps Graphite Tennis #GS-BBE Belinda Bencic Pink On Card Auto 15/15", "pink"),
+                            ("2024 Topps Graphite Tennis Daniel Rincon Rookie Blue On Card Auto 50/50 RC SP", "blue"),
+                            ("2024 TOPPS ROYALTY TENNIS FERNANDA CONTRERAS ROOKIE ON CARD AUTOGRAPH GREEN 5/5", "green"),
+                            ("Iga Swiatek 2023 Topps Chrome Orange Wave 25/25 PSA 10", "orange"),
+                            ("2024 Topps Royalty Collection MONICA SELES ROYAL DECREE ON CARD AUTO # 1/25", "")):
+            with self.subTest(title=title[:50]):
+                self.assertEqual(engine.parallel_colour(title), want)
+
+    def test_bare_ace_next_to_a_year_or_its_line_is_ace_authentic(self):
+        for title in ("2013 ACE Tennis National Autograph Card BA-CW1 Caroline Wozniacki 15/15",
+                      "2013 Ace Personal Best Career Ranking Arvane Rezai 1/15 #1 Card signed auto",
+                      'VINCE SPADEA "SILVER BASE CARD 100 /100" ACE SIGNATURE SERIES 2005'):
+            with self.subTest(title=title[:40]):
+                self.assertEqual(engine.resolve_manufacturer("", "", title), "Ace Authentic")
+                self.assertEqual(engine.title_recognition_inputs(title)[0]["set_name"], "Ace Authentic")
+        # "ace" is also a word of the game, and a maker in the field still wins
+        self.assertEqual(engine.resolve_manufacturer("", "", "2024 Topps Chrome Ace Serve Carlos Alcaraz 1/5"), "Topps")
+        self.assertEqual(engine.resolve_manufacturer("", "", "Federer ace machine card 1/1"), "")
+
+    def test_two_players_read_as_multiple(self):
+        known = engine.PLAYERS + ["Madison Keys", "Erika Andreeva"]
+        for title in ("2024 Topps Royalty-Prodigious Pair Coco Gauff,Jessica Pegula #PSP-PG Gold 10/10",
+                      "2024 TOPPS ROYALTY MADISON KEYS/BJORN FRATANGELO DUAL ON CARD AUTO 1/25 FOTL",
+                      "2024 Topps Royalty Tennis Mirra & Erika Andreeva Dual Auto Card 01/25",
+                      "Coco Gauff / Iga Swiatek dual auto 1/10"):
+            with self.subTest(title=title[:50]):
+                baseline, options = engine.title_recognition_inputs(title, known)
+                self.assertEqual(baseline["player"], "multiple")
+        baseline, options = engine.title_recognition_inputs(
+            "2024 TOPPS ROYALTY MADISON KEYS/BJORN FRATANGELO DUAL ON CARD AUTO 1/25 FOTL", known)
+        self.assertIn("Madison Keys", options["player"])
+        self.assertIn("Bjorn Fratangelo", options["player"])   # Jev can still name either
+        for title in ("Panini 2026 Instant Tennis Jannik Sinner #2 One of One Sports Trading Card。1/1",
+                      "topps graphite tennis 3 Card Kayla Day Lot. Relic, Relic Auto and 15/15",
+                      "SHINTARO MOCHIZUKI 2024 GSR-SMI Topps Graphite Auto/Relic card S#01/10 in holder"):
+            with self.subTest(title=title[:50]):
+                self.assertNotEqual(engine.title_recognition_inputs(title, known)[0]["player"], "multiple")
+
+    def test_a_lot_of_several_players_is_not_one_player(self):
+        """Seen in the first live sample: "Card Lot Sharapova Federer Agassi"
+        came back as a three-word name; "Ace Authentics Heroes & Legends" as
+        the player "Authentics Heroes"."""
+        known = engine.PLAYERS + ["Victoria Azarenka", "Jim Courier"]
+        for title in ("2005 Ace Authentic Signature & Debut Edition Card Lot Sharapova Federer Agassi",
+                      "2005 Ace Authentic Signature & 2008 Matchpoint Card Lot Federer Agassi Azarenka"):
+            with self.subTest(title=title[-30:]):
+                self.assertEqual(engine.player_from_title(title, known), "")
+                self.assertEqual(engine.title_recognition_inputs(title, known)[0]["player"], "multiple")
+        self.assertEqual(engine.player_from_title(
+            "2006 Ace Authentics Heroes & Legends Mariano Zabaleta #98 fm0"), "Mariano Zabaleta")
+        self.assertEqual(engine.player_from_title(
+            "Rafael Nadal Ace Authentic Tennis 2005 Top Seeds TS-6", known), "Rafael Nadal")
+        # one known player beside an unknown word is still that player
+        self.assertEqual(engine.player_from_title("Topps Chrome Roger Federer Refractor 1/5", known), "Roger Federer")
+
+    def test_a_known_typo_is_snapped_in_the_baseline_and_the_candidates(self):
+        known = engine.PLAYERS + ["Denis Shapovalov"]
+        baseline, options = engine.title_recognition_inputs(
+            "2024 Topps Royalty ---DENIS SHAPOVOLOV---SUPERIOR SIGNATURES----25/25", known)
+        self.assertEqual(baseline["player"], "Denis Shapovalov")
+        self.assertIn("Denis Shapovalov", options["player"])
+        # the engine's own reading of the sheet is untouched: it keeps what was written
+        self.assertEqual(engine.player_from_title("2024 Topps Royalty ---DENIS SHAPOVOLOV--- 25/25"),
+                         "Denis Shapovolov")
+
+    def test_not_graded_beats_a_grader_named_as_an_aspiration(self):
+        """Jev caught this one: "PSA ready NOT graded" read as graded."""
+        for title, want in (("2024 Topps Chrome Carlos Alcaraz PSA ready NOT graded", "raw"),
+                            ("Coco Gauff raw 1/1 Topps Chrome", "raw"),
+                            ("Sinner Topps Chrome ungraded auto 5/5", "raw"),
+                            ("Iga Swiatek PSA 10 1/10", "graded"),
+                            ("Rafael Nadal Topps Chrome PSA 9/9 Auto", "graded"),
+                            ("Alcaraz Topps Chrome slabbed 1/1", "graded")):
+            with self.subTest(title=title):
+                self.assertEqual(engine.classify_grading(title)[0], want)
+        self.assertEqual(engine.classify_grading("PSA ready NOT graded", {"Graded": ["Yes"]})[0], "graded")
+
+    def test_a_snapped_typo_is_offered_to_jev_once_as_the_known_name(self):
+        known = engine.PLAYERS + ["Denis Shapovalov"]
+        _, options = engine.title_recognition_inputs(
+            "2024 Topps Royalty ---DENIS SHAPOVOLOV---SUPERIOR SIGNATURES----25/25", known)
+        self.assertIn("Denis Shapovalov", options["player"])
+        self.assertNotIn("Denis Shapovolov", options["player"])
+        # a name nothing known resembles is still offered as written
+        _, options = engine.title_recognition_inputs("2024 Topps Royalty Fernanda Contreras 5/5", known)
+        self.assertIn("Fernanda Contreras", options["player"])
+
+    def test_what_1882_newest_listings_taught(self):
+        """Shadow-run on 22 Sep over the newest 1,882 listings across the seven
+        sets; each case here was a confident disagreement with Jev that turned
+        out to be the parser's fault. Confident disagreements went 379 -> 132."""
+        known = engine.PLAYERS + ["Novak Djokovic", "Daniil Medvedev"]
+        cases = {   # title: (player, set, parallel, year, serial)
+            "Topps 2026 Graphite Confetti Jessica Pegula CF-5 Insert Tennis Card WTA": ("Jessica Pegula", "Topps Graphite", "unknown", "2026", "unknown"),
+            "2025 TOPPS CHROME TENNIS----NOVAK DJOKOVIC---GEOMETRIC GOLD---06/50": ("Novak Djokovic", "Topps Chrome", "gold", "2025", "6/50"),
+            "2024 Topps Graphite Match Masters Aqua Refractor /199 Lorenzo Sonego #MM-MA": ("Lorenzo Sonego", "Topps Graphite", "aqua", "2024", "unknown"),
+            "2024 Topps Graphite Tennis Novak Djokovic Winning Streaks Aqua /199 WS-ND": ("Novak Djokovic", "Topps Graphite", "aqua", "2024", "unknown"),
+            "2024 Topps Chrome Tennis Autographs I #TCASCN Sean Cuenin Auto - NM-MT VR39": ("Sean Cuenin", "Topps Chrome", "unknown", "2024", "unknown"),
+            "\U0001f3beLuca Van Assche 2024 Topps Graphite Tennis SSP Fuchsia Pink /15 RC Rookie": ("Luca Van Assche", "Topps Graphite", "pink", "2024", "unknown"),
+            "2003 NETPRO ELITE 2000 #19 RAFAEL NADAL ROOKIE RC PSA 10": ("Rafael Nadal", "NetPro", "unknown", "2003", "unknown"),
+            "2026 Topps Now Alexandra Eala 1st Title Win in DC 8/3/26 Card #18": ("Alexandra Eala", "Topps Now", "unknown", "2026", "unknown"),
+            "Lorenzo Musetti 2026 Topps Graphite Tennis #51 Holo Blue - 04/50": ("Lorenzo Musetti", "Topps Graphite", "blue", "2026", "4/50"),
+            "Topps 2026 Graphite Signatures Auto RC Vilius Gaubas #GRS-VGS 03/50 blue": ("Vilius Gaubas", "Topps Graphite", "blue", "2026", "3/50"),
+            "2024 Topps Chrome Green Grass Court Refractor 77/99 Daniil Medvedev #2": ("Daniil Medvedev", "Topps Chrome", "green", "2024", "77/99"),
+            "2003 NetPro Serena Williams #1 PSA 9 MINT Rookie RC 0jk3": ("Serena Williams", "NetPro", "unknown", "2003", "unknown"),
+            "2026 TOPPS NOW #10 ELENA RYBAKINA BGS 10 BLACK LABEL": ("Elena Rybakina", "Topps Now", "unknown", "2026", "unknown"),
+            "2026 NETPRO International Series Dual Jersey Autograph Aryna Sabalenka Card": ("Aryna Sabalenka", "NetPro", "unknown", "2026", "unknown"),
+            "1991 Netpro Legends #2 Stan Smith PSA 9 (Top Pop, Pop 2)": ("Stan Smith", "NetPro", "unknown", "1991", "unknown"),
+            "2023-24 Topps Royalty Regalia Relics Jordan Hawkins, Jordan Hawkins RP": ("Jordan Hawkins", "Topps Royalty", "unknown", "2023", "unknown"),
+        }
+        for title, want in cases.items():
+            with self.subTest(title=title[:48]):
+                b = engine.title_recognition_inputs(title, known)[0]
+                self.assertEqual((b["player"], b["set_name"], b["parallel"], b["year"], b["serial"]), want)
+
+    def test_a_date_is_not_a_serial(self):
+        self.assertEqual(engine.extract_serial("2026 Topps Now Eala 1st Title Win 8/3/26 Card #18", {}), (None, None))
+        self.assertEqual(engine.extract_serial("Topps Now Sinner wins 1/5/26 Gold 1/5", {}), (1, 5))
+        self.assertEqual(engine.extract_serial("Roger Federer NetPro -1/0", {}), (1, 0))
+        self.assertEqual(engine.extract_serial("Nadal BGS 9.5/10 Refractor 1/25", {}), (1, 25))
+
+    def test_a_line_named_a_word_or_two_after_topps_confirms_the_set(self):
+        for title in ("Topps 2026 Graphite Sofia Kenin GSR-SKN Signed Auto Patch /50",
+                      "2026 Topps Tennis Graphite Marta Kostyuk Relic Auto Blue /50"):
+            with self.subTest(title=title[:40]):
+                self.assertTrue(engine.line_in_title("graphite", title.lower()))
+                self.assertEqual(engine.brand_of("Topps", "", title), "Topps Graphite")
+        self.assertFalse(engine.line_in_title("graphite", "2024 panini graphite pencil card"))
+        self.assertEqual(engine.brand_of("Panini", "", "Magnus 2026 Panini Ring Royalty Wrestling Auto"), "")
+        self.assertEqual(engine.brand_of("Panini", "", "2024 Panini Instant Jannik Sinner 1/1"), "Panini Instant")
+
+    def test_known_players_reads_the_board_and_survives_its_absence(self):
+        names = engine.known_players()
+        self.assertTrue(set(engine.PLAYERS) <= set(names))
+        self.assertNotIn("Unknown player", names)
+        with patch.object(engine, "_BASE_DIR", tempfile.mkdtemp()):
+            self.assertEqual(engine.known_players(), list(engine.PLAYERS))
+
     def test_an_ordinal_does_not_shed_a_false_name(self):
         """'20th' used to split into '20' and 'th', and 'Th Anniv' came back."""
         self.assertEqual(engine.player_from_title(

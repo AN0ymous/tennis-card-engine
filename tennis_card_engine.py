@@ -103,6 +103,15 @@ PLAYERS = [
 # alone are too broad (cover football, basketball, etc.), so those two also
 # require one of their SET_KEYWORDS to appear in the item's "Set" specific
 # or title.
+# Ace Authentic's own titles mostly say "ACE": "2013 ACE Tennis National
+# Autograph Card", "ACE SIGNATURE SERIES 2005", "2013 Ace Personal Best".
+# Four of the recorded Ace cards had no maker readable from the title until
+# this. A bare "ace" is the maker only next to a year or one of its lines,
+# never on its own, since it is also a word of the game.
+ACE_MAKER_RE = re.compile(
+    r"\b(?:(?:19|20)\d{2}\s+ace|ace\s+(?:authentic|authentics|signature|tennis|"
+    r"national|personal|grand\s+slam|matchpoint|premium|elite|legends))\b")
+
 ALLOWED_MANUFACTURERS = {
     "netpro": None,
     "the netpro trading card company": None,
@@ -117,6 +126,24 @@ ALLOWED_MANUFACTURERS = {
 # parallel, and sellers call players "tennis royalty" in their prose. In a
 # title these two only count with the maker's name attached.
 QUALIFIED_IN_TITLE = {"graphite": "topps graphite", "royalty": "topps royalty"}
+
+
+def line_in_title(kw, title_lower):
+    """Whether a Topps line is named in the title. "Topps 2026 Graphite" and
+    "Topps Tennis Graphite" name it as surely as "Topps Graphite": sellers
+    put the year or the sport between the maker and the line on 89 of 1,882
+    newest listings sampled on 22 Sep, and every one read as no set. Up to
+    two words may sit between; the bare "graphite"/"royalty" never counts
+    alone, since those are also words of other makers' products."""
+    words = QUALIFIED_IN_TITLE.get(kw, kw).split()
+    if len(words) == 1:
+        return re.search(rf"\b{re.escape(kw)}\b", title_lower) is not None
+    if f"{words[0]} {words[1]}" in title_lower:
+        return True
+    # Sellers call players "tennis royalty"; that is prose, not the set, so
+    # the word before the line may not be "tennis" for Royalty.
+    between = r"(?:\W+(?!tennis\b)\w+){0,2}" if kw == "royalty" else r"(?:\W+\w+){0,2}"
+    return re.search(rf"\b{re.escape(words[0])}\b{between}\W+{re.escape(words[1])}\b", title_lower) is not None
 
 # Sets to skip even when the manufacturer is allowed, matched as whole words
 # against the item's "Set" specific and the title. NetPro's base and Glossy
@@ -229,7 +256,7 @@ PATCH_WORDS = ["patch", "patches", "relic", "relics", "jersey", "jerseys", "memo
                "swatch", "swatches", "game used", "game-used", "match used", "match-used",
                "match worn", "match-worn", "player worn", "player-worn", "event worn",
                "event-worn", "tournament worn", "tournament-worn", "worn material",
-               "materials", "material", "shirt", "ball relic", "racket piece"]
+               "materials", "material", "ball relic", "racket piece"]
 CONDITIONS = {"graded": "Graded", "raw": "Raw"}
 
 # Colour match: the colour parallel named in the listing (Blue Refractor,
@@ -255,13 +282,18 @@ COLOUR_FAMILIES = {                # parallel colour -> outfit colours that coun
     "white": {"white"}, "silver": {"silver", "grey", "white"},
 }
 PARALLEL_WORDS = r"(?:refractor|refractors|wave|shimmer|speckle|prism|lava|raywave|ray wave|x-?fractor|foil|parallel|sapphire|mojo|atomic|helix|ice|cracked ice|\d+\s*/\s*\d+|/\s*\d|#)"
-GRADERS = ["psa", "bgs", "sgc", "cgc", "csg", "hga", "isa", "gma", "ksa", "beckett", "tag"]
+PARALLEL_KIND_WORDS = r"(?:on[- ]card|auto|autograph|autographed|relic|patch|rookie|rc|base|chrome|ink|holo|signatures?)\b"
+GRADERS = ["psa", "bgs", "sgc", "cgc", "csg", "hga", "isa", "gma", "ksa", "beckett", "tag", "pgi"]
 GRADE_RE = re.compile(
-    r"\b(psa|bgs|sgc|cgc|csg|hga|isa|gma|ksa|beckett|tag)\b[\s:-]*"
+    r"\b(psa|bgs|sgc|cgc|csg|hga|isa|gma|ksa|beckett|tag|pgi)\b[\s:-]*"
     r"(?:gem\s*(?:mint|mt)|pristine|black\s*label|mint|nm-mt|nm)?[\s:-]*(10|[1-9](?:\.5)?)\b(?!\s*/)",
     re.I)
 GRADER_RE = re.compile(r"\b(psa|bgs|sgc|cgc|csg|hga|beckett)\b", re.I)   # a grader named at all
 GRADED_WORDS_RE = re.compile(r"\b(graded|slab|slabbed|gem\s*(?:mint|mt)\s*10)\b", re.I)
+# "PSA ready NOT graded", "ungraded", "raw": the title says the card is not
+# in a slab, whatever grader it also names as an aspiration. Checked before
+# the grader words, since "PSA ready" names PSA and means the opposite.
+NOT_GRADED_RE = re.compile(r"\b(?:not\s+graded|un-?graded|raw|(?:psa|bgs|sgc|cgc)[\s-]*ready)\b", re.I)
 LISTING_TYPES = {            # page value -> eBay buying option
     "buy_now": "FIXED_PRICE",
     "auction": "AUCTION",
@@ -473,7 +505,7 @@ def classify_card(title, aspects=None):
     features = " ".join(str(v) for vals in (aspects.get("Features") or [],) for v in vals).lower()
     signed = str((aspects.get("Autographed") or [""])[0]).strip().lower() in ("yes", "true")
     signed = signed or bool(aspects.get("Signed By")) or "autograph" in features
-    auto = signed or _has_word(AUTO_WORDS, text)
+    auto = signed or _has_word(AUTO_WORDS, text) or re.search(r"\d+auto\b|\(au\)|\bink\b|psa\s*/\s*dna|\bdna\b", text) is not None
     patch = _has_word(PATCH_WORDS, text) or any(
         w in features for w in ("memorabilia", "relic", "patch", "jersey", "game used", "worn"))
     if auto and patch:
@@ -498,6 +530,8 @@ def classify_grading(title, aspects=None):
         return "graded", " ".join(x for x in (grader, grade) if x)
     if graded_flag == "yes" or (grade and grade.lower() != "ungraded"):
         return "graded", grade or "Graded"
+    if NOT_GRADED_RE.search(title) and not GRADE_RE.search(title):
+        return "raw", "Raw"
     m = GRADE_RE.search(title)
     if m:
         return "graded", f"{m.group(1).upper()} {m.group(2)}"
@@ -517,9 +551,26 @@ def parallel_colour(title, aspects=None):
             m = re.search(rf"\b({'|'.join(PARALLEL_COLOURS)})\b", str(value).lower())
             if m:
                 return m.group(1)
-    text = title.lower()
-    m = re.search(rf"\b({'|'.join(PARALLEL_COLOURS)})\b\s+(?:\w+\s+)?{PARALLEL_WORDS}", text)
+    # "GEOMETRIC GOLD---06/50", "Holo Blue - 04/50": a run of dashes is a space.
+    text = re.sub(r"\s*-{1,}\s*(?=\d)|(?<=[a-z])\s*-{2,}\s*", " ", title.lower())
+    grade_mint = re.search(r"\b(?:psa|bgs|sgc|cgc|\d+)\s*(?:gem\s*)?mint\b", text)
+    text = re.sub(r"\bblack\s+label\b", "grade-label", text)   # BGS Black Label is a grade
+    m = re.search(rf"\b({'|'.join(PARALLEL_COLOURS)})\b\s+(?:\w+\s+){{0,2}}{PARALLEL_WORDS}", text)
+    if m and not (m.group(1) == "mint" and grade_mint):
+        return m.group(1)
+    m = re.search(rf"\b({'|'.join(PARALLEL_COLOURS)})\b\s+(?:{'|'.join(GRADERS)})\b", text)
+    if m and m.group(1) != "mint":
+        return m.group(1)                                   # "Pop 1 Gold PSA 10"
+    # "03/50 blue": the colour after the serial, at the end of the title
+    m = re.search(rf"\d+\s*/\s*\d+\s+({'|'.join(PARALLEL_COLOURS)})\b", text)
     if m:
+        return m.group(1)
+    # "Belinda Bencic Pink On Card Auto 15/15", "Rincon Rookie Blue On Card
+    # Auto 50/50": an autograph or relic parallel is named by its colour and
+    # the card's kind, with no "refractor" anywhere. Measured on the recorded
+    # cards, three of eight blank parallels were exactly this shape.
+    m = re.search(rf"\b({'|'.join(PARALLEL_COLOURS)})\b\s+(?:\w+\s+){{0,2}}{PARALLEL_KIND_WORDS}", text)
+    if m and not (m.group(1) == "mint" and grade_mint):
         return m.group(1)
     return ""
 
@@ -905,9 +956,12 @@ def save_outputs(wb, xlsx_path, seen, state_path, cursors, cursor_path,
 # and name the old reason's opening words in RECONSIDER_REASONS, so those
 # rejects -- and only those -- are judged again when a walk next reaches
 # them. A reject made under the current version is never looked at twice.
-JUDGE_VERSION = 2
+JUDGE_VERSION = 3
 RECONSIDER_REASONS = {
     2: ("manufacturer not in allow-list",),      # a blank or line-named maker now reads off the title
+    3: ("manufacturer not in allow-list",        # a bare "ACE" next to a year or an Ace line is Ace Authentic
+        "set/title doesn't confirm",             # "Topps 2026 Graphite" names the line
+        "is neither the first nor the last"),    # a date (8/3/26) no longer reads as the serial, so "... 8/3/26 Gold 1/1" is judged again
 }
 
 
@@ -1179,7 +1233,11 @@ def item_ids_in_spreadsheet(xlsx_path, limit=300):
 
 # (?<!\.) so "BGS 9.5/10" does not yield 5/10 -- the numerator must not be the
 # tail of a decimal grade.
-SERIAL_RE = re.compile(r"(?<!\.)\b(\d{1,5})\s*/\s*(\d{1,5})\b")
+# Not the tail of a decimal (9.5/10), and not part of a date: Topps Now titles
+# carry the event's date, and "1st Title Win 8/3/26" read as the serial 8/3 --
+# "1/5/26" would have read as a bookend. Neither number may follow a slash,
+# and the pair may not be followed by one.
+SERIAL_RE = re.compile(r"(?<![./])(?<![./]\s)\b(\d{1,5})\s*/\s*(\d{1,5})\b(?!\s*/\s*\d)")
 
 # The word right before an N/M that marks it as a grade, not a serial. A
 # grader's name, or the grade words sellers put between the grader and the
@@ -1394,6 +1452,18 @@ PLAYER_NOISE = set(PARALLEL_COLOURS) | set(GRADERS) | set("""
     sepia collection regalia decree royal prodigious ambassador influential grip
     signings debut winners rookies stars star prospect prospects icon icons
     geometric captured pineapple youthquake aces bookend full extension superior
+    authentics heroes matchpoint seeds court glossy elite premium greats top
+    sportkings kings geometric rally relics confetti match masters all fast
+    shipping liquid winning streaks scoring sensations intricate images full
+    extension point marks triumphant grass imperial ink game roundball round
+    ball sports illustrated kids pop event edition international limitless
+    regalia signature outfit worn nike swoosh highlights ring wrestling
+    triple dual quad trio duo major league color colour sale presale pre
+    celebrates celebrate world wins win won contenders pride brown grey gray
+    reserve inaugural prototype impact aces mirrored pillars greatness spurs
+    pursuit baseball basketball football hockey soccer golf boxing mlb nba nfl
+    nhl wwe ufc mma factory brand hand ready youngest oldest title titles
+    straight five sport sports numbered pop graded ungraded dna coa
 """.split())
 
 # Two or three letters in capitals is usually a code, not a name -- but BEN,
@@ -1498,6 +1568,19 @@ def as_typed(text):
     return SHOUTED_WORD_RE.sub(lambda m: m.group(0)[:1].upper() + m.group(0)[1:].lower(), text)
 
 
+def _distinct_known_surnames(words, known):
+    """The known players, each with a different surname of four letters or
+    more, whose surname is one of `words`. Two of them in one run means the
+    run is a lot ("Card Lot Sharapova Federer Agassi"), not a player."""
+    lower = {w.lower() for w in words}
+    found = {}
+    for name in known:
+        parts = name.strip().split()
+        if len(parts) >= 2 and len(parts[-1]) >= 4 and parts[-1].lower() in lower:
+            found.setdefault(parts[-1].lower(), name)
+    return list(found.values())
+
+
 def player_from_title(title, known=()):
     """The player a listing title names, or "" when it cannot be told.
 
@@ -1523,6 +1606,16 @@ def player_from_title(title, known=()):
     # "TENNIS----DANIIL MEDVEDEV---RELIC" yields the name; a single hyphen
     # stays inside a word for Saint-Denis. "20th" stays one token and simply
     # fails as a name, rather than shedding a "th" that could start one.
+    for r in _name_runs(title):
+        if len(_distinct_known_surnames(r, known)) >= 2:
+            continue                      # several players' surnames in a row: a lot
+        return " ".join(_as_written(t) for t in r)
+    return ""
+
+
+def _name_runs(title):
+    """Every run of two or three name-like words in a title, in order, each
+    trimmed of a trailing lone initial."""
     def _noise(word):
         return word.lower() in PLAYER_NOISE or word.lower() in _brand_words()
 
@@ -1534,7 +1627,12 @@ def player_from_title(title, known=()):
         for k, piece in enumerate(pieces):
             if k:
                 tokens.append("")
+            code = piece.startswith("#")            # "#TCASCN", "#GSM-12": a set code, not a name
             piece = piece.strip("\"'\u2019\u201c\u201d.!?()[]{}#*:;")
+            piece = re.sub(r"^[^A-Za-z\u00C0-\u024F]+|[^A-Za-z\u00C0-\u024F'\u2019]+$", "", piece)   # 🎾Luca
+            if code:
+                tokens.append("")
+                continue
             # "Card-Elina": a card word hyphenated onto a name keeps the name and
             # drops the word, instead of losing both. Saint-Denis has no noise
             # part and stays whole; GS-MKC is caught later by being all caps.
@@ -1562,13 +1660,14 @@ def player_from_title(title, known=()):
             run = []
     if run:
         runs.append(run)
+    found = []
     for r in runs:
         # a trailing lone initial is not a name ("Kayla Day J" would be odd)
         while r and len(r[-1]) == 1:
             r.pop()
         if 2 <= len(r) <= 3:
-            return " ".join(_as_written(t) for t in r)
-    return ""
+            found.append(r)
+    return found
 
 
 def get_player(aspects, title="", known=PLAYERS):
@@ -1582,6 +1681,111 @@ def get_player(aspects, title="", known=PLAYERS):
             # name stood out on the board beside every other one.
             return as_typed(str(values[0]).strip())
     return player_from_title(title, known)
+
+
+def known_players():
+    """The roster plus every player already recorded in the published board."""
+    names = list(PLAYERS)
+    try:
+        with open(os.path.join(_BASE_DIR, "results", "board.json"), encoding="utf-8") as f:
+            board = json.load(f)
+        for card in board.get("cards", []):
+            for name in str(card.get("player") or "").split(","):
+                name = name.strip()
+                if name and name.lower() != "unknown player":
+                    names.append(name)
+    except (OSError, ValueError, AttributeError):
+        pass
+    return list(dict.fromkeys(names))
+
+
+def _edit_distance(a, b):
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1]
+
+
+def snap_to_known(name, known):
+    """Snap a one-edit seller typo to an already known player name."""
+    if not name:
+        return name
+    words = name.lower().split()
+    best = None
+    for candidate in known:
+        cw = candidate.lower().split()
+        if len(cw) != len(words):
+            continue
+        if cw == words:
+            return candidate
+        if len(words[-1]) < 5 or any(abs(len(a) - len(b)) > 1 for a, b in zip(words, cw)):
+            continue
+        per_word = [_edit_distance(a, b) for a, b in zip(words, cw)]
+        total = sum(per_word)
+        if max(per_word) <= 1 and 0 < total <= 2 and (best is None or total < best[0]):
+            best = (total, candidate)
+    return best[1] if best else name
+
+
+def _names_either_side_of_a_wall(title):
+    """Whether a title names two different players across punctuation."""
+    if re.search(r"\b([^\W\d_]+ [^\W\d_]+),\s*\1\b", title, re.IGNORECASE):
+        return False
+    for m in re.finditer(r"([^\W\d_]+)\s*(?:[,/&]|\band\b)\s*([^\W\d_]+)", title, re.IGNORECASE):
+        a, b = m.groups()
+        if a.lower() != b.lower() and all(_name_like(w) for w in (a, b)):
+            return True
+    return False
+
+
+def title_recognition_inputs(title, known=None):
+    """Build title-only baseline fields and candidate values for experiments."""
+    known = list(known) if known is not None else list(PLAYERS)
+    player = snap_to_known(player_from_title(title, known), known)
+    player = " ".join(_as_written(w) for w in player.split())
+    if (_names_either_side_of_a_wall(title)
+            or len(_distinct_known_surnames(re.findall(r"[^\W\d_]+", title), known)) >= 2):
+        player = "multiple"
+    manufacturer = resolve_manufacturer("", "", title)
+    serial = extract_serial(title, {})
+    years = list(dict.fromkeys(re.findall(r"\b(?:19|20)\d{2}\b", title)))
+    leading = re.match(r"\W*((?:19|20)\d{2})(?:-\d{2})?\b", title)
+    baseline = {
+        "player": player or "unknown", "card_type": classify_card(title),
+        "condition": classify_grading(title)[0],
+        "set_name": brand_of(manufacturer, "", title) or "unknown",
+        "parallel": parallel_colour(title) or "unknown",
+        "year": leading.group(1) if leading else years[0] if len(years) == 1 else "unknown",
+        "serial": f"{serial[0]}/{serial[1]}" if None not in serial else "unknown",
+    }
+    names = [" ".join(_as_written(w) for w in n.split()) for n in known]
+    if player and player != "multiple":
+        names.append(player)
+    names.extend(snap_to_known(" ".join(_as_written(t) for t in run), known)
+                 for run in _name_runs(title))
+    snapped = {n.lower() for n in names}
+    tokens = re.findall(r"[^\W\d_]+(?:[-'’][^\W\d_]+)*|[^\s]", title, re.UNICODE)
+    for width in (2, 3):
+        for start in range(len(tokens) - width + 1):
+            span = tokens[start:start + width]
+            if all(_name_like(token) for token in span):
+                literal = " ".join(_as_written(token) for token in span)
+                if snap_to_known(literal, known).lower() in snapped and literal.lower() not in snapped:
+                    continue
+                names.append(literal)
+    names = list(dict.fromkeys(names))[:200]
+    options = {
+        "player": names + ["multiple"],
+        "card_type": ["base", "auto", "patch", "patch_auto"],
+        "condition": ["raw", "graded"], "set_name": DEFAULT_BRAND_KEYWORDS,
+        "parallel": PARALLEL_COLOURS, "year": years,
+        "serial": list(dict.fromkeys(f"{int(m.group(1))}/{int(m.group(2))}"
+                        for m in SERIAL_RE.finditer(title) if not is_grade_pair(title, m))),
+    }
+    return baseline, options
 
 
 def get_manufacturer_and_set(aspects):
@@ -1614,6 +1818,8 @@ def resolve_manufacturer(manufacturer, set_name="", title=""):
                           ("panini", "Panini"), ("topps", "Topps")):
             if re.search(rf"\b{re.escape(key)}\b", text):
                 return name
+        if ACE_MAKER_RE.search(text):
+            return "Ace Authentic"
     return manu
 
 
@@ -1790,7 +1996,7 @@ def is_licensed_and_allowed_brand(title, manufacturer, set_name, aspects=None):
     required_set_keywords = ALLOWED_MANUFACTURERS[manu_lower]
     if required_set_keywords:
         def confirms(kw):
-            return kw in set_lower or QUALIFIED_IN_TITLE.get(kw, kw) in title_lower
+            return kw in set_lower or line_in_title(kw, title_lower)
         if not any(confirms(kw) for kw in required_set_keywords):
             return False, f"set/title doesn't confirm {required_set_keywords}"
 
@@ -2298,10 +2504,10 @@ def brand_of(manufacturer, set_name, title=""):
     if "ace authentic" in manu:
         return "Ace Authentic"
     if "panini" in manu:
-        return "Panini Instant"
+        return "Panini Instant" if "instant" in f"{manu} {set_lower} {title_lower}" else ""
     if "topps" in manu:
         for kw in ALLOWED_MANUFACTURERS["topps"]:
-            if kw in set_lower or QUALIFIED_IN_TITLE.get(kw, kw) in title_lower:
+            if kw in set_lower or line_in_title(kw, title_lower):
                 return BRAND_FOR_KEYWORD[kw]
     return ""
 
