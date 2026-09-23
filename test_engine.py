@@ -3732,6 +3732,23 @@ class TitleRecognitionBaseline(unittest.TestCase):
                 self.assertFalse(engine.line_in_title(kw, title))
         self.assertTrue(engine.line_in_title("topps chrome", "2024 topps chrome tennis"))
 
+    def test_chrome_and_now_take_a_year_between(self):
+        self.assertTrue(engine.line_in_title("topps chrome", "topps 2025 chrome sapphire green zheng 75/75"))
+        self.assertTrue(engine.line_in_title("topps now", "topps 2024 now sinner 1/1"))
+        self.assertFalse(engine.line_in_title("topps chrome", "topps tennis chrome gauff"))
+        self.assertTrue(engine.line_in_title("topps now", "signed 2026 topps nowaustralian open card"))
+
+    def test_the_title_reader_ignores_accents_and_snaps_one_letter_typos(self):
+        known = engine.PLAYERS + ["Björn Borg", "Albert Ramos-Vinolas", "Shintaro Mochizuki",
+                                  "Mirra Andreeva", "Belinda Bencic"]
+        for title, want in (("2024 Topps Graphite Bjorn Borg Winning Streaks 1/1", "Björn Borg"),
+                            ("Albert Ramos-Viñolas #01/10 2025 Topps Chrome", "Albert Ramos-Vinolas"),
+                            ("SHINTARO MOCHIZUHI 2024 Topps Graphite Auto 01/10", "Shintaro Mochizuki"),
+                            ("2024 Topps Royalty Blue 1/25 Erika Andreeva #64", "Erika Andreeva"),
+                            ("2025 Topps Chrome Belinda Bennie Black 2/2", "Belinda Bennie")):
+            with self.subTest(title=title[:40]):
+                self.assertEqual(engine.player_from_title(title, known), want)
+
     def test_ace_trumps_is_not_ace_authentic(self):
         self.assertEqual(engine.resolve_manufacturer("", "", "1986 Ace Trumps Dragster Top Alcohol #D2"), "")
         self.assertEqual(engine.brand_of(engine.resolve_manufacturer("", "", "2011 Ace EX Auto 78/99 Jill Craybas"),

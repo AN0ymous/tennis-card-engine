@@ -49,6 +49,7 @@ import logging
 import random
 import smtplib
 import threading
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from email.mime.multipart import MIMEMultipart
@@ -140,9 +141,14 @@ def line_in_title(kw, title_lower):
     alone, since those are also words of other makers' products. Topps
     Chrome and Topps Now get no gap: other Topps products end in those words."""
     if kw not in QUALIFIED_IN_TITLE:
-        # "Topps Chrome" and "Topps Now" stay exact pairs: with a gap,
-        # "Topps Cosmic Chrome" and "Topps Tennis Buy Now" read as the line.
-        return kw in title_lower
+        # "Topps Chrome" and "Topps Now" take a year between and nothing else
+        # ("Topps 2025 Chrome Sapphire"): with any word, "Topps Cosmic Chrome"
+        # and "Topps Tennis Buy Now" read as the line.
+        words = kw.split()
+        if kw in title_lower or len(words) != 2:
+            return kw in title_lower      # as before: "TOPPS NOWAUSTRALIAN OPEN" counts
+        return re.search(rf"\b{re.escape(words[0])}(?:\W+(?:19|20)\d\d(?:-\d\d)?)?\W+"
+                         rf"{re.escape(words[1])}\b", title_lower) is not None
     words = QUALIFIED_IN_TITLE[kw].split()
     if f"{words[0]} {words[1]}" in title_lower:
         return True
@@ -1607,9 +1613,11 @@ def player_from_title(title, known=()):
     missed, and a title that yields nothing returns "" -- never a guess."""
     if not title:
         return ""
-    tl = title.lower()
+    # Accents are compared away, so "Bjorn Borg" finds Björn Borg and
+    # "Ramos-Viñolas" finds Ramos-Vinolas; the known spelling is returned.
+    tl = fold_accents(title)
     hits = [n for n in known if n and n.strip().lower() != "unknown player"
-            and all(re.search(rf"\b{re.escape(t)}\b", tl) for t in n.lower().split())]
+            and all(re.search(rf"\b{re.escape(t)}\b", tl) for t in fold_accents(n).split())]
     if hits:
         return max(hits, key=len).strip()
 
@@ -1622,8 +1630,16 @@ def player_from_title(title, known=()):
     for r in _name_runs(title):
         if len(_distinct_known_surnames(r, known)) >= 2:
             continue                      # several players' surnames in a row: a lot
-        return " ".join(_as_written(t) for t in r)
+        # A one-letter seller typo of a known name ("Denis Shapovolov",
+        # "SHINTARO MOCHIZUHI") is that name, on snap_to_known's strict terms.
+        return snap_to_known(" ".join(_as_written(t) for t in r), known)
     return ""
+
+
+def fold_accents(text):
+    """Lower case with accents taken off: "Björn" and "bjorn" compare equal."""
+    return "".join(c for c in unicodedata.normalize("NFKD", text.lower())
+                   if not unicodedata.combining(c))
 
 
 def _name_runs(title):
