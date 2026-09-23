@@ -108,8 +108,11 @@ PLAYERS = [
 # Four of the recorded Ace cards had no maker readable from the title until
 # this. A bare "ace" is the maker only next to a year or one of its lines,
 # never on its own, since it is also a word of the game.
+# "1986 Ace Trumps" is a British card game (dragsters, Indianapolis 500): 37
+# of 47 new Ace readings on 1,888 live titles on 23 Sep, so a year only
+# vouches for the "ace" after it when "trumps" does not follow.
 ACE_MAKER_RE = re.compile(
-    r"\b(?:(?:19|20)\d{2}\s+ace|ace\s+(?:authentic|authentics|signature|tennis|"
+    r"\b(?:(?:19|20)\d{2}\s+ace(?!\s+trumps\b)|ace\s+(?:authentic|authentics|signature|tennis|"
     r"national|personal|grand\s+slam|matchpoint|premium|elite|legends))\b")
 
 ALLOWED_MANUFACTURERS = {

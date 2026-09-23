@@ -3732,6 +3732,11 @@ class TitleRecognitionBaseline(unittest.TestCase):
                 self.assertFalse(engine.line_in_title(kw, title))
         self.assertTrue(engine.line_in_title("topps chrome", "2024 topps chrome tennis"))
 
+    def test_ace_trumps_is_not_ace_authentic(self):
+        self.assertEqual(engine.resolve_manufacturer("", "", "1986 Ace Trumps Dragster Top Alcohol #D2"), "")
+        self.assertEqual(engine.brand_of(engine.resolve_manufacturer("", "", "2011 Ace EX Auto 78/99 Jill Craybas"),
+                                         "", "2011 Ace EX Auto 78/99 Jill Craybas"), "Ace Authentic")
+
     def test_royalty_takes_a_year_between_and_nothing_else(self):
         self.assertTrue(engine.line_in_title("royalty", "topps 2025 royalty ufc tsarukyan auto /49"))
         self.assertTrue(engine.line_in_title("royalty", "topps 2023-24 royalty collection lavine 18/25"))
