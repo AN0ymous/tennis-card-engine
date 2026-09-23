@@ -1129,6 +1129,7 @@ class ThePanelAnswersBothQuestions(unittest.TestCase):
                         or cell(r, "Serial #") in engine.grade_pairs_in(title)
                         or cell(r, "Serial #") in engine.card_number_pairs_in(title)
                         or cell(r, "Serial #") in engine.contradicted_pairs_in(title)
+                        or cell(r, "Serial #") in engine.date_pairs_in(title)
                         or engine.other_sport_in_title(title)):
                     left_off_by_rule += 1
             dropped = min(len(recorded), engine.BOARD_LIMIT) - len(board)
@@ -2778,6 +2779,48 @@ class GradesAreNotSerials(unittest.TestCase):
     def test_a_big_serial_in_front_is_read_before_any_small_pair(self):
         self.assertEqual(self.serial(
             "2024 Topps Chrome Tennis Denis Shapovalov 1st Pineapple Refractor 77/77 \u22481/1"), (77, 77))
+
+
+class ADateRecordedAsASerialLeavesThePage(unittest.TestCase):
+    """PR #51 taught SERIAL_RE to step over a date, so "Oldest Finalist
+    1/30/26" no longer reads as a 1/30 bookend -- but the Djokovic card it
+    found was already recorded, and build_board reads the recorded serial,
+    so it stayed on the page. Every other "not really a serial" rule drops
+    its recorded rows the same way; this is the date rule's turn."""
+
+    DJOKOVIC = "2024 Topps Now Novak Djokovic 2026 Australian Open Oldest Finalist 1/30/26"
+
+    def test_both_pairs_a_date_could_have_been_read_as(self):
+        self.assertEqual(engine.date_pairs_in(self.DJOKOVIC), {"1/30", "30/26"})
+        self.assertEqual(engine.date_pairs_in("Topps Now Alcaraz 1/26/26 Orange 25/25"),
+                         {"1/26", "26/26"})
+
+    def test_a_serial_stated_outside_the_date_keeps_its_card(self):
+        """The case completeness turns on: a New Year's Topps Now carries a
+        date that reads 1/1 and a real 1/1 as well. The real one wins."""
+        self.assertNotIn("1/1", engine.date_pairs_in("Topps Now 1/1/2025 Superfractor 1/1"))
+        self.assertNotIn("25/25", engine.date_pairs_in("Topps Now Alcaraz 1/26/26 Orange 25/25"))
+
+    def test_a_title_with_no_date_offers_nothing(self):
+        for title in ("2024 Topps Chrome Gauff Gold 1/50",
+                      "2025 Topps Chrome Sinner 9.5/10 BGS 1/1",
+                      "Mirra Andreeva 2024 Topps Royalty GOLD 01/10 #39 RC Russia /10"):
+            with self.subTest(title=title):
+                self.assertEqual(engine.date_pairs_in(title), set())
+
+    def test_the_board_drops_the_recorded_date_and_keeps_the_rest(self):
+        with tempfile.TemporaryDirectory() as folder:
+            xlsx = os.path.join(folder, "sheet.xlsx")
+            wb, ws = engine.load_or_create_sheet(xlsx)
+            for title, n, m, item in (
+                    (self.DJOKOVIC, 1, 30, "336726755490"),
+                    ("Topps Now 1/1/2025 Superfractor 1/1", 1, 1, "336726755491"),
+                    ("Topps Now Alcaraz 1/26/26 Orange 25/25", 25, 25, "336726755492")):
+                engine.append_row(ws, "Somebody", "Topps", "2026 Topps Now", title, n, m,
+                                  "14.99 USD", f"https://www.ebay.com/itm/{item}")
+            wb.save(xlsx)
+            board = engine.build_board(xlsx)
+        self.assertEqual(sorted(c["serial"] for c in board), ["1/1", "25/25"])
 
 
 class ASetNameIsNotAnAutograph(unittest.TestCase):
