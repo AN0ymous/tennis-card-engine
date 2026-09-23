@@ -1405,6 +1405,27 @@ def is_contradicted_pair(title, match):
     return any(int(m.group(1)) > 1 for m in PRINT_RUN_ANY_RE.finditer(elsewhere))
 
 
+# A date written into a title: the "1/30/26" of "2024 Topps Now Novak Djokovic
+# 2026 Australian Open Oldest Finalist 1/30/26". SERIAL_RE no longer reads a
+# pair that is part of one, so this only matters for rows recorded before it
+# learned that -- the Djokovic card was on the page as a 1/30 bookend.
+DATE_RE = re.compile(r"(?<![\d/.])(\d{1,2})/(\d{1,2})/(\d{2}|\d{4})(?![\d/])")
+
+
+def date_pairs_in(title):
+    """The N/M strings in a title that are really part of a date -- "1/30"
+    and "30/26" of 1/30/26 -- less any the title also states on its own.
+    That last part is the one that matters for completeness: "Topps Now
+    1/1/2025 Superfractor 1/1" carries a date that reads 1/1 *and* a real
+    1/1, and the real one keeps its card on the page."""
+    pairs = set()
+    for m in DATE_RE.finditer(title):
+        a, b, c = (int(g) for g in m.groups())
+        pairs |= {f"{a}/{b}", f"{b}/{c}"}
+    # anything SERIAL_RE finds is stated outside a date, since it skips dates
+    return pairs - {f"{int(m.group(1))}/{int(m.group(2))}" for m in SERIAL_RE.finditer(title)}
+
+
 def contradicted_pairs_in(title):
     """The N/M strings in a title the title itself contradicts."""
     return {f"{int(m.group(1))}/{int(m.group(2))}"
@@ -2599,6 +2620,10 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
         # "# /10 ... 1/1 on eBay" recorded as a True 1/1 before the reader
         # noticed the title arguing with itself. Off the page, row kept.
         if cell(row, "Serial #") in contradicted_pairs_in(cell(row, "Card Description")):
+            continue
+        # "Oldest Finalist 1/30/26" recorded as 1/30 before the reader told a
+        # Topps Now date from a serial. Off the page, row kept.
+        if cell(row, "Serial #") in date_pairs_in(cell(row, "Card Description")):
             continue
         if other_sport_in_title(cell(row, "Card Description")):
             continue

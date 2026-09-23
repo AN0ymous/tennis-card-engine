@@ -284,6 +284,28 @@ on a website.
   on, get their say before the listing is turned away -- so `settled_by_title`
   no longer settles such a title for free and it costs one call. Measured
   against the 182 recorded rows it changes exactly the two Gauff boasts.
+- **A date is not a serial** (PR #51, 23 Sep). Topps Now titles carry the
+  event's date, and "2024 Topps Now Novak Djokovic 2026 Australian Open
+  Oldest Finalist 1/30/26" was recorded as a 1/30 bookend -- it is 30
+  January. `SERIAL_RE` now refuses a pair with a slash on either side of it
+  (`(?<![./])` and `(?!/\d)`), so the whole of 8/3/26 or 9/7/2025 reads as
+  nothing, while "Superfractor. 1/1", "Serial No. 1/25" and "Refractor / 1/1"
+  -- a dot or slash with a space before the number -- still read. That fixes
+  every future listing; **the recorded row needed a board rule of its own**,
+  since `build_board` reads the recorded `Serial #` rather than the title.
+  `date_pairs_in` names both pairs a date could have been read as ("1/30" and
+  "30/26" of 1/30/26) and drops a recorded row whose serial is one of them,
+  like the grade, card-number and contradicted rules; the row stays in the
+  spreadsheet. **Less any pair the title states outside the date**, which is
+  where completeness is kept: "Topps Now 1/1/2025 Superfractor 1/1" reads 1/1
+  from its date *and* carries a real 1/1, and the real one keeps the card on
+  the page. Measured against the 335 recorded rows: one title holds a date,
+  and that is the Djokovic card. Judge version 3 came with #51 and
+  reconsiders maker, set and not-a-bookend rejects once; counted against the
+  23 Sep `seen_items.json` that is 4,187 rejects, 3,460 of them free from
+  the title and 727 up to a call each, plus at most 475 date-shaped
+  not-a-bookend pairs that may now need a fetch -- the first scan after it
+  walks all seven sets in full and costs roughly 1,500 calls at worst.
 - **Custom cards are rejected before the serial is read.** A card somebody
   made themselves carries a real maker in the Manufacturer field and is nearly
   always called a 1/1, because only one exists, so neither the allow-list nor
