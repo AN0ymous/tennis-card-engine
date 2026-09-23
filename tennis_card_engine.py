@@ -134,15 +134,21 @@ def line_in_title(kw, title_lower):
     put the year or the sport between the maker and the line on 89 of 1,882
     newest listings sampled on 22 Sep, and every one read as no set. Up to
     two words may sit between; the bare "graphite"/"royalty" never counts
-    alone, since those are also words of other makers' products."""
-    words = QUALIFIED_IN_TITLE.get(kw, kw).split()
-    if len(words) == 1:
-        return re.search(rf"\b{re.escape(kw)}\b", title_lower) is not None
+    alone, since those are also words of other makers' products. Topps
+    Chrome and Topps Now get no gap: other Topps products end in those words."""
+    if kw not in QUALIFIED_IN_TITLE:
+        # "Topps Chrome" and "Topps Now" stay exact pairs: with a gap,
+        # "Topps Cosmic Chrome" and "Topps Tennis Buy Now" read as the line.
+        return kw in title_lower
+    words = QUALIFIED_IN_TITLE[kw].split()
     if f"{words[0]} {words[1]}" in title_lower:
         return True
-    # Sellers call players "tennis royalty"; that is prose, not the set, so
-    # the word before the line may not be "tennis" for Royalty.
-    between = r"(?:\W+(?!tennis\b)\w+){0,2}" if kw == "royalty" else r"(?:\W+\w+){0,2}"
+    # Royalty takes a year and nothing else ("Topps 2025 Royalty"): Topps
+    # also makes Running Back Royalty, Roundball Royalty and WWE Royalty, 52 of
+    # 76 titles a two-word gap let through on 23 Sep, and sellers call
+    # players "tennis royalty" in prose.
+    between = (r"(?:\W+(?:19|20)\d\d(?:-\d\d)?)?" if kw == "royalty"
+               else r"(?:\W+\w+){0,2}")
     return re.search(rf"\b{re.escape(words[0])}\b{between}\W+{re.escape(words[1])}\b", title_lower) is not None
 
 # Sets to skip even when the manufacturer is allowed, matched as whole words
@@ -984,7 +990,9 @@ def reject_stands(entry, title):
     made = int(entry.get("judge") or 1)
     if made >= JUDGE_VERSION:
         return True
-    reason = str(entry.get("reason") or "")
+    # "968/999 is neither the first nor the last..." opens with its serial,
+    # so the serial is stepped over before the opening words are compared.
+    reason = re.sub(r"^\d+/\d+\s+", "", str(entry.get("reason") or ""))
     return not any(reason.startswith(opening)
                    for version, openings in RECONSIDER_REASONS.items()
                    if version > made for opening in openings)
@@ -1236,8 +1244,10 @@ def item_ids_in_spreadsheet(xlsx_path, limit=300):
 # Not the tail of a decimal (9.5/10), and not part of a date: Topps Now titles
 # carry the event's date, and "1st Title Win 8/3/26" read as the serial 8/3 --
 # "1/5/26" would have read as a bookend. Neither number may follow a slash,
-# and the pair may not be followed by one.
-SERIAL_RE = re.compile(r"(?<![./])(?<![./]\s)\b(\d{1,5})\s*/\s*(\d{1,5})\b(?!\s*/\s*\d)")
+# and the pair may not be followed by one. Only a dot or slash glued to the
+# numbers counts: "Superfractor. 1/1", "Serial No. 1/25", "Refractor / 1/1" and
+# "1/1 / 2024 Topps" are real serials, and a spaced guard lost all four.
+SERIAL_RE = re.compile(r"(?<![./])\b(\d{1,5})\s*/\s*(\d{1,5})\b(?!/\d)")
 
 # The word right before an N/M that marks it as a grade, not a serial. A
 # grader's name, or the grade words sellers put between the grader and the
@@ -1452,14 +1462,14 @@ PLAYER_NOISE = set(PARALLEL_COLOURS) | set(GRADERS) | set("""
     sepia collection regalia decree royal prodigious ambassador influential grip
     signings debut winners rookies stars star prospect prospects icon icons
     geometric captured pineapple youthquake aces bookend full extension superior
-    authentics heroes matchpoint seeds court glossy elite premium greats top
+    authentics heroes matchpoint seeds glossy elite premium greats top
     sportkings kings geometric rally relics confetti match masters all fast
     shipping liquid winning streaks scoring sensations intricate images full
     extension point marks triumphant grass imperial ink game roundball round
     ball sports illustrated kids pop event edition international limitless
     regalia signature outfit worn nike swoosh highlights ring wrestling
     triple dual quad trio duo major league color colour sale presale pre
-    celebrates celebrate world wins win won contenders pride brown grey gray
+    celebrates celebrate world wins win won contenders pride grey gray
     reserve inaugural prototype impact aces mirrored pillars greatness spurs
     pursuit baseball basketball football hockey soccer golf boxing mlb nba nfl
     nhl wwe ufc mma factory brand hand ready youngest oldest title titles
@@ -1619,6 +1629,11 @@ def _name_runs(title):
     def _noise(word):
         return word.lower() in PLAYER_NOISE or word.lower() in _brand_words()
 
+    # "Grass Court", "Clay Court" and Graphite's "Court Masters" insert: not
+    # Margaret Court, so the phrase becomes a wall rather than the word being
+    # noise everywhere.
+    title = re.sub(r"\b(?:(?:grass|clay|hard|indoor|centre|center)\s+court|court\s+masters?)\b",
+                   " , ", title, flags=re.I)
     tokens = []
     for raw in re.sub(r"-{2,}", " ", title).split():
         # A comma or slash between two names -- "Gauff,Jessica", "KEYS/BJORN" --
@@ -1761,11 +1776,17 @@ def title_recognition_inputs(title, known=None):
         "year": leading.group(1) if leading else years[0] if len(years) == 1 else "unknown",
         "serial": f"{serial[0]}/{serial[1]}" if None not in serial else "unknown",
     }
-    names = [" ".join(_as_written(w) for w in n.split()) for n in known]
+    # Only the known names this title could mean -- those whose surname is a
+    # word of it -- not the whole roster and board: every choice is sent with
+    # every request, and past 200 names the title's own name was cut off.
+    words = set(re.findall(r"[^\W\d_]+", title.lower()))
+    names = [" ".join(_as_written(w) for w in n.split()) for n in known
+             if n.split() and n.split()[-1].lower() in words]
     if player and player != "multiple":
         names.append(player)
     names.extend(snap_to_known(" ".join(_as_written(t) for t in run), known)
                  for run in _name_runs(title))
+    names = [n for n in names if n]
     snapped = {n.lower() for n in names}
     tokens = re.findall(r"[^\W\d_]+(?:[-'’][^\W\d_]+)*|[^\s]", title, re.UNICODE)
     for width in (2, 3):

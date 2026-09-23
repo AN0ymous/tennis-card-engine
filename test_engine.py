@@ -2320,6 +2320,12 @@ class ARejectIsOnlyAsPermanentAsItsRule(unittest.TestCase):
         # a reject with a reason but no version is a version-1 reject
         self.assertFalse(engine.reject_stands({"verdict": "reject", "reason": "manufacturer not in allow-list: 'Topps Chrome'"}, self.BOOKEND))
 
+    def test_a_not_a_bookend_reject_is_reconsidered_though_its_reason_opens_with_the_serial(self):
+        """'8/3/26 Gold 1/1' was read as 8/3 under version 2."""
+        old = {"verdict": "reject", "reason": "8/3 is neither the first nor the last of its run", "judge": 2}
+        self.assertFalse(engine.reject_stands(old, "Topps Now Sinner 8/3/26 Gold 1/1"))
+        self.assertTrue(engine.reject_stands(dict(old, judge=engine.JUDGE_VERSION), "x"))
+
     def test_a_scan_judges_the_reconsidered_ones_again_and_no_others(self):
         items = [{"itemId": "v1|1|0", "title": self.BOOKEND},
                  {"itemId": "v1|2|0", "title": self.MIDRUN},
@@ -3700,6 +3706,14 @@ class TitleRecognitionBaseline(unittest.TestCase):
         self.assertEqual(engine.extract_serial("Roger Federer NetPro -1/0", {}), (1, 0))
         self.assertEqual(engine.extract_serial("Nadal BGS 9.5/10 Refractor 1/25", {}), (1, 25))
 
+    def test_a_spaced_dot_or_slash_does_not_hide_a_serial(self):
+        # ("1/1 / 2024 Topps" is left to is_contradicted_pair, which reads the
+        # "/2024" as a run stated elsewhere and steps the 1/1 aside.)
+        for title in ("Coco Gauff Superfractor. 1/1", "Serial No. 1/25",
+                      "Gold Refractor / 1/1"):
+            with self.subTest(title=title):
+                self.assertIn(engine.extract_serial(title, {}), ((1, 1), (1, 25)))
+
     def test_a_line_named_a_word_or_two_after_topps_confirms_the_set(self):
         for title in ("Topps 2026 Graphite Sofia Kenin GSR-SKN Signed Auto Patch /50",
                       "2026 Topps Tennis Graphite Marta Kostyuk Relic Auto Blue /50"):
@@ -3709,6 +3723,32 @@ class TitleRecognitionBaseline(unittest.TestCase):
         self.assertFalse(engine.line_in_title("graphite", "2024 panini graphite pencil card"))
         self.assertEqual(engine.brand_of("Panini", "", "Magnus 2026 Panini Ring Royalty Wrestling Auto"), "")
         self.assertEqual(engine.brand_of("Panini", "", "2024 Panini Instant Jannik Sinner 1/1"), "Panini Instant")
+
+    def test_chrome_and_now_stay_exact_pairs(self):
+        for kw, title in (("topps chrome", "2024 topps cosmic chrome gauff 1/1"),
+                          ("topps chrome", "topps stadium club chrome 1/1"),
+                          ("topps now", "topps tennis buy now 1/1")):
+            with self.subTest(title=title):
+                self.assertFalse(engine.line_in_title(kw, title))
+        self.assertTrue(engine.line_in_title("topps chrome", "2024 topps chrome tennis"))
+
+    def test_royalty_takes_a_year_between_and_nothing_else(self):
+        self.assertTrue(engine.line_in_title("royalty", "topps 2025 royalty ufc tsarukyan auto /49"))
+        self.assertTrue(engine.line_in_title("royalty", "topps 2023-24 royalty collection lavine 18/25"))
+        for title in ("2007 topps running back royalty tomlinson sayers",
+                      "1998-99 topps roundball royalty refractor hardaway",
+                      "2025 topps wwe royalty bronson reed /99",
+                      "topps tennis royalty gauff 1/1"):
+            with self.subTest(title=title):
+                self.assertFalse(engine.line_in_title("royalty", title))
+
+    def test_court_and_brown_are_surnames_but_a_surface_is_not(self):
+        self.assertEqual(engine.player_from_title("2019 Legends Margaret Court Auto 1/1"), "Margaret Court")
+        self.assertEqual(engine.player_from_title("Dustin Brown Topps Chrome 1/1"), "Dustin Brown")
+        self.assertEqual(engine.player_from_title(
+            "2024 Topps Chrome Green Grass Court Refractor 77/99 Daniil Medvedev #2"), "Daniil Medvedev")
+        self.assertEqual(engine.player_from_title(
+            "2024 Topps Graphite Tommy Paul Court Masters Gold Refractor #/25"), "Tommy Paul")
 
     def test_known_players_reads_the_board_and_survives_its_absence(self):
         names = engine.known_players()
