@@ -14763,7 +14763,7 @@
   "v1|147559642579|0": {
     "verdict": "reject",
     "reason": "914/999 is neither the first nor the last of its run",
-    "judge": 2
+    "judge": 3
   },
   "v1|147559651992|0": {
     "verdict": "reject",
@@ -16107,6 +16107,11 @@
   "v1|147589414092|0": {
     "verdict": "reject",
     "reason": "31/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|147589567769|0": {
+    "verdict": "reject",
+    "reason": "22/150 is neither the first nor the last of its run",
     "judge": 3
   },
   "v1|147589672509|0": {
@@ -27873,7 +27878,7 @@
   "v1|178489254482|0": {
     "verdict": "reject",
     "reason": "95/150 is neither the first nor the last of its run",
-    "judge": 2
+    "judge": 3
   },
   "v1|178490181862|0": {
     "verdict": "reject",
@@ -44147,7 +44152,7 @@
   "v1|227389562825|0": {
     "verdict": "reject",
     "reason": "13/26 is neither the first nor the last of its run",
-    "judge": 2
+    "judge": 3
   },
   "v1|227391615407|0": {
     "verdict": "reject",
@@ -44687,12 +44692,12 @@
   "v1|227496424809|0": {
     "verdict": "reject",
     "reason": "11/150 is neither the first nor the last of its run",
-    "judge": 2
+    "judge": 3
   },
   "v1|227496426394|0": {
     "verdict": "reject",
     "reason": "10/150 is neither the first nor the last of its run",
-    "judge": 2
+    "judge": 3
   },
   "v1|227496443192|0": {
     "verdict": "reject",
@@ -88820,6 +88825,26 @@
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 3
   },
+  "v1|257761922207|0": {
+    "verdict": "reject",
+    "reason": "11/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257761922210|0": {
+    "verdict": "reject",
+    "reason": "22/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257761922213|0": {
+    "verdict": "reject",
+    "reason": "80/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257761932527|0": {
+    "verdict": "reject",
+    "reason": "91/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
   "v1|264974187839|0": {
     "verdict": "reject",
     "reason": "383/549 is neither the first nor the last of its run",
@@ -91633,6 +91658,36 @@
     "verdict": "reject",
     "reason": "title says WWE, not tennis",
     "judge": 2
+  },
+  "v1|267793905473|0": {
+    "verdict": "reject",
+    "reason": "9/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|267793905474|0": {
+    "verdict": "reject",
+    "reason": "100/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|267793905475|0": {
+    "verdict": "reject",
+    "reason": "34/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|267793905477|0": {
+    "verdict": "reject",
+    "reason": "109/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|267793905478|0": {
+    "verdict": "reject",
+    "reason": "123/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|267793906714|0": {
+    "verdict": "reject",
+    "reason": "81/150 is neither the first nor the last of its run",
+    "judge": 3
   },
   "v1|273449181899|0": {
     "verdict": "reject",
@@ -100631,7 +100686,7 @@
   "v1|298654448285|0": {
     "verdict": "reject",
     "reason": "77/150 is neither the first nor the last of its run",
-    "judge": 2
+    "judge": 3
   },
   "v1|298654639089|0": {
     "verdict": "reject",
@@ -148973,7 +149028,7 @@
   "v1|398357209531|0": {
     "verdict": "reject",
     "reason": "69/150 is neither the first nor the last of its run",
-    "judge": 2
+    "judge": 3
   },
   "v1|398361289751|0": "reject",
   "v1|398363207384|0": "reject",
@@ -156123,7 +156178,7 @@
   "v1|800603595385|0": {
     "verdict": "reject",
     "reason": "82/150 is neither the first nor the last of its run",
-    "judge": 2
+    "judge": 3
   },
   "v1|800606503278|0": {
     "verdict": "filtered",
