@@ -3590,6 +3590,11 @@
     "reason": "title says UFC, not tennis",
     "judge": 3
   },
+  "v1|117428540542|0": {
+    "verdict": "reject",
+    "reason": "7/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
   "v1|123344658069|0": {
     "verdict": "reject",
     "reason": "40/100 is neither the first nor the last of its run",
@@ -11124,6 +11129,61 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|128095714262|0": {
+    "verdict": "reject",
+    "reason": "8/3 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|128095721931|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|128095730762|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|128095743412|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|128095756088|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|128095775368|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|128095781055|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|128095813003|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|128095822008|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|128095879517|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|128096366582|0": {
+    "verdict": "reject",
+    "reason": "title says UFC, not tennis",
+    "judge": 3
+  },
   "v1|130446673551|0": {
     "verdict": "reject",
     "reason": "248/549 is neither the first nor the last of its run",
@@ -13829,6 +13889,16 @@
     "judge": 3
   },
   "v1|137771288739|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|137772912606|435748623746": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|137773673472|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -17583,6 +17653,41 @@
   "v1|147594898318|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|147595633146|0": {
+    "verdict": "reject",
+    "reason": "217/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|147595787959|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|147595797168|0": {
+    "verdict": "reject",
+    "reason": "title says soccer, not tennis",
+    "judge": 3
+  },
+  "v1|147595832437|0": {
+    "verdict": "reject",
+    "reason": "listing says Soccer, not tennis",
+    "judge": 3
+  },
+  "v1|147595835491|0": {
+    "verdict": "reject",
+    "reason": "title says soccer, not tennis",
+    "judge": 3
+  },
+  "v1|147595844432|0": {
+    "verdict": "reject",
+    "reason": "listing says Soccer, not tennis",
+    "judge": 3
+  },
+  "v1|147595848706|0": {
+    "verdict": "reject",
+    "reason": "title says soccer, not tennis",
     "judge": 3
   },
   "v1|152502753605|0": {
@@ -22073,6 +22178,16 @@
   "v1|158331221789|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|158332240177|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|158333130073|0": {
+    "verdict": "reject",
+    "reason": "listing says Basketball, not tennis",
     "judge": 3
   },
   "v1|161409304275|0": {
@@ -28189,6 +28304,21 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|168716208623|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|168716234119|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|168717040008|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
   "v1|173880100026|0": "reject",
   "v1|173880100031|0": "reject",
   "v1|174236896323|0": "reject",
@@ -32530,6 +32660,61 @@
     "judge": 3
   },
   "v1|178523456645|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|178524649155|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|178524679738|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|178524688520|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|178524771256|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|178524774173|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|178524782514|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|178524789112|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|178524807506|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|178524820361|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|178524850795|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|178524854050|0": {
     "verdict": "reject",
     "reason": "title says WWE, not tennis",
     "judge": 3
@@ -39123,6 +39308,16 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|188977251796|0": {
+    "verdict": "reject",
+    "reason": "title says basketball, not tennis",
+    "judge": 3
+  },
+  "v1|188978415896|0": {
+    "verdict": "reject",
+    "reason": "94/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
   "v1|192936705153|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -43031,6 +43226,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|198664064123|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|202990110131|503177831147": {
     "verdict": "reject",
     "reason": "title says football, not tennis",
@@ -45376,6 +45576,16 @@
     "judge": 3
   },
   "v1|206578198158|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|206578278974|0": {
+    "verdict": "reject",
+    "reason": "58/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|206578345376|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -48790,6 +49000,11 @@
   "v1|227536585262|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|227537249288|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
     "judge": 3
   },
   "v1|233807725021|0": "reject",
@@ -70161,6 +70376,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|237083364859|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|237083364860|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -70187,6 +70407,16 @@
     "judge": 3
   },
   "v1|237083364865|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237083364866|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237083364867|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -70226,6 +70456,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|237083364875|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|237083364876|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -70241,7 +70476,17 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|237083364879|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|237083364880|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237083364881|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -70271,6 +70516,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|237083364887|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|237083364888|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -70292,6 +70542,11 @@
     "judge": 3
   },
   "v1|237083364892|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237083364893|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -70321,12 +70576,27 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|237083364899|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|237083364900|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|237083364901|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|237083364902|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237083364903|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -70381,7 +70651,17 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|237083364915|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|237083364916|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237083364917|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -70391,7 +70671,22 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|237083364920|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237083364921|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|237083364922|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237083364923|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -73000,6 +73295,16 @@
     "reason": "315/399 is neither the first nor the last of its run",
     "judge": 3
   },
+  "v1|237087202126|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087202175|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|237087204807|0": {
     "verdict": "reject",
     "reason": "4/15 is neither the first nor the last of its run",
@@ -73206,6 +73511,1012 @@
     "judge": 3
   },
   "v1|237087351705|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087360542|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237087361271|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087361469|0": {
+    "verdict": "reject",
+    "reason": "44/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087363495|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087364090|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237087365810|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087384605|0": {
+    "verdict": "reject",
+    "reason": "271/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087387010|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087388080|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087400331|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237087407198|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087407202|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237087414088|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087417028|0": {
+    "verdict": "reject",
+    "reason": "323/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087417439|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237087417488|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087418414|0": {
+    "verdict": "reject",
+    "reason": "2/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087419175|0": {
+    "verdict": "reject",
+    "reason": "59/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087419228|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087432988|0": {
+    "verdict": "reject",
+    "reason": "9/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087433755|0": {
+    "verdict": "reject",
+    "reason": "16/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087438335|0": {
+    "verdict": "reject",
+    "reason": "11/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087439401|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087441732|0": {
+    "verdict": "reject",
+    "reason": "237/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087449213|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|237087457830|0": {
+    "verdict": "reject",
+    "reason": "22/199 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087459523|0": {
+    "verdict": "reject",
+    "reason": "3/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087460409|0": {
+    "verdict": "reject",
+    "reason": "title says UFC, not tennis",
+    "judge": 3
+  },
+  "v1|237087461037|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237087461407|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|237087462234|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087466913|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087467035|0": {
+    "verdict": "reject",
+    "reason": "24/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087468583|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087492058|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087501783|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087501998|0": {
+    "verdict": "reject",
+    "reason": "246/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087504385|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087504960|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087505541|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087509349|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087511255|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087514558|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087515416|0": {
+    "verdict": "reject",
+    "reason": "104/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087517574|0": {
+    "verdict": "reject",
+    "reason": "28/199 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087519364|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|237087519901|0": {
+    "verdict": "reject",
+    "reason": "277/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087526082|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087527253|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237087530456|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087530462|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087538009|0": "match",
+  "v1|237087540567|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087540985|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087542092|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087542389|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087555816|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'Leaf'",
+    "judge": 3
+  },
+  "v1|237087556468|0": {
+    "verdict": "reject",
+    "reason": "81/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087558412|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087560045|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087563826|0": {
+    "verdict": "reject",
+    "reason": "title says UFC, not tennis",
+    "judge": 3
+  },
+  "v1|237087566200|0": {
+    "verdict": "reject",
+    "reason": "6/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087567298|0": {
+    "verdict": "reject",
+    "reason": "7/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087569892|0": {
+    "verdict": "reject",
+    "reason": "200/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087577757|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087671331|0": {
+    "verdict": "reject",
+    "reason": "97/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087673334|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087675516|0": {
+    "verdict": "reject",
+    "reason": "3/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087677099|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087680309|0": {
+    "verdict": "reject",
+    "reason": "127/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087681382|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087682450|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087682648|0": {
+    "verdict": "reject",
+    "reason": "title says UFC, not tennis",
+    "judge": 3
+  },
+  "v1|237087687153|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087691922|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'Leaf'",
+    "judge": 3
+  },
+  "v1|237087709568|0": {
+    "verdict": "reject",
+    "reason": "474/499 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087718120|0": {
+    "verdict": "reject",
+    "reason": "84/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087724333|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087725767|0": {
+    "verdict": "reject",
+    "reason": "192/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087729588|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087731821|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237087731846|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237087732977|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087734253|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087735392|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087737368|0": {
+    "verdict": "reject",
+    "reason": "353/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087745455|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087749986|0": {
+    "verdict": "reject",
+    "reason": "216/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087755479|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087755685|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087764327|0": {
+    "verdict": "reject",
+    "reason": "9/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087764667|0": {
+    "verdict": "reject",
+    "reason": "103/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087769207|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087769237|0": {
+    "verdict": "reject",
+    "reason": "183/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087775038|0": {
+    "verdict": "reject",
+    "reason": "41/45 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087778347|0": {
+    "verdict": "reject",
+    "reason": "85/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087784112|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087785419|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|237087791485|0": {
+    "verdict": "reject",
+    "reason": "81/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087819081|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087823950|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087829553|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237087830965|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087835480|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087837695|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087842948|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087843929|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237087852969|0": {
+    "verdict": "reject",
+    "reason": "6/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087854662|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087858073|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087861504|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087862994|0": {
+    "verdict": "reject",
+    "reason": "22/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087863485|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087865392|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087868287|0": {
+    "verdict": "reject",
+    "reason": "47/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087868292|0": {
+    "verdict": "reject",
+    "reason": "11/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087868293|0": {
+    "verdict": "reject",
+    "reason": "25/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087871002|0": {
+    "verdict": "reject",
+    "reason": "15/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087871030|0": {
+    "verdict": "reject",
+    "reason": "13/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087871047|0": {
+    "verdict": "reject",
+    "reason": "20/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087871071|0": {
+    "verdict": "reject",
+    "reason": "21/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087871074|0": {
+    "verdict": "reject",
+    "reason": "21/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087871088|0": {
+    "verdict": "reject",
+    "reason": "76/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087871102|0": {
+    "verdict": "reject",
+    "reason": "85/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087871187|0": {
+    "verdict": "reject",
+    "reason": "listing says Basketball, not tennis",
+    "judge": 3
+  },
+  "v1|237087871272|0": {
+    "verdict": "reject",
+    "reason": "35/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087871938|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087873351|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087875042|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087882662|0": {
+    "verdict": "reject",
+    "reason": "title says UFC, not tennis",
+    "judge": 3
+  },
+  "v1|237087882710|0": {
+    "verdict": "reject",
+    "reason": "title says baseball, not tennis",
+    "judge": 3
+  },
+  "v1|237087887363|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237087888435|0": {
+    "verdict": "reject",
+    "reason": "14/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087888721|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087888974|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087889049|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087889191|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087889258|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087889321|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087889331|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087889546|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087889570|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087890020|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087904096|0": {
+    "verdict": "reject",
+    "reason": "71/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087904976|0": {
+    "verdict": "reject",
+    "reason": "13/15 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087906426|0": {
+    "verdict": "reject",
+    "reason": "36/199 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087909292|0": {
+    "verdict": "reject",
+    "reason": "41/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087935063|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087941903|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'Sports Illustrated'",
+    "judge": 3
+  },
+  "v1|237087946197|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087948179|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087951093|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087952846|0": {
+    "verdict": "reject",
+    "reason": "6/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087953369|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|237087953919|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087957028|0": {
+    "verdict": "reject",
+    "reason": "43/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087957035|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237087958983|0": {
+    "verdict": "reject",
+    "reason": "10/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087964730|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087965637|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237087971178|0": {
+    "verdict": "reject",
+    "reason": "398/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237087971556|0": {
+    "verdict": "reject",
+    "reason": "105/499 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088005995|0": {
+    "verdict": "reject",
+    "reason": "85/125 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088007999|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237088033864|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088036632|0": {
+    "verdict": "reject",
+    "reason": "86/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088048253|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088063318|0": {
+    "verdict": "reject",
+    "reason": "32/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088063930|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088076787|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237088077779|0": {
+    "verdict": "reject",
+    "reason": "15/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088080006|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088102134|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237088102497|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088109159|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088115815|0": {
+    "verdict": "reject",
+    "reason": "5/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088117811|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088119007|0": {
+    "verdict": "reject",
+    "reason": "30/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088122146|0": {
+    "verdict": "reject",
+    "reason": "10/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088155652|0": {
+    "verdict": "reject",
+    "reason": "19/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088158173|0": {
+    "verdict": "reject",
+    "reason": "96/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088161669|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088164735|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088172106|0": {
+    "verdict": "reject",
+    "reason": "16/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088181237|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088184669|0": {
+    "verdict": "reject",
+    "reason": "48/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088184735|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088197936|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088201649|0": {
+    "verdict": "reject",
+    "reason": "7/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088202984|0": {
+    "verdict": "reject",
+    "reason": "59/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088207460|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088223782|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088244600|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088248654|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237088260373|0": {
+    "verdict": "reject",
+    "reason": "91/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088270472|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237088302646|0": {
+    "verdict": "reject",
+    "reason": "14/23 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088330124|0": {
+    "verdict": "reject",
+    "reason": "12/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088334799|0": {
+    "verdict": "reject",
+    "reason": "188/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|237088350607|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237088354048|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237088357836|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -95064,6 +96375,1145 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|257762056761|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762057001|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762058543|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762061581|0": {
+    "verdict": "reject",
+    "reason": "297/499 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762062012|0": {
+    "verdict": "reject",
+    "reason": "11/15 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762062249|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762062369|0": {
+    "verdict": "reject",
+    "reason": "4/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762063999|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762067106|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762068590|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762079799|0": {
+    "verdict": "reject",
+    "reason": "51/69 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762082909|0": {
+    "verdict": "reject",
+    "reason": "91/199 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762083322|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762084835|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762084846|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762086460|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|257762086465|0": {
+    "verdict": "reject",
+    "reason": "116/125 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762088934|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762091102|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762093313|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762093466|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762099456|0": {
+    "verdict": "reject",
+    "reason": "342/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762103983|0": {
+    "verdict": "reject",
+    "reason": "66/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762105851|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762107923|0": {
+    "verdict": "reject",
+    "reason": "177/499 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762108595|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762109077|0": {
+    "verdict": "reject",
+    "reason": "72/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762109436|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762109864|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762111671|0": {
+    "verdict": "reject",
+    "reason": "185/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762140563|0": {
+    "verdict": "reject",
+    "reason": "26/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762148384|0": {
+    "verdict": "reject",
+    "reason": "3/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762151786|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762151998|0": {
+    "verdict": "reject",
+    "reason": "12/15 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762153617|0": {
+    "verdict": "reject",
+    "reason": "88/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762154147|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762154646|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762154679|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762154765|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762154797|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762155035|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762156301|0": {
+    "verdict": "reject",
+    "reason": "27/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762157332|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762158421|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762158430|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762159382|0": {
+    "verdict": "reject",
+    "reason": "listing says Football, not tennis",
+    "judge": 3
+  },
+  "v1|257762169671|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762174596|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762174944|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762178923|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762179036|0": {
+    "verdict": "reject",
+    "reason": "34/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762180556|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762181072|0": {
+    "verdict": "reject",
+    "reason": "10/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762181282|0": {
+    "verdict": "reject",
+    "reason": "6/16 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762181674|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762182133|0": {
+    "verdict": "reject",
+    "reason": "9/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762182328|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762183533|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762187038|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762192033|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762208683|0": {
+    "verdict": "reject",
+    "reason": "171/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762215798|0": {
+    "verdict": "reject",
+    "reason": "23/5 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762217155|0": {
+    "verdict": "reject",
+    "reason": "155/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762217627|0": {
+    "verdict": "reject",
+    "reason": "108/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762219808|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762220906|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762223240|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762296845|0": {
+    "verdict": "reject",
+    "reason": "48/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762300649|0": {
+    "verdict": "reject",
+    "reason": "81/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762307160|0": {
+    "verdict": "reject",
+    "reason": "52/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762316233|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762320540|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762321230|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762322625|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762324075|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762326506|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'ProTennis Player Cards, Inc.'",
+    "judge": 3
+  },
+  "v1|257762332926|0": {
+    "verdict": "reject",
+    "reason": "155/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762337221|0": {
+    "verdict": "reject",
+    "reason": "66/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762345042|0": {
+    "verdict": "reject",
+    "reason": "98/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762347712|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762347743|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762350018|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|257762350020|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|257762350309|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762351498|0": {
+    "verdict": "reject",
+    "reason": "136/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762351904|0": {
+    "verdict": "reject",
+    "reason": "13/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762352727|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762352801|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|257762353911|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762354230|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|257762354310|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|257762363493|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762367603|0": {
+    "verdict": "reject",
+    "reason": "296/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762375115|0": {
+    "verdict": "reject",
+    "reason": "105/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762375881|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762377889|0": {
+    "verdict": "reject",
+    "reason": "150/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762378971|0": {
+    "verdict": "reject",
+    "reason": "11/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762378995|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|257762379588|0": {
+    "verdict": "reject",
+    "reason": "146/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762379678|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762389017|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762389939|0": {
+    "verdict": "reject",
+    "reason": "91/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762390280|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762392014|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762394022|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762395610|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762396874|0": {
+    "verdict": "reject",
+    "reason": "175/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762396947|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762399371|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762399752|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762399953|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762408512|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762413789|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762415372|0": {
+    "verdict": "reject",
+    "reason": "4/35 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762423909|0": {
+    "verdict": "reject",
+    "reason": "57/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762427565|0": {
+    "verdict": "reject",
+    "reason": "192/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762428269|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762428472|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762429967|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762430689|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762432449|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762433239|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762433360|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762433964|0": {
+    "verdict": "reject",
+    "reason": "26/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762434673|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762439191|0": {
+    "verdict": "reject",
+    "reason": "76/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762458264|0": {
+    "verdict": "reject",
+    "reason": "44/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762458283|0": {
+    "verdict": "reject",
+    "reason": "listing says Basketball, not tennis",
+    "judge": 3
+  },
+  "v1|257762459233|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762468218|0": "match",
+  "v1|257762468514|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762469019|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762476721|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762477498|0": {
+    "verdict": "reject",
+    "reason": "83/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762477506|0": {
+    "verdict": "reject",
+    "reason": "58/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762477520|0": {
+    "verdict": "reject",
+    "reason": "28/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762477542|0": {
+    "verdict": "reject",
+    "reason": "71/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762477544|0": {
+    "verdict": "reject",
+    "reason": "15/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762477549|0": {
+    "verdict": "reject",
+    "reason": "9/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762477571|0": {
+    "verdict": "reject",
+    "reason": "27/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762482944|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762484890|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762486426|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762487220|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762498034|0": {
+    "verdict": "reject",
+    "reason": "331/499 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762502958|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762503208|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762503368|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762503492|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762503495|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762503522|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762503555|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762503579|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762503581|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762503591|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762503793|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762504151|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762504427|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762506838|0": {
+    "verdict": "reject",
+    "reason": "2/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762510133|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|257762511422|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762526270|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762527803|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762528842|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762529609|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762531613|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762535466|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762535971|0": {
+    "verdict": "reject",
+    "reason": "105/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762537909|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762543266|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762561102|0": {
+    "verdict": "reject",
+    "reason": "238/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762562060|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762563201|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|257762568762|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762570350|0": {
+    "verdict": "reject",
+    "reason": "178/299 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762570366|0": {
+    "verdict": "reject",
+    "reason": "5/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762570500|0": {
+    "verdict": "reject",
+    "reason": "371/499 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762570522|0": {
+    "verdict": "reject",
+    "reason": "37/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762584430|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762593465|0": {
+    "verdict": "reject",
+    "reason": "4/5 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762593900|0": {
+    "verdict": "reject",
+    "reason": "8/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762594342|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762597115|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762599314|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762602115|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762604062|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762617638|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762617791|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762618100|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762620448|0": {
+    "verdict": "reject",
+    "reason": "20/35 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762620623|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762625811|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|257762635721|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762639829|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762647036|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762651439|0": {
+    "verdict": "reject",
+    "reason": "27/125 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762653592|0": "match",
+  "v1|257762659907|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762661348|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762661587|0": {
+    "verdict": "reject",
+    "reason": "27/125 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762678381|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762679692|0": {
+    "verdict": "reject",
+    "reason": "39/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762680114|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|257762680673|0": {
+    "verdict": "reject",
+    "reason": "61/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762694975|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762697744|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762698550|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762699083|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762701229|0": "match",
+  "v1|257762710164|0": {
+    "verdict": "reject",
+    "reason": "79/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762718235|0": {
+    "verdict": "reject",
+    "reason": "31/125 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762724195|0": "match",
+  "v1|257762726532|0": {
+    "verdict": "reject",
+    "reason": "40/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762729624|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762730509|0": {
+    "verdict": "reject",
+    "reason": "81/125 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762731019|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762741993|0": {
+    "verdict": "reject",
+    "reason": "190/299 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762743707|0": {
+    "verdict": "reject",
+    "reason": "22/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762745087|0": {
+    "verdict": "reject",
+    "reason": "33/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762748300|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762767031|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|257762769932|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762776653|0": {
+    "verdict": "reject",
+    "reason": "36/100 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762777421|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762779471|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762790084|0": {
+    "verdict": "reject",
+    "reason": "19/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762798559|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762808886|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762816579|0": {
+    "verdict": "reject",
+    "reason": "40/100 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257762865741|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257762888592|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|264974187839|0": {
     "verdict": "reject",
     "reason": "383/549 is neither the first nor the last of its run",
@@ -97941,6 +100391,11 @@
   "v1|267793906714|0": {
     "verdict": "reject",
     "reason": "81/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|267794245485|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 3
   },
   "v1|273146400080|0": {
@@ -101369,6 +103824,16 @@
     "judge": 3
   },
   "v1|278403696817|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|278404500670|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|278404850094|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 3
@@ -105051,6 +107516,46 @@
     "judge": 3
   },
   "v1|287604821726|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|287605617391|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|287605617395|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|287605617442|0": {
+    "verdict": "reject",
+    "reason": "10/125 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|287605617532|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|287605617534|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|287605618251|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|287605618267|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|287605683491|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -108974,6 +111479,11 @@
   "v1|298702206806|0": {
     "verdict": "reject",
     "reason": "title says UFC, not tennis",
+    "judge": 3
+  },
+  "v1|298703412727|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 3
   },
   "v1|302468198255|0": {
@@ -113879,6 +116389,36 @@
     "reason": "title says UFC, not tennis",
     "judge": 3
   },
+  "v1|307195694102|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|307195975606|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|307196022065|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|307196030981|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|307196049155|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|307196058286|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|313200685949|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -118641,6 +121181,26 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|318910815907|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|318912122817|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|318912169360|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|318912481951|0": {
+    "verdict": "reject",
+    "reason": "title says soccer, not tennis",
+    "judge": 3
+  },
   "v1|324002006810|513045337318": {
     "verdict": "filtered",
     "rules": "f0be4ca8e5561804",
@@ -122589,6 +125149,26 @@
     "judge": 3
   },
   "v1|327371781939|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|327371813596|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|327371831011|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|327372224252|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|327372338779|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -143255,9 +145835,1415 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|336809972980|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336809973605|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336809977747|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336809979354|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336809981175|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336809981563|0": {
+    "verdict": "reject",
+    "reason": "373/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336809981779|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336809984252|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336809984662|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336809987286|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|336809987478|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336809990369|0": {
+    "verdict": "reject",
+    "reason": "67/499 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810006765|0": {
+    "verdict": "reject",
+    "reason": "263/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810008617|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810008618|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810008619|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810008620|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810008621|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810008622|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810018530|0": {
+    "verdict": "reject",
+    "reason": "124/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810019851|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810020810|0": "match",
+  "v1|336810021264|0": {
+    "verdict": "reject",
+    "reason": "60/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810021701|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810025102|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810025943|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810032422|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810033798|0": {
+    "verdict": "reject",
+    "reason": "66/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810035453|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810037440|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810039946|0": {
+    "verdict": "reject",
+    "reason": "13/15 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810041234|0": {
+    "verdict": "reject",
+    "reason": "title says UFC, not tennis",
+    "judge": 3
+  },
+  "v1|336810041967|0": {
+    "verdict": "reject",
+    "reason": "389/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810049453|0": {
+    "verdict": "reject",
+    "reason": "127/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810051049|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810056999|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810057879|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810059894|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810076755|0": {
+    "verdict": "reject",
+    "reason": "title says football, not tennis",
+    "judge": 3
+  },
+  "v1|336810079991|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810080470|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810081268|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810081512|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810085305|0": {
+    "verdict": "reject",
+    "reason": "title says UFC, not tennis",
+    "judge": 3
+  },
+  "v1|336810089303|0": {
+    "verdict": "reject",
+    "reason": "55/67 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810096323|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810097426|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810099169|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810099235|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|336810100159|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810101210|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810101264|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810101408|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810101527|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810101852|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810104631|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810106738|0": {
+    "verdict": "reject",
+    "reason": "324/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810110147|0": {
+    "verdict": "reject",
+    "reason": "2/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810115179|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810118241|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810119276|0": {
+    "verdict": "reject",
+    "reason": "251/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810122901|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810125359|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810125360|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810126103|0": {
+    "verdict": "reject",
+    "reason": "18/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810129311|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810133760|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810135570|0": {
+    "verdict": "reject",
+    "reason": "227/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810139189|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810142044|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810145928|0": {
+    "verdict": "reject",
+    "reason": "10/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810147850|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810150672|0": {
+    "verdict": "reject",
+    "reason": "4/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810156161|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810161538|0": {
+    "verdict": "reject",
+    "reason": "56/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810161673|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810161820|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810242770|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810243723|0": {
+    "verdict": "reject",
+    "reason": "10/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810244793|0": {
+    "verdict": "reject",
+    "reason": "209/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810246516|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810251887|0": {
+    "verdict": "reject",
+    "reason": "29/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810252327|0": {
+    "verdict": "reject",
+    "reason": "45/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810253789|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810258896|0": {
+    "verdict": "reject",
+    "reason": "3/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810267856|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810270526|0": {
+    "verdict": "reject",
+    "reason": "160/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810277615|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810280600|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810286330|0": {
+    "verdict": "reject",
+    "reason": "42/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810287499|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810287792|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810288670|0": {
+    "verdict": "reject",
+    "reason": "186/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810289057|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810293063|0": {
+    "verdict": "reject",
+    "reason": "title says UFC, not tennis",
+    "judge": 3
+  },
+  "v1|336810293815|0": {
+    "verdict": "reject",
+    "reason": "32/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810294249|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|336810294252|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|336810294259|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|336810294730|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810299869|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|336810299876|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|336810306299|0": {
+    "verdict": "reject",
+    "reason": "48/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810307011|0": {
+    "verdict": "reject",
+    "reason": "240/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810307037|0": {
+    "verdict": "reject",
+    "reason": "290/325 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810307796|0": {
+    "verdict": "reject",
+    "reason": "105/125 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810308041|0": {
+    "verdict": "reject",
+    "reason": "317/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810310739|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810310911|0": {
+    "verdict": "reject",
+    "reason": "19/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810311222|0": {
+    "verdict": "reject",
+    "reason": "86/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810311457|0": {
+    "verdict": "reject",
+    "reason": "233/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810319571|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810320231|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810325175|0": {
+    "verdict": "reject",
+    "reason": "246/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810326289|0": {
+    "verdict": "reject",
+    "reason": "45/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810327810|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810331424|0": {
+    "verdict": "reject",
+    "reason": "24/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810331798|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810331902|0": {
+    "verdict": "reject",
+    "reason": "154/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810334287|0": {
+    "verdict": "reject",
+    "reason": "81/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810334326|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810336849|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810337278|0": {
+    "verdict": "reject",
+    "reason": "102/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810338538|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810341058|0": {
+    "verdict": "reject",
+    "reason": "18/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810343981|0": {
+    "verdict": "reject",
+    "reason": "223/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810364877|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810371607|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810378811|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810379046|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810380471|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810383348|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810385078|0": {
+    "verdict": "reject",
+    "reason": "223/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810389292|0": {
+    "verdict": "reject",
+    "reason": "74/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810389586|0": {
+    "verdict": "reject",
+    "reason": "92/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810389596|0": {
+    "verdict": "reject",
+    "reason": "12/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810389684|0": {
+    "verdict": "reject",
+    "reason": "11/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810390938|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810391492|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810392803|0": {
+    "verdict": "reject",
+    "reason": "2/5 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810392913|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810393931|0": {
+    "verdict": "reject",
+    "reason": "11/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810400308|0": {
+    "verdict": "reject",
+    "reason": "60/65 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810400313|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810400558|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810401058|0": {
+    "verdict": "reject",
+    "reason": "108/499 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810401624|0": {
+    "verdict": "reject",
+    "reason": "5/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810404153|0": {
+    "verdict": "reject",
+    "reason": "67/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810404154|0": {
+    "verdict": "reject",
+    "reason": "2/15 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810404159|0": {
+    "verdict": "reject",
+    "reason": "11/15 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810404165|0": {
+    "verdict": "reject",
+    "reason": "20/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810404166|0": {
+    "verdict": "reject",
+    "reason": "listing says Basketball, not tennis",
+    "judge": 3
+  },
+  "v1|336810404176|0": {
+    "verdict": "reject",
+    "reason": "27/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810404177|0": {
+    "verdict": "reject",
+    "reason": "24/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810404180|0": {
+    "verdict": "reject",
+    "reason": "2/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810404181|0": {
+    "verdict": "reject",
+    "reason": "12/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810404186|0": {
+    "verdict": "reject",
+    "reason": "listing says Basketball, not tennis",
+    "judge": 3
+  },
+  "v1|336810404193|0": {
+    "verdict": "reject",
+    "reason": "listing says Basketball, not tennis",
+    "judge": 3
+  },
+  "v1|336810404199|0": {
+    "verdict": "reject",
+    "reason": "listing says Basketball, not tennis",
+    "judge": 3
+  },
+  "v1|336810404200|0": {
+    "verdict": "reject",
+    "reason": "2/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810404203|0": {
+    "verdict": "reject",
+    "reason": "8/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810404210|0": {
+    "verdict": "reject",
+    "reason": "8/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810404695|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810404718|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810404722|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810404842|0": {
+    "verdict": "reject",
+    "reason": "84/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810405343|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810406474|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810407148|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810407179|0": {
+    "verdict": "reject",
+    "reason": "title says UFC, not tennis",
+    "judge": 3
+  },
+  "v1|336810408500|0": {
+    "verdict": "reject",
+    "reason": "17/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810414695|0": {
+    "verdict": "reject",
+    "reason": "listing says Basketball, not tennis",
+    "judge": 3
+  },
+  "v1|336810420001|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420331|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810420650|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420651|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420681|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420686|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420688|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420732|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420742|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420746|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420747|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420760|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420778|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420787|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420796|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420851|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810420876|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810422856|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810433370|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810437407|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810442112|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810446591|0": {
+    "verdict": "reject",
+    "reason": "4/5 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810447166|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810451348|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810452258|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810460397|0": {
+    "verdict": "reject",
+    "reason": "43/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810464872|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|336810469996|0": {
+    "verdict": "reject",
+    "reason": "351/499 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810470122|0": {
+    "verdict": "reject",
+    "reason": "153/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810470798|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810472436|0": {
+    "verdict": "reject",
+    "reason": "60/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810472440|0": {
+    "verdict": "reject",
+    "reason": "23/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810474177|0": {
+    "verdict": "reject",
+    "reason": "20/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810474254|0": {
+    "verdict": "reject",
+    "reason": "10/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810482495|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810482616|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810482688|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810483595|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810489968|0": {
+    "verdict": "reject",
+    "reason": "66/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810493764|0": {
+    "verdict": "reject",
+    "reason": "315/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810493847|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810494001|0": {
+    "verdict": "reject",
+    "reason": "256/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810494873|0": {
+    "verdict": "reject",
+    "reason": "39/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810496876|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810498220|0": {
+    "verdict": "reject",
+    "reason": "4/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810507411|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810510058|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810511712|0": {
+    "verdict": "reject",
+    "reason": "18/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810522959|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810523911|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810526111|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810528450|0": {
+    "verdict": "reject",
+    "reason": "14/125 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810536878|0": {
+    "verdict": "reject",
+    "reason": "65/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810537560|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810538318|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810541565|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810555315|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810559111|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810559211|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810559236|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810559241|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810559249|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810559924|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810561063|0": {
+    "verdict": "reject",
+    "reason": "40/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810576218|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810576223|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810576227|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810577100|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810577647|0": {
+    "verdict": "reject",
+    "reason": "58/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810578548|0": {
+    "verdict": "reject",
+    "reason": "66/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810578678|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810590420|0": {
+    "verdict": "reject",
+    "reason": "16/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810590431|0": {
+    "verdict": "reject",
+    "reason": "143/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810591641|0": {
+    "verdict": "reject",
+    "reason": "12/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810598059|0": {
+    "verdict": "reject",
+    "reason": "9/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810598133|0": {
+    "verdict": "reject",
+    "reason": "6/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810599828|0": {
+    "verdict": "reject",
+    "reason": "7/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810605307|0": {
+    "verdict": "reject",
+    "reason": "7/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810606597|0": {
+    "verdict": "reject",
+    "reason": "13/25 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810607139|0": {
+    "verdict": "reject",
+    "reason": "44/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810608771|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810609434|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810622921|0": {
+    "verdict": "reject",
+    "reason": "title says UFC, not tennis",
+    "judge": 3
+  },
+  "v1|336810628003|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'Leaf'",
+    "judge": 3
+  },
+  "v1|336810628881|0": {
+    "verdict": "reject",
+    "reason": "manufacturer not in allow-list: 'Leaf'",
+    "judge": 3
+  },
+  "v1|336810630902|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810632173|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810678552|0": {
+    "verdict": "reject",
+    "reason": "11/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810684167|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810685764|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810688217|0": {
+    "verdict": "reject",
+    "reason": "6/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810694773|0": {
+    "verdict": "reject",
+    "reason": "12/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810695939|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810699947|0": {
+    "verdict": "reject",
+    "reason": "11/33 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810703530|0": {
+    "verdict": "reject",
+    "reason": "70/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810704922|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810706400|0": {
+    "verdict": "reject",
+    "reason": "36/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810730301|0": {
+    "verdict": "reject",
+    "reason": "7/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810740344|0": {
+    "verdict": "reject",
+    "reason": "21/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810741588|0": {
+    "verdict": "reject",
+    "reason": "28/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810745938|0": {
+    "verdict": "reject",
+    "reason": "4/35 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810754705|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810756771|0": {
+    "verdict": "reject",
+    "reason": "95/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336810759835|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810759836|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810759837|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810759838|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|336810759898|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810762796|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810763141|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336810768697|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
     "judge": 3
   },
   "v1|353269329544|0": "reject",
@@ -148704,6 +152690,11 @@
     "judge": 3
   },
   "v1|366688320828|0": "match",
+  "v1|366689320936|0": {
+    "verdict": "reject",
+    "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
   "v1|372208715535|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -154939,6 +158930,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|377519594300|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|381338553871|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -160367,6 +164363,26 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|398426223305|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|398427435804|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|398427582181|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|398427654613|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|401738865458|0": {
     "verdict": "reject",
     "reason": "listing says Baseball, not tennis",
@@ -165271,6 +169287,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|407241774357|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
   "v1|800001755687|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -167595,6 +171616,11 @@
     "reason": "title says WWE, not tennis",
     "judge": 3
   },
+  "v1|800707346992|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
   "v1|820001528073|0": "reject",
   "v1|820002929019|0": {
     "verdict": "reject",
@@ -169832,6 +173858,21 @@
   "v1|820164817794|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|820166138577|0": {
+    "verdict": "reject",
+    "reason": "93/99 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|820166297605|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|820166300144|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 3
   }
 }
