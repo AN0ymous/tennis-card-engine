@@ -22299,6 +22299,11 @@
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 2
   },
+  "v1|168352907794|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
   "v1|168352916097|0": "reject",
   "v1|168352918749|0": "reject",
   "v1|168352922871|0": "reject",
@@ -27780,6 +27785,16 @@
   "v1|178477140283|0": "reject",
   "v1|178477442807|477792865158": "reject",
   "v1|178477452597|477792534859": "reject",
+  "v1|178477807808|0": {
+    "verdict": "reject",
+    "reason": "70/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|178477808164|0": {
+    "verdict": "reject",
+    "reason": "69/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
   "v1|178478074426|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -44040,6 +44055,11 @@
   },
   "v1|227344789884|0": "reject",
   "v1|227344789901|0": "reject",
+  "v1|227347532349|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
   "v1|227354745401|0": {
     "verdict": "reject",
     "reason": "title says WWE, not tennis",
@@ -86624,6 +86644,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 2
   },
+  "v1|257756484088|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
   "v1|257756485810|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -112781,6 +112806,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 2
   },
+  "v1|327139665401|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
   "v1|327139860463|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -136418,6 +136448,16 @@
     "judge": 2
   },
   "v1|358918622176|0": "reject",
+  "v1|358923438627|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|358923462842|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
   "v1|358924815162|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
