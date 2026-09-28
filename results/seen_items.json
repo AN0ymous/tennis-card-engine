@@ -25158,6 +25158,16 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|158352883826|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|158352903360|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|161409304275|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -89675,6 +89685,31 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|237094388631|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|237094423338|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237094433308|0": {
+    "verdict": "reject",
+    "reason": "blocked set: The NetPro Trading Card Company base",
+    "judge": 3
+  },
+  "v1|237094469257|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237094471764|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|254597341734|0": "reject",
   "v1|254768996343|0": {
     "verdict": "reject",
@@ -122068,6 +122103,11 @@
     "judge": 3
   },
   "v1|257770122968|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257770384907|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -154709,6 +154749,11 @@
     "reason": "title says UFC, not tennis",
     "judge": 3
   },
+  "v1|327377599911|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|333556324968|0": "reject",
   "v1|333556473601|0": "reject",
   "v1|333570130053|0": "reject",
@@ -185632,6 +185677,16 @@
   "v1|336816320641|0": {
     "verdict": "reject",
     "reason": "200/399 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|336816464689|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336816518489|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 3
   },
   "v1|353269329544|0": "reject",
