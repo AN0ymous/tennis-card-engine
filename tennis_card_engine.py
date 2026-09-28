@@ -1725,16 +1725,68 @@ def _name_runs(title):
     return found
 
 
-def get_player(aspects, title="", known=PLAYERS):
+def title_bears_out(name, title):
+    """Whether a title agrees with a name something else put on the listing
+    -- eBay's Player field, or the player a scan searched for. Surnames only,
+    as everywhere else: "Denis" in "UFC Benoit Saint Denis" does not bear out
+    Denis Shapovalov. Each name in a list counts ("Madison Keys, Bjorn
+    Fratangelo"), accents are compared away, and a surname a seller got one
+    letter wrong still counts, so "Djokivic" bears out Djokovic."""
+    words = set(re.findall(r"[^\W\d_]+", fold_accents(title)))
+    for part in re.split(r"[,/&]|\band\b", fold_accents(name)):
+        tokens = re.findall(r"[^\W\d_]+", part)
+        if not tokens:
+            continue
+        surname = tokens[-1]
+        if len(surname) < 3 or surname in PLAYER_NOISE:
+            continue
+        if surname in words or (len(surname) >= 5 and any(
+                abs(len(surname) - len(w)) <= 1 and _edit_distance(surname, w) <= 1
+                for w in words)):
+            return True
+    return False
+
+
+def _name_words(name):
+    """The words of a name worth comparing: folded, three letters or more,
+    not card vocabulary."""
+    return {w for w in re.findall(r"[^\W\d_]+", fold_accents(name))
+            if len(w) >= 3 and w not in PLAYER_NOISE}
+
+
+def get_player(aspects, title="", known=PLAYERS, searched=None):
     """The player: eBay's own specifics first, then the title, then nothing.
     "" rather than "Unknown player", so the page can choose how to show a
-    card whose player really is not stated instead of printing a shrug."""
-    for key in PLAYER_ASPECTS:
-        values = (aspects or {}).get(key)
-        if values and str(values[0]).strip():
-            # eBay hands this back however the seller typed it, and a shouted
-            # name stood out on the board beside every other one.
-            return as_typed(str(values[0]).strip())
+    card whose player really is not stated instead of printing a shrug.
+
+    **Unless the title names somebody else.** "Aryna Sabalenka NetPro Premium
+    Rainbow Red 01/10 Autograph #A-AS Auto SSP" came with "Joao Fonseca" in
+    its Player field -- a seller's copied listing -- and sat on the board as
+    a Fonseca card at $2,999.99. So a claimed name the title does not bear
+    out gives way to the name the title itself reads. A title that names
+    nobody contradicts nothing, and the claim stands. `searched` is the
+    player a scan asked for, which is a claim of the same kind: a Fonseca
+    scan that met this listing through its Player field must not file it
+    under Fonseca either."""
+    claimed = searched or ""
+    if not claimed:
+        for key in PLAYER_ASPECTS:
+            values = (aspects or {}).get(key)
+            if values and str(values[0]).strip():
+                claimed = str(values[0]).strip()
+                break
+    if claimed and not title_bears_out(claimed, title):
+        read = player_from_title(title, known)
+        # Only a wholly different name overrules the claim. One that shares a
+        # name with it is the same person misspelt: "2025 Topps Chrome Tennis
+        # Belinda Bennie BLACK GEOMETRIC 2/2" is Belinda Bencic, two letters
+        # out, and her Player field was right.
+        if read and not (_name_words(read) & _name_words(claimed)):
+            return as_typed(read)
+    if claimed:
+        # eBay hands this back however the seller typed it, and a shouted
+        # name stood out on the board beside every other one.
+        return as_typed(claimed)
     return player_from_title(title, known)
 
 
@@ -2655,9 +2707,12 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
             # leave it "" and let the page say so quietly rather than shrug.
             # as_typed so a row recorded before the rule existed reads the
             # same as one recorded after it, with no scan needed.
-            "player": as_typed(cell(row, "Player")
-                               if cell(row, "Player") not in ("", "Unknown player")
-                               else player_from_title(cell(row, "Card Description"), known)),
+            # The recorded player is a claim like eBay's own field was, and
+            # the title outranks it the same way (get_player), so a card filed
+            # under the wrong name reads right on the next export.
+            "player": get_player({}, cell(row, "Card Description"), known,
+                                 searched=cell(row, "Player")
+                                 if cell(row, "Player") not in ("", "Unknown player") else None),
             "manufacturer": manufacturer,
             "set_name": set_name,
             "brand": brand_of(manufacturer, set_name, cell(row, "Card Description")),
@@ -2851,7 +2906,7 @@ def judge_listing(item, detail, player=None, rules=None):
         caution = f"{caution} \u00b7 {note}" if caution else note
 
     fields = {
-        "player": player or get_player(aspects, title),
+        "player": get_player(aspects, title, searched=player),
         "manufacturer": manufacturer,
         "set_name": set_name,
         "card_number": card_number,

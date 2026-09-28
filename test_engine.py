@@ -3585,9 +3585,60 @@ class PlayersReadOffTheTitle(unittest.TestCase):
         self.assertEqual(engine.player_from_title(
             "Coco Gauff Venus Williams 2025 Topps Chrome Tennis DUAL REFRACTOR 25/25 Auto"), "")
 
-    def test_ebays_own_field_still_wins(self):
+    SABALENKA = "Aryna Sabalenka NetPro Premium Rainbow Red 01/10 Autograph #A-AS Auto SSP"
+
+    def test_ebays_own_field_wins_where_the_title_agrees_or_says_nothing(self):
+        for title in ("2024 Topps Chrome Iga Swiatek Auto 1/1",
+                      "2024 Topps Chrome Swiatek Gold 1/50",
+                      "2024 Topps Chrome Tennis Gold Refractor 1/50"):
+            with self.subTest(title=title):
+                self.assertEqual(engine.get_player({"Player/Athlete": ["Iga Swiatek"]}, title),
+                                 "Iga Swiatek")
+
+    def test_the_title_outranks_a_field_that_names_somebody_else(self):
+        """The Sabalenka card sat on the board as Joao Fonseca's at $2,999.99:
+        the seller's Player field was copied from another listing, and the
+        field used to win whatever the title said."""
+        self.assertEqual(engine.get_player({"Player/Athlete": ["Joao Fonseca"]}, self.SABALENKA),
+                         "Aryna Sabalenka")
         self.assertEqual(engine.get_player({"Player/Athlete": ["Iga Swiatek"]},
-                                           "2024 Topps Chrome Coco Gauff Auto 1/1"), "Iga Swiatek")
+                                           "2024 Topps Chrome Coco Gauff Auto 1/1"), "Coco Gauff")
+
+    def test_a_scan_that_searched_for_one_player_files_the_card_under_its_own(self):
+        """A Fonseca scan meets this listing through its Player field; the
+        name it searched for is a claim like any other."""
+        self.assertEqual(engine.get_player({"Player/Athlete": ["Joao Fonseca"]}, self.SABALENKA,
+                                           searched="Joao Fonseca"), "Aryna Sabalenka")
+        self.assertEqual(engine.get_player({}, "2024 Topps Chrome Tennis Fonseca Gold 1/50",
+                                           searched="Joao Fonseca"), "Joao Fonseca")
+
+    def test_a_misspelt_title_does_not_overrule_the_right_name(self):
+        """"Belinda Bennie" is Belinda Bencic two letters out; the shared
+        first name says so, and her field was right. One letter out bears
+        the surname out on its own."""
+        self.assertEqual(engine.get_player({"Player/Athlete": ["Belinda Bencic"]},
+                                           "2025 Topps Chrome Tennis Belinda Bennie BLACK GEOMETRIC 2/2"),
+                         "Belinda Bencic")
+        self.assertEqual(engine.get_player({"Player/Athlete": ["Novak Djokovic"]},
+                                           "2024 Topps Now Novak Djokivic Gold 1/1"), "Novak Djokovic")
+
+    def test_a_first_name_alone_does_not_bear_a_name_out(self):
+        self.assertFalse(engine.title_bears_out(
+            "Denis Shapovalov", "2025 Topps Royalty UFC Benoit Saint Denis Blue Patch 1/2"))
+        self.assertTrue(engine.title_bears_out(
+            "Madison Keys, Bjorn Fratangelo", "2024 Topps Chrome Keys Dual Auto 1/5"))
+        self.assertTrue(engine.title_bears_out("João Fonseca", "2025 Topps Chrome Joao Fonseca 1/1"))
+
+    def test_the_board_files_a_recorded_card_under_the_name_on_it(self):
+        """No rescan: build_board applies the same rule to the recorded row."""
+        with tempfile.TemporaryDirectory() as folder:
+            xlsx = os.path.join(folder, "sheet.xlsx")
+            wb, ws = engine.load_or_create_sheet(xlsx)
+            engine.append_row(ws, "Joao Fonseca", "NetPro", "2026 NetPro Tennis", self.SABALENKA,
+                              1, 10, "2999.99 USD", "https://www.ebay.com/itm/188982822691")
+            wb.save(xlsx)
+            board = engine.build_board(xlsx)
+        self.assertEqual([c["player"] for c in board], ["Aryna Sabalenka"])
 
     def test_signed_by_is_read_when_player_is_blank(self):
         """The Ace Authentic autos: eBay had the name, under a different key."""

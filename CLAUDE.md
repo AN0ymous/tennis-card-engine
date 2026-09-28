@@ -183,6 +183,22 @@ on a website.
   `sport_named`, because the reject reason quotes the sport as eBay wrote it
   and those reasons live in `seen_items.json`, where a changed spelling would
   read as a new reason.
+  **The title outranks a Player field that names somebody else** (28 Sep).
+  "Aryna Sabalenka NetPro Premium Rainbow Red 01/10 Autograph #A-AS Auto
+  SSP" came with "Joao Fonseca" in its Player field -- a seller's copied
+  listing -- and sat on the board as a Fonseca card at $2,999.99, because
+  eBay's field used to win whatever the title said. Now a claimed name
+  (eBay's field, or the player a scan searched for) stands when the title
+  bears it out (`title_bears_out`: the surname as a whole word, accents
+  compared away, one letter of seller typo allowed) or names nobody; it gives
+  way only when the title reads a **wholly different** name, sharing no word
+  with the claim. That last clause is what keeps "Belinda Bennie" -- Belinda
+  Bencic two letters out -- under her right name. A first name alone never
+  bears a name out, as everywhere else. `build_board` applies the same rule
+  to recorded rows, so no rescan is needed; the spreadsheet row keeps what
+  was recorded. Measured against the 411-card board: exactly the Sabalenka
+  card changes. Attribution only: the player never decides whether a card is
+  kept, so nothing about completeness moves.
 - **A card grade over an autograph grade is not a serial.** "PSA 9/9",
   "Psa MINT 9/9" and "BGS 9.5/10" read exactly like N/M, and three PSA 9
   autos were recorded as the last of a run of nine. `is_grade_pair` steps
