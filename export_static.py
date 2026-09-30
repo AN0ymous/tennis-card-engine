@@ -140,6 +140,19 @@ with open(status_path, "w") as f:
     json.dump({"checkedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                "statuses": statuses}, f)
 
+# The board was written before the statuses were read, with the price each
+# card was found at. Now that the day's readings are in, write it again with
+# the price eBay gives today, so a bid that has moved shows on the page and
+# sorts and filters where it now stands. Never when the board was kept rather
+# than rebuilt -- that board belongs to an earlier run.
+if board and not board_kept:
+    priced = engine.with_current_prices(board, statuses)
+    moved = sum(1 for c in priced if "foundPrice" in c)
+    with open(board_path, "w") as f:
+        json.dump({"cards": priced}, f)
+    print(f"prices: {moved} of {len(priced)} board card(s) now stand at a different price "
+          "from the one they were found at")
+
 # How much of eBay's daily allowance this keyset has left, as eBay reports it.
 # Written after the scan, so it is the figure the run itself finished on.
 allowance = {}

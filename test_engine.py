@@ -3471,6 +3471,21 @@ class TheExportNeverBlanksThePublishedBoard(unittest.TestCase):
             self.assertEqual(self.run_export(out, spreadsheet=False).returncode, 0)
             self.assertEqual(self.board(out), [])
 
+    def test_the_published_board_carries_the_price_ebay_gives_today(self):
+        """An auction found at $1.25 read $1.25 on the page after it had been
+        bid to $1,325: the current figure sat in status.json and the board
+        never used it. The export now writes it in, keeping the found price."""
+        with tempfile.TemporaryDirectory() as out:
+            with open(os.path.join(out, "status.json"), "w") as f:
+                json.dump({"statuses": {"v1|206510108410|0": {
+                    "status": "active", "checkedAt": "2026-09-30T16:02:52Z",
+                    "price": "1325.00 USD"}}}, f)
+            done = self.run_export(out)
+            self.assertEqual(done.returncode, 0, done.stderr)
+            [card] = self.board(out)
+        self.assertEqual((card["price"], card["priceValue"], card["foundPrice"]),
+                         ("1325.00 USD", 1325.0, "40.00 USD"))
+
     def test_a_spreadsheet_with_cards_publishes_them_as_before(self):
         with tempfile.TemporaryDirectory() as out:
             with open(os.path.join(out, "board.json"), "w") as f:
@@ -3485,6 +3500,32 @@ class TheExportNeverBlanksThePublishedBoard(unittest.TestCase):
                               cwd=HERE, capture_output=True, text=True)
         self.assertNotEqual(done.returncode, 0)
         self.assertIn("ImportError", done.stderr)
+
+
+class ABoardCardShowsTodaysPrice(unittest.TestCase):
+    """with_current_prices: the board brought up to the last status reading."""
+
+    CARD = {"link": "https://www.ebay.com/itm/206510108410", "price": "1.25 USD",
+            "priceValue": 1.25, "title": "2025 Topps Chrome Tennis Auto Red Geometric 5/5"}
+
+    def reading(self, **fields):
+        return {"v1|206510108410|0": dict({"status": "active"}, **fields)}
+
+    def test_a_moved_price_replaces_the_found_one_and_keeps_it_beside(self):
+        [card] = engine.with_current_prices([self.CARD], self.reading(price="1,325.00 USD"))
+        self.assertEqual((card["price"], card["priceValue"], card["foundPrice"]),
+                         ("1,325.00 USD", 1325.0, "1.25 USD"))
+
+    def test_nothing_changes_where_nothing_new_is_known(self):
+        for statuses in ({}, self.reading(), self.reading(price=""), self.reading(price="1.25 USD")):
+            with self.subTest(statuses=statuses):
+                [card] = engine.with_current_prices([self.CARD], statuses)
+                self.assertEqual(card, self.CARD)
+
+    def test_the_found_card_is_not_altered_in_place(self):
+        board = [dict(self.CARD)]
+        engine.with_current_prices(board, self.reading(price="9.00 USD"))
+        self.assertEqual(board[0]["price"], "1.25 USD")
 
 
 class PlayersReadOffTheTitle(unittest.TestCase):

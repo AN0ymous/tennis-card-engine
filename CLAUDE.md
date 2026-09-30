@@ -775,6 +775,19 @@ and the one-time full re-walk after the cursor format changed happened at run
   Together the daily run went from 194 status calls to 182, and every repeat
   scan in between from 194 to 0. The saved page's "Check eBay now" still asks
   at once, so a card you care about is never more than a click from fresh.
+- **The board shows the price eBay gives today, not the one a card was
+  found at** (30 Sep). The status refresh has always recorded each listing's
+  current price, but only the saved page used it ("now ..."); the board, the
+  match cards, the card view, the price sort and the price filter all read
+  the price from the spreadsheet, fixed when the card was found. So an
+  auction found at $1.25 and bid to $1,325 read $1.25 everywhere -- 85 of the
+  447 cards on the board that day stood at a different price. The export now
+  rewrites `board.json` after the status refresh (`with_current_prices`),
+  with the found price kept beside it as `foundPrice`; the spreadsheet is not
+  touched. **It is only as fresh as the statuses**, which the daily scheduled
+  run refreshes and a hand-started scan within 20 hours of the last refresh
+  does not, so a bid placed today shows after the next daily run. Hosted only:
+  on the PC the board still shows found prices.
 - **The ceiling keeps the work it interrupts.** `consume_api_call` raised
   from inside the detail fetch, and the exception unwound the whole fetch:
   every listing already fetched alongside the one that met the ceiling went
