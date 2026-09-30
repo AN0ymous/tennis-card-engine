@@ -2625,6 +2625,26 @@ def brand_of(manufacturer, set_name, title=""):
     return ""
 
 
+def with_current_prices(board, statuses):
+    """The board with each card's price brought up to what eBay said at the
+    last status refresh. The spreadsheet keeps the price a card was found at,
+    and the board used to show only that -- so an auction found at $1.25 and
+    bid up to $1,325 read $1.25 on the page, and sorted and filtered as $1.25,
+    while the current figure sat unused in status.json (85 of 447 cards on 30
+    Sep). The found price is kept beside it as `foundPrice`, only where the two
+    differ. A card with no reading, or a reading with no price, is left alone."""
+    out = []
+    for card in board:
+        reading = statuses.get(item_id_from_link(card.get("link", ""))) or {}
+        now = str(reading.get("price") or "").strip()
+        if now and now != card.get("price"):
+            number = re.search(r"\d[\d,]*(?:\.\d+)?", now)
+            card = dict(card, foundPrice=card.get("price"), price=now,
+                        priceValue=float(number.group().replace(",", "")) if number else 0.0)
+        out.append(card)
+    return out
+
+
 def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
     if not os.path.exists(xlsx_path):
         return []
