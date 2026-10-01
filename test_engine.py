@@ -3226,6 +3226,41 @@ class TitlesWithNoSignOfASerial(unittest.TestCase):
             _, _, asked = self.scan(items[:4], folder)
         self.assertEqual(len(asked), 1)               # never none, however small the run
 
+    def test_the_allowance_is_a_day_not_a_run(self):
+        """Twenty-five a day across every run, kept in the daily counter file.
+        The first big scan of the day takes it; a later one still checks one
+        listing, so no scan's skips go untested."""
+        items = [{"itemId": f"v1|{i}|0", "title": f"2024 Topps Chrome Coco Gauff Refractor {i}"}
+                 for i in range(1000)]
+        with tempfile.TemporaryDirectory() as folder:
+            _, _, first = self.scan(items, folder)
+            _, _, second = self.scan([dict(i, itemId=i["itemId"] + "b") for i in items], folder)
+            with patch.object(engine, "_BASE_DIR", folder):
+                spent = engine.audits_today()
+            with open(os.path.join(folder, engine.API_USAGE_FILE)) as f:
+                usage = json.load(f)
+        self.assertEqual((len(first), len(second), spent), (25, 1, 26))
+        self.assertIn("browse", usage)                # the call counter is untouched beside it
+
+    def test_a_new_day_brings_a_new_allowance(self):
+        items = [{"itemId": f"v1|{i}|0", "title": f"2024 Topps Chrome Coco Gauff Refractor {i}"}
+                 for i in range(1000)]
+        with tempfile.TemporaryDirectory() as folder:
+            with open(os.path.join(folder, engine.API_USAGE_FILE), "w") as f:
+                json.dump({"date": "2026-01-01", "browse": 4000, "audited": 25}, f)
+            _, _, asked = self.scan(items, folder)
+        self.assertEqual(len(asked), 25)
+
+    def test_the_call_counter_keeps_the_tally_it_shares_a_file_with(self):
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(engine, "_BASE_DIR", folder):
+            engine.note_audits(7)
+            engine.consume_api_call()
+            engine.consume_api_call()
+            self.assertEqual(engine.audits_today(), 7)
+            with open(os.path.join(folder, engine.API_USAGE_FILE)) as f:
+                self.assertEqual(json.load(f)["browse"], 2)
+
     def test_a_skipped_listing_that_was_a_match_is_said_out_loud(self):
         """The signal to name NO_SIGN_REASON in RECONSIDER_REASONS and bump
         JUDGE_VERSION, which brings every skipped listing back to be judged
