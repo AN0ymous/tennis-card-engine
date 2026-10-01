@@ -1765,11 +1765,8 @@ def title_bears_out(name, title):
     Fratangelo"), accents are compared away, and a surname a seller got one
     letter wrong still counts, so "Djokivic" bears out Djokovic."""
     words = set(re.findall(r"[^\W\d_]+", fold_accents(title)))
-    for part in re.split(r"[,/&]|\band\b", fold_accents(name)):
-        tokens = re.findall(r"[^\W\d_]+", part)
-        if not tokens:
-            continue
-        surname = tokens[-1]
+    for part in _name_parts(name):
+        surname = _surname(part)
         if len(surname) < 3 or surname in PLAYER_NOISE:
             continue
         if surname in words or (len(surname) >= 5 and any(
@@ -1777,6 +1774,60 @@ def title_bears_out(name, title):
                 for w in words)):
             return True
     return False
+
+
+# What follows a surname without being one: "Martin Damm Jr" is a Damm.
+NAME_SUFFIXES = {"jr", "sr", "ii", "iii", "iv"}
+
+
+def _name_parts(name):
+    """The names in a field that lists several: "Madison Keys, Bjorn
+    Fratangelo", "Margaret Smith Court/Chris Evert"."""
+    return [p.strip() for p in re.split(r"[,/&]|\band\b", name) if p.strip()]
+
+
+def _surname(name):
+    """A name's surname, folded: its last word, less any Jr or III after it."""
+    tokens = re.findall(r"[^\W\d_]+", fold_accents(name))
+    while len(tokens) > 1 and tokens[-1] in NAME_SUFFIXES:
+        tokens.pop()
+    return tokens[-1] if tokens else ""
+
+
+def tidy_claim(claimed, title, known=()):
+    """A Player field put the way the page reads it, without changing who it
+    names. Sellers fill the field loosely, and the board showed it (1 Oct):
+    "Carlos Alcaraz, Cristiano Ronaldo, Lionel Messi, Michael Jordan,
+    Ronaldo" on an Alcaraz patch card whose title names nobody else; "Joao
+    Fonseca, João Fonseca", one man twice; and "Shelton" alone on eight
+    cards whose titles mostly say Ben Shelton. So, in a field that lists
+    several names, only those the title bears out are kept -- unless it
+    bears out none, when the field is left as it came, since a title that
+    names nobody contradicts nothing -- one spelling apart from accents is
+    one name, and a lone surname takes the full name the title reads for
+    it, when it reads one. Cosmetic: the page's player filter matches a
+    whole name inside another, so "Shelton" was already found as Ben
+    Shelton, and none of this decides whether a card is kept."""
+    parts = _name_parts(claimed)
+    if len(parts) > 1:
+        borne = [p for p in parts if title_bears_out(p, title)]
+        parts = borne or parts
+    seen, kept = set(), []
+    for part in parts:
+        if fold_accents(part) not in seen:
+            seen.add(fold_accents(part))
+            kept.append(part)
+    if len(kept) == 1 and len(re.findall(r"[^\W\d_]+", kept[0])) == 1:
+        read = player_from_title(title, known)
+        if len(read.split()) >= 2 and _surname(read) == _surname(kept[0]):
+            return read
+    if kept == parts and len(kept) == len(_name_parts(claimed)):
+        # Nothing taken out, so keep the seller's own separators -- but each
+        # name in the list is written the way the page reads, since "Jessica
+        # Pegula, madison keys" is mixed as a whole and so escaped as_typed.
+        pieces = re.split(r"([,/&]|\band\b)", claimed)   # separators at odd places
+        return "".join(p if i % 2 else as_typed(p) for i, p in enumerate(pieces))
+    return ", ".join(as_typed(part) for part in kept)
 
 
 def _name_words(name):
@@ -1818,7 +1869,7 @@ def get_player(aspects, title="", known=PLAYERS, searched=None):
     if claimed:
         # eBay hands this back however the seller typed it, and a shouted
         # name stood out on the board beside every other one.
-        return as_typed(claimed)
+        return as_typed(tidy_claim(claimed, title, known))
     return player_from_title(title, known)
 
 

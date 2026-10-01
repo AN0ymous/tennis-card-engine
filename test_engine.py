@@ -3705,6 +3705,61 @@ class PlayersReadOffTheTitle(unittest.TestCase):
             "Madison Keys, Bjorn Fratangelo", "2024 Topps Chrome Keys Dual Auto 1/5"))
         self.assertTrue(engine.title_bears_out("João Fonseca", "2025 Topps Chrome Joao Fonseca 1/1"))
 
+    def test_a_suffix_is_not_the_surname(self):
+        """"Martin Damm Jr" is a Damm; "Jr" used to be read as his surname
+        and, at two letters, skipped -- so no title could bear him out."""
+        self.assertTrue(engine.title_bears_out(
+            "Martin Damm Jr", "Martin Damm Jr. 2024 Topps Graphite Tennis Gold Rookie RC Auto 25/25"))
+        self.assertTrue(engine.title_bears_out("Frank Smith III", "Smith 2024 Topps Chrome 1/1"))
+        self.assertFalse(engine.title_bears_out("Martin Damm Jr", "2024 Topps Graphite Jr Card 1/1"))
+
+    def test_a_stuffed_field_keeps_only_the_names_the_title_bears_out(self):
+        field = {"Player/Athlete": ["Carlos Alcaraz, Cristiano Ronaldo, Lionel Messi, Michael Jordan, Ronaldo"]}
+        self.assertEqual(engine.get_player(field, "Topps 2026 Graphite Tennis Carlos Alcaraz 1/1 Nike Swoosh Patch"),
+                         "Carlos Alcaraz")
+
+    def test_a_real_dual_card_keeps_both_names_and_their_separator(self):
+        for claimed, title in (
+                ("Madison Keys, Bjorn Fratangelo", "2024 TOPPS ROYALTY MADISON KEYS/BJORN FRATANGELO DUAL AUTO 1/25"),
+                ("Margaret Smith Court/Chris Evert", "2021 Topps Chrome Battle Margaret Smith Court Chris Evert 1/1"),
+                ("Erika Andreeva, Mirra Andreeva", "2024 Topps Royalty Tennis Mirra & Erika Andreeva Dual Auto 01/25")):
+            with self.subTest(claimed=claimed):
+                self.assertEqual(engine.get_player({"Player/Athlete": [claimed]}, title), claimed)
+
+    def test_a_field_that_names_nobody_the_title_does_is_left_as_it_came(self):
+        """A title that names nobody contradicts nothing, list or not."""
+        claimed = "Coco Gauff, Emma Raducanu"
+        self.assertEqual(engine.get_player({"Player/Athlete": [claimed]}, "Topps Royalty Relic 25/25"), claimed)
+
+    def test_one_name_spelt_twice_is_one_name(self):
+        self.assertEqual(engine.get_player({"Player/Athlete": ["Joao Fonseca, João Fonseca"]},
+                                           "Joao Fonseca 2026 Netpro Premium Rainbow Auto RC 150/150"),
+                         "Joao Fonseca")
+
+    def test_each_name_in_a_list_is_written_the_way_the_page_reads(self):
+        self.assertEqual(engine.get_player({"Player/Athlete": ["Jessica Pegula, madison keys"]},
+                                           "2026 Topps Chrome Tennis Jessica Pegula Madison Keys Dual Auto # 1/25"),
+                         "Jessica Pegula, Madison Keys")
+        self.assertEqual(engine.get_player({"Player/Athlete": ["Mirra and Erika Andreeva"]}, "x"),
+                         "Mirra and Erika Andreeva")
+
+    def test_a_lone_surname_takes_the_full_name_the_title_reads(self):
+        for title, full in (
+                ("2024 TOPPS CHROME TENNIS ACES AUTO RED REFRACTOR BEN SHELTON RC 1 /5 PSA 10", "Ben Shelton"),
+                ("2024 TOPPS CHROME TENNIS ACES SUPERFRACTOR 1/1 #CASAS ARYNA SABALENKA 1/1 PSA 9", "Aryna Sabalenka"),
+                ("Linda Noskova 2025 Topps Chrome Tennis RC Auto Superfractor 1/1", "Linda Noskova")):
+            with self.subTest(title=title):
+                surname = full.split()[-1]
+                self.assertEqual(engine.get_player({"Player/Athlete": [surname]}, title), full)
+
+    def test_a_lone_surname_stays_when_the_title_gives_no_first_name(self):
+        """A dual card names both surnames and no first names; guessing one
+        would be worse than the surname the seller gave."""
+        for title in ("2024 TOPPS CHROME TENNIS TIAFOE/SHELTON DUAL AUTO BLACK REFRACTOR #1/10 PSA 8",
+                      "2024 TOPPS ROYALTY TENNIS--FRITZ SHELTON TIAFOE PAUL-QUAD AUTO BOOKLET--1/1"):
+            with self.subTest(title=title):
+                self.assertEqual(engine.get_player({"Player/Athlete": ["Shelton"]}, title), "Shelton")
+
     def test_the_board_files_a_recorded_card_under_the_name_on_it(self):
         """No rescan: build_board applies the same rule to the recorded row."""
         with tempfile.TemporaryDirectory() as folder:

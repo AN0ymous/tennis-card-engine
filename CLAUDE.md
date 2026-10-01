@@ -199,6 +199,20 @@ on a website.
   was recorded. Measured against the 411-card board: exactly the Sabalenka
   card changes. Attribution only: the player never decides whether a card is
   kept, so nothing about completeness moves.
+  **A Player field that stands is tidied without changing who it names**
+  (`tidy_claim`, 1 Oct). Sellers fill it loosely: "Carlos Alcaraz, Cristiano
+  Ronaldo, Lionel Messi, Michael Jordan, Ronaldo" on an Alcaraz patch,
+  "Joao Fonseca, João Fonseca", and a bare "Shelton" on eight cards. In a
+  list, only the names the title bears out are kept (all of them when it
+  bears out none); one spelling apart from accents is one name; a lone
+  surname takes the full name the title reads for it, and stays a surname
+  when the title gives no first name (the Tiafoe/Shelton dual); and each
+  name in a list goes through `as_typed` on its own, separators untouched,
+  so "Jessica Pegula, madison keys" reads right. Genuine duals keep both
+  names. Separately, `_surname` steps over Jr, Sr, II, III and IV, so
+  "Martin Damm Jr" is borne out by a title saying Damm. Measured against
+  the 477-card board: 11 names change, every one the same person written
+  in full, and nothing else on the board moves.
 - **A card grade over an autograph grade is not a serial.** "PSA 9/9",
   "Psa MINT 9/9" and "BGS 9.5/10" read exactly like N/M, and three PSA 9
   autos were recorded as the last of a run of nine. `is_grade_pair` steps
