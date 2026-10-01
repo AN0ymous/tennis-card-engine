@@ -485,17 +485,8 @@ def price_filter(min_price=None, max_price=None):
 def consume_api_call(bucket="browse"):
     """Reserve one call from a conservative per-key, per-Pacific-day budget."""
     with _API_USAGE_LOCK:
-        path = os.path.join(_BASE_DIR, API_USAGE_FILE)
-        today = datetime.now(ZoneInfo("America/Los_Angeles")).date().isoformat()
-        usage = {"date": today, "browse": 0, "getItems": 0}
-        if os.path.exists(path):
-            try:
-                with open(path) as f:
-                    saved = json.load(f)
-                if saved.get("date") == today:
-                    usage.update(saved)
-            except (OSError, ValueError, AttributeError):
-                pass
+        path, usage = _usage_today()
+        today = usage["date"]
         used = int(usage.get(bucket, 0) or 0)
         if used >= API_DAILY_BUDGET and not budget_bypassed():
             raise EngineError(
@@ -503,6 +494,43 @@ def consume_api_call(bucket="browse"):
                 f"of {API_DAILY_BUDGET} calls is exhausted for {today} Pacific time."
             )
         usage[bucket] = used + 1
+        temporary = path + ".tmp"
+        with open(temporary, "w") as f:
+            json.dump(usage, f, indent=2)
+        os.replace(temporary, path)
+
+
+def _usage_today():
+    """Today's entry in the daily counter file, or a fresh one for a new
+    Pacific day. Callers hold _API_USAGE_LOCK."""
+    path = os.path.join(_BASE_DIR, API_USAGE_FILE)
+    today = datetime.now(ZoneInfo("America/Los_Angeles")).date().isoformat()
+    usage = {"date": today, "browse": 0, "getItems": 0}
+    if os.path.exists(path):
+        try:
+            with open(path) as f:
+                saved = json.load(f)
+            if saved.get("date") == today:
+                usage.update(saved)
+        except (OSError, ValueError, AttributeError):
+            pass
+    return path, usage
+
+
+def audits_today():
+    """How many no-sign spot-checks have been spent today, across every run.
+    Kept in the daily counter file, so it starts again when the allowance does."""
+    with _API_USAGE_LOCK:
+        return int(_usage_today()[1].get("audited", 0) or 0)
+
+
+def note_audits(n):
+    """Add a run's spot-checks to today's tally."""
+    if n <= 0:
+        return
+    with _API_USAGE_LOCK:
+        path, usage = _usage_today()
+        usage["audited"] = int(usage.get("audited", 0) or 0) + n
         temporary = path + ".tmp"
         with open(temporary, "w") as f:
             json.dump(usage, f, indent=2)
@@ -1052,10 +1080,14 @@ NO_SIGN_REASON = "title carries no sign of a serial number"
 # The rule above is checked against live listings rather than trusted: some of
 # the listings a run skipped are fetched and judged properly anyway, chosen at
 # random, and a skipped listing that turns out to be a match is said out loud.
-# At most this many, and never more than a twentieth of what was skipped, so
-# the proof can never eat the saving -- a daily run skipping fifteen hundred
-# pays twenty-five, a repeat scan skipping sixty pays three. Always at least
-# one, so the rule is never left entirely untested. Set to 0 to turn it off.
+# At most this many **a day** across every run (kept in the daily counter
+# file, so it starts again with the allowance), and never more than a
+# twentieth of what a run skipped, so the proof can never eat the saving.
+# Always at least one per run, so no scan's skips go entirely untested. It was
+# this many per run until 1 Oct, which paid 25 again for every extra scan of
+# the day: replayed over 21-30 Sep, 314 calls per-run against 234 per-day, the
+# same rule measured just as often and nothing found either way. Set to 0 to
+# turn it off.
 NO_SIGN_AUDIT = 25
 
 
@@ -3312,8 +3344,9 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
         # calls against the fifteen hundred or so the rule saves, the proof
         # costs under two per cent of the saving.
         if write_outputs and not cancelled and skipped_no_sign and NO_SIGN_AUDIT:
-            how_many = min(NO_SIGN_AUDIT, max(1, len(skipped_no_sign) // 20),
-                           len(skipped_no_sign))
+            left_today = max(0, NO_SIGN_AUDIT - audits_today())
+            how_many = min(len(skipped_no_sign),
+                           max(1, min(left_today, len(skipped_no_sign) // 20)))
             sample = random.sample(skipped_no_sign, how_many)
             emit("info", message=f"Checking {len(sample)} of the {len(skipped_no_sign)} "
                                  "listing(s) skipped for carrying no sign of a serial.")
@@ -3330,6 +3363,7 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
                 record_judgement(item, detail, player, rule_key)
                 if seen.get(item["itemId"]) == "match":
                     surprises.append(item.get("title", ""))
+            note_audits(audited)
             if surprises:
                 say(f"{len(surprises)} listing(s) skipped for carrying no sign of a serial "
                     "turned out to be matches, so the rule is losing cards. Name "

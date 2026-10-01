@@ -1015,8 +1015,9 @@ and the one-time full re-walk after the cursor format changed happened at run
   against the live spreadsheet on every run of the suite, so the day a card
   is recorded that the rule would have skipped, the tests fail.
   **And it is not taken on trust.** Each run fetches a few of the listings it
-  skipped and judges them properly anyway (`NO_SIGN_AUDIT`, at most 25 and
-  never more than a twentieth of what was skipped, always at least one), so
+  skipped and judges them properly anyway (`NO_SIGN_AUDIT`: at most 25 **a
+  day** across every run, never more than a twentieth of what a run skipped,
+  always at least one per run), so
   the rule is measured against live listings rather than against the rows it
   was written from. One that turns out to be a match is kept -- it is judged
   by the same `record_judgement` as everything else -- and `say()`s out loud
@@ -1026,6 +1027,14 @@ and the one-time full re-walk after the cursor format changed happened at run
   nothing is lost for good.
   The run prints how many it skipped and how many it audited, so the real
   saving is on the Actions log rather than estimated here.
+  **The 25 is a daily allowance, not a per-run one** (1 Oct). Per run, every
+  extra scan of the day paid up to 25 again for the same measurement; the
+  tally now sits beside the call counter in `ebay_api_usage.json`
+  (`audits_today` / `note_audits`) and starts again with it. Replayed over
+  21-30 Sep: 314 calls per-run against 234 per-day, about 8 a day. By then
+  the audit had checked well over a thousand skipped listings and every one
+  of them was a reject -- no recorded card has ever lacked a sign of
+  numbering -- so measuring once a day loses nothing it was finding.
   **Why now, when 18 Sep turned it down:** that note said "steady state is a
   couple of hundred detail calls a day", which was a figure for one run an
   hour after another, not for a day. Measured across runs 60 and 61, listings
