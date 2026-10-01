@@ -113,6 +113,7 @@ jobs:
           DIGEST_FROM_EMAIL: ${{ secrets.DIGEST_FROM_EMAIL }}
           DIGEST_FROM_APP_PASSWORD: ${{ secrets.DIGEST_FROM_APP_PASSWORD }}
           DIGEST_TO_EMAIL: ${{ secrets.DIGEST_TO_EMAIL }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}   # optional: a push to your phone for new finds
           EBAY_ENV: ${{ vars.EBAY_ENV }}      # leave unset; "sandbox" only to test keys
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # optional: outfit colours from photos
           VISION_MODEL: ${{ vars.VISION_MODEL }}               # optional; default claude-opus-5

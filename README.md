@@ -90,14 +90,19 @@ never reach the browser. On macOS or Linux use `python3` in place of `py`.
 
 One main page and two pages of its own, reached from the top bar.
 
-- **The board** — every card found, newest first, with its serial, price and a
-  link to the listing. Star one to keep it.
-- **Scan setup** — players, sets, print-run ceiling, card type, graded or raw,
-  price range, listing type. It decides what a scan records **and** narrows
-  what the page shows, the moment you change it, with no scan needed.
-- **Matches** — two sections, because there are two questions: *New this scan*
-  (usually empty, and that is correct) and *Everything found so far* (the whole
-  record, filtered, paged).
+- **The board** — every card found, with its serial, today's price (and the
+  price it was found at, where that has moved), the countdown on an auction,
+  and a link to the listing. It opens on the cards still **for sale**; sold
+  and ended ones are a tap away. A card listed again after it failed to sell
+  shows once, with the earlier listings in its card view. Star one to keep it.
+- **Scan setup** — players, sets, print-run ceiling, availability, order
+  (newest listed, ending soon, just found, price, rarest), bookend, card type,
+  check-by-eye, graded or raw, price range, listing type. It decides what a
+  scan records **and** narrows what the page shows, the moment you change it,
+  with no scan needed.
+- **Matches** — a search box over every title, then two sections, because
+  there are two questions: *New this scan* (usually empty, and that is
+  correct) and *Everything found so far* (the whole record, filtered, paged).
 - **Saved cards** (`#saved`) — the cards you starred, each showing whether the
   listing is still live or has sold.
 - **How it works** (`#method`) — the method and process reference: what
@@ -105,6 +110,13 @@ One main page and two pages of its own, reached from the top bar.
 
 A scan started from the page runs on the server or on GitHub, never in the
 browser, so it survives you closing the tab.
+
+**Alerts for new finds** are off until you switch them on. A push to your
+phone: install the free **ntfy** app, subscribe to a topic name only you would
+guess, and add that name as the `NTFY_TOPIC` repository secret (or a line in
+`.env` on the PC). An email digest: set `DIGEST_FROM_EMAIL`,
+`DIGEST_FROM_APP_PASSWORD` (a Gmail app password) and optionally
+`DIGEST_TO_EMAIL`. Either way, one message per run that found something.
 
 ---
 

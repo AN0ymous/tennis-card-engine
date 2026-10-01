@@ -179,12 +179,26 @@
           <p class="hint">A card qualifies when its serial is #1 or the final card of the run.</p>
         </div>
 
+        <div class="field" id="avail-field">
+          <div class="field-head"><span class="label" id="avail-label">Availability</span></div>
+          <div class="seg" role="radiogroup" aria-labelledby="avail-label" id="avail-seg">
+            <button type="button" class="seg-btn is-on" role="radio" aria-checked="true" data-value="sale">For sale</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="sold">Sold</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="ended">Ended</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="all">All</button>
+          </div>
+          <p class="hint" id="avail-note">Only cards you can still buy.</p>
+        </div>
+
         <div class="field" id="sort-field">
           <div class="field-head"><span class="label" id="sort-label">Order</span></div>
-          <div class="seg" role="radiogroup" aria-labelledby="sort-label" id="sort-seg">
+          <div class="seg seg-grid" role="radiogroup" aria-labelledby="sort-label" id="sort-seg">
             <button type="button" class="seg-btn is-on" role="radio" aria-checked="true" data-value="newest">Newest listed</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="ending">Ending soon</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="found">Just found</button>
             <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="price_desc">Highest price</button>
             <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="price_asc">Lowest price</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="rarest">Rarest</button>
           </div>
           <p class="hint" id="sort-note">The board and the matches run newest listing first.</p>
         </div>
@@ -231,6 +245,16 @@
           </div>
           <p class="hint" id="colourmatch-note">Every card, whether or not the outfit matches the parallel.</p>
           <p class="hint" id="colourmatch-setup" hidden></p>
+        </div>
+
+        <div class="field" id="caution-field">
+          <div class="field-head"><span class="label" id="caution-label">Check by eye</span></div>
+          <div class="seg" role="radiogroup" aria-labelledby="caution-label" id="caution-seg">
+            <button type="button" class="seg-btn is-on" role="radio" aria-checked="true" data-value="all">All cards</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="hide">Hide flagged</button>
+            <button type="button" class="seg-btn" role="radio" aria-checked="false" data-value="only">Only flagged</button>
+          </div>
+          <p class="hint" id="caution-note">Flagged cards are shown with the rest.</p>
         </div>
 
         <div class="field" id="condition-field">
@@ -352,6 +376,11 @@
           </select>
         </label>
         <button type="button" class="linkbtn" id="download-btn" hidden>Download spreadsheet</button>
+      </div>
+      <div class="searchbar">
+        <label class="sr-only" for="title-search">Search the cards</label>
+        <input type="search" id="title-search" autocomplete="off" spellcheck="false"
+               placeholder="Search titles: Superfractor, Padparadscha, Shelton, 1/1&hellip;">
       </div>
       <div id="results-area">
         <div class="empty" id="empty-state">
@@ -526,8 +555,9 @@ Arguments: tennis_card_engine.py</pre>
           <thead><tr><th class="mono">File</th><th>Holds</th></tr></thead>
           <tbody>
             <tr><td class="mono">tennis_cards_verified.xlsx</td><td>Every qualifying card found, one row each, with a live link to the listing. Nothing is ever removed from it.</td></tr>
-            <tr><td class="mono">new_matches.json</td><td>Just the most recent run's finds — what the Matches panel shows and what the digest email sends.</td></tr>
-            <tr><td class="mono">board.json</td><td>The recent cards this page puts on the board. Rules added later are applied here, so a card the engine would no longer keep drops off the page while its spreadsheet row stays.</td></tr>
+            <tr><td class="mono">new_matches.json</td><td>Just the most recent run's finds — what the Matches panel shows, and what the digest email and the phone push send.</td></tr>
+            <tr><td class="mono">board.json</td><td>Every recorded card still for sale, at today's price — what this page draws first. Rules added later are applied here, so a card the engine would no longer keep drops off the page while its spreadsheet row stays.</td></tr>
+            <tr><td class="mono">board-archive.json</td><td>The recorded cards that have sold or ended, fetched a moment after the rest, so the page loads at the size of the market rather than of the history.</td></tr>
             <tr><td class="mono">status.json</td><td>Active, sold or ended for every recorded listing, so a saved card can be filtered without a server.</td></tr>
             <tr><td class="mono">config.json</td><td>The settings this page reads — the sets, the ceiling, the allow-list — and the time of the last scan.</td></tr>
             <tr><td class="mono">seen_items.json</td><td>Item IDs already judged, so the same listing is never fetched from eBay twice. Deleting it makes the next scan pay for everything again.</td></tr>
@@ -684,6 +714,7 @@ Arguments: tennis_card_engine.py</pre>
         <dt>Colour match</dt><dd id="holo-d-colourmatch"></dd>
         <dt id="holo-dt-caution" hidden>Caution</dt><dd id="holo-d-caution" class="is-caution" hidden></dd>
         <dt>Listing</dt><dd id="holo-d-listing"></dd>
+        <dt id="holo-dt-others" hidden>Other listings</dt><dd id="holo-d-others" hidden></dd>
       </dl>
       <div class="holo-actions">
         <button type="button" class="holo-star" id="holo-star" aria-pressed="false">
