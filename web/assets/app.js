@@ -9,6 +9,7 @@ const API = {
   stop: "api/stop",
   matches: "api/matches",
   board: "api/board",
+  archive: null,             // hosted only: the sold and ended half of the board
   spreadsheet: "api/spreadsheet",
   portrait: (player) => `api/portrait?player=${encodeURIComponent(player)}`,
 };
@@ -66,6 +67,9 @@ const state = {
   config: null,
   matches: [],
   board: [],
+  archive: [],               // the board's sold and ended cards, fetched after the rest
+  archivedCount: 0,          // how many the archive holds, known before it arrives
+  query: "",                 // the search box
   price: { min: 0, max: null },
   listing: "all",
   sort: "newest",
@@ -74,6 +78,8 @@ const state = {
   cardtype: "all",
   condition: "all",
   colourmatch: "all",
+  avail: "sale",
+  caution: "all",
   saved: {},                 // link -> card, the viewer's starred cards
   statuses: {},              // item id -> {status, checkedAt, price, bids}
   savedstatus: "all",
@@ -155,9 +161,17 @@ function inListingType(card) {
 
 function listingLine(card) {
   if (!card.listing) return "";
-  const bids = card.bids != null && card.listing.includes("Auction")
-    ? ` \u00b7 ${card.bids} bid${card.bids === 1 ? "" : "s"}` : "";
+  const n = bidsOf(card);
+  const bids = n != null && card.listing.includes("Auction")
+    ? ` \u00b7 ${n} bid${n === 1 ? "" : "s"}` : "";
   return card.listing + bids;
+}
+
+/* today's bid count where the status refresh has one, else the count the
+   card was found with */
+function bidsOf(card) {
+  const st = card._example ? {} : statusOf(card);
+  return st.bids != null ? st.bids : card.bids;
 }
 
 function setListing(value) {
@@ -192,10 +206,33 @@ const SEGS = {
     key: "tce.sort", fallback: "newest",
     notes: {
       newest: "The board and the matches run newest listing first.",
+      ending: "Auctions closest to their end first, then everything else newest first.",
+      found: "The cards the scans found most recently first.",
       price_desc: "Highest asking price first. Auctions count their current bid.",
       price_asc: "Lowest asking price first. Cards with no price sit at the end.",
+      rarest: "Smallest print run first: true 1/1s, then /2, /3 and up.",
     },
-    titles: { newest: "Just listed", price_desc: "Highest prices", price_asc: "Lowest prices" },
+    titles: {
+      newest: "Just listed", ending: "Ending soon", found: "Just found",
+      price_desc: "Highest prices", price_asc: "Lowest prices", rarest: "Rarest first",
+    },
+  },
+  avail: {
+    key: "tce.avail", fallback: "sale",
+    notes: {
+      sale: "Only cards you can still buy.",
+      sold: "Only cards whose listing sold, or that you marked sold.",
+      ended: "Only listings that ended unsold, or have gone from eBay.",
+      all: "Every card ever found, sold and ended ones included.",
+    },
+  },
+  caution: {
+    key: "tce.caution", fallback: "all",
+    notes: {
+      all: "Flagged cards are shown with the rest.",
+      hide: "Cards flagged \u201ccheck by eye\u201d are left out.",
+      only: "Only cards the engine flagged to check by eye: its reason is on each card.",
+    },
   },
   bookend: {
     key: "tce.bookend", fallback: "all",
@@ -345,11 +382,226 @@ function inWindow(card) {
 
 function sortCards(list) {
   const byPrice = (c) => priceValue(c.price);
+  const newest = (a, b) => listedKey(b) - listedKey(a);
   const sorted = [...list];
   if (state.sort === "price_desc") sorted.sort((a, b) => byPrice(b) - byPrice(a));
   else if (state.sort === "price_asc") sorted.sort((a, b) => (byPrice(a) || Infinity) - (byPrice(b) || Infinity));
-  else sorted.sort((a, b) => listedKey(b) - listedKey(a));
+  else if (state.sort === "ending") {
+    // a running auction by how soon it ends; everything else after, newest first
+    const left = (c) => {
+      const end = auctionEnd(c);
+      return end && end.getTime() > Date.now() ? end.getTime() : Infinity;
+    };
+    sorted.sort((a, b) => (left(a) - left(b)) || newest(a, b));
+  } else if (state.sort === "found") {
+    const at = (c) => (foundAt(c) || new Date(0)).getTime();
+    sorted.sort((a, b) => (at(b) - at(a)) || newest(a, b));
+  } else if (state.sort === "rarest") {
+    // a 1/0 (the "-1/0" cards kept as they are) states no real run, so it is
+    // not rarer than a 1/1: it goes with the unreadable ones, at the end
+    const run = (c) => { const r = printRunOf(c); return r == null || r < 1 ? Infinity : r; };
+    sorted.sort((a, b) => (run(a) - run(b)) || newest(a, b));
+  } else sorted.sort(newest);
   return sorted;
+}
+
+/* ---- for sale, sold or ended ----
+   The board is the whole record, and a fifth of it can no longer be bought.
+   What a card is comes from statusOf -- the owner's own mark, else the
+   day's status refresh -- and from the clock: an eBay auction ends when it
+   says it will, so one whose end has passed since the refresh is over even
+   though no reading says so yet. With bids it sold; without, it ended. A card
+   nobody has asked about is for sale, since a card wrongly filed as gone is
+   the one nobody looks at. */
+function auctionEnd(card) {
+  if (!/auction/i.test(card.listing || "")) return null;
+  const raw = (card._example ? "" : statusOf(card).endDate) || card.endDate || "";
+  const d = raw ? new Date(raw) : null;
+  return d && !isNaN(d) ? d : null;
+}
+
+function availabilityOf(card) {
+  if (card._example) return "sale";
+  const s = statusOf(card).status;
+  if (s === "sold" || s === "ended") return s;
+  const end = auctionEnd(card);
+  if (end && end.getTime() <= Date.now()) return bidsOf(card) > 0 ? "sold" : "ended";
+  return "sale";
+}
+
+function inAvailability(card) {
+  return state.avail === "all" || availabilityOf(card) === state.avail;
+}
+
+function inCaution(card) {
+  if (state.caution === "all") return true;
+  return state.caution === "only" ? !!card.caution : !card.caution;
+}
+
+/* How long an auction has left, in words a glance can take. */
+function endWords(end) {
+  const ms = end.getTime() - Date.now();
+  if (ms <= 0) return "Auction over";
+  const mins = Math.max(1, Math.round(ms / 60000));
+  if (mins < 60) return `Ends in ${mins} min`;
+  const h = Math.floor(mins / 60);
+  if (h < 48) return `Ends in ${h} h ${String(mins % 60).padStart(2, "0")} min`;
+  return "Ends " + end.toLocaleString(undefined,
+    { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+const SOON_MS = 60 * 60 * 1000;
+
+/* the countdown on a card; the ticker below keeps it running */
+function endTag(card, className) {
+  const end = auctionEnd(card);
+  if (!end || availabilityOf(card) === "sold") return null;
+  const left = end.getTime() - Date.now();
+  const tag = el("span", className + (left > 0 && left < SOON_MS ? " is-soon" : ""), endWords(end));
+  tag.dataset.ends = end.toISOString();
+  tag.dataset.over = left <= 0 ? "1" : "0";
+  return tag;
+}
+
+/* Every countdown on the page, once every half minute. An auction that
+   crosses its end changes what it is -- for sale to sold or ended -- so the
+   lists are drawn again then, and only then. */
+function tickEnds() {
+  let crossed = false;
+  document.querySelectorAll("[data-ends]").forEach((node) => {
+    const end = new Date(node.dataset.ends);
+    const left = end.getTime() - Date.now();
+    if (left <= 0 && node.dataset.over !== "1") crossed = true;
+    node.textContent = endWords(end);
+    node.classList.toggle("is-soon", left > 0 && left < SOON_MS);
+  });
+  if (crossed) { renderBoard(); renderMatches(); }
+}
+
+/* ---- the price then and now ----
+   board.json carries today's price, with the one the card was found at kept
+   as foundPrice wherever the two differ (with_current_prices, hosted only). */
+function priceMove(card) {
+  if (!card.foundPrice) return null;
+  const was = priceValue(card.foundPrice), now = priceValue(card.price);
+  if (!was || !now || was === now) return null;
+  return { up: now > was, was: card.foundPrice };
+}
+
+function moveLine(card, className) {
+  const move = priceMove(card);
+  if (!move) return null;
+  return el("div", `${className} ${move.up ? "is-up" : "is-down"}`,
+    `${move.up ? "\u25b2 Up" : "\u25bc Down"} from ${move.was} when found`);
+}
+
+/* ---- the search box ----
+   Every word typed must appear somewhere in the card: title, player, set or
+   parallel. Accents and case do not matter. A serial typed as one ("1/1",
+   "01/10") is read as a serial, so 1/1 finds the 1/1s and not every 1/10. */
+function fold(text) {
+  return String(text || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function inQuery(card) {
+  if (!state.query) return true;
+  const hay = fold([card.title, card.player, card.set_name, card.brand, card.parallel,
+    card.serial].join(" "));
+  return fold(state.query).split(/\s+/).filter(Boolean).every((t) => {
+    const pair = t.match(/^0*(\d+)\/0*(\d+)$/);
+    if (!pair) return hay.includes(t);
+    return new RegExp(`(^|[^\\d])0*${pair[1]}\\s*/\\s*0*${pair[2]}(?!\\d)`).test(hay);
+  });
+}
+
+const QUERY_KEY = "tce.query";
+
+function initSearch() {
+  const box = $("title-search");
+  try { box.value = sessionStorage.getItem(QUERY_KEY) || ""; } catch { /* ignore */ }
+  state.query = box.value.trim();
+  let wait = null;
+  box.addEventListener("input", () => {
+    clearTimeout(wait);
+    wait = setTimeout(() => {
+      state.query = box.value.trim();
+      try { sessionStorage.setItem(QUERY_KEY, state.query); } catch { /* ignore */ }
+      renderMatches();
+      renderBoard();
+    }, 150);
+  });
+}
+
+/* ---- one card, listed more than once ----
+   A seller whose card did not sell lists it again, and the board then held
+   it twice: Zoe Kruger 10/10 sold on 18 Sep and up again on 30 Sep, the Maya
+   Joint 1/1 ended at $1,999.99 and then sold at auction. Same title, same
+   serial, a different listing. Those are shown as one card -- the listing
+   still for sale, else the newest -- and the others ride along on it, with
+   their prices, in the card view. Only when at most one of them is for sale:
+   two live listings of the same title at once may be two sellers, and
+   folding one away would hide a card that can be bought. */
+function relistKey(card) {
+  return `${words(card.title || "").join(" ")}|${String(card.serial || "").replace(/\s+/g, "")}`;
+}
+
+function relistGroups(all) {
+  const groups = new Map();
+  all.forEach((c) => {
+    if (c._example || !c.link) return;
+    const k = relistKey(c);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(c);
+  });
+  const merged = new Map();
+  groups.forEach((members, k) => {
+    if (members.length > 1 && members.filter((c) => availabilityOf(c) === "sale").length <= 1) {
+      merged.set(k, members);
+    }
+  });
+  return merged;
+}
+
+function collapseRelists(list, merged) {
+  if (!merged.size) return list;
+  const listed = new Set(list.map((c) => c.link));
+  const pick = new Map();
+  merged.forEach((members, k) => {
+    const best = members.find((c) => availabilityOf(c) === "sale")
+      || [...members].sort((a, b) => listedKey(b) - listedKey(a))[0];
+    // the best one when the filters let it through, else the first that is
+    const chosenCard = listed.has(best.link) ? best : list.find((c) => relistKey(c) === k);
+    if (chosenCard) pick.set(k, chosenCard.link);
+  });
+  const out = [];
+  list.forEach((c) => {
+    const members = merged.get(relistKey(c));
+    if (!members) { out.push(c); return; }
+    if (pick.get(relistKey(c)) !== c.link) return;
+    out.push({ ...c, _others: members.filter((m) => m.link !== c.link) });
+  });
+  return out;
+}
+
+/* Every card on record: the half for sale, and the sold and ended half once
+   it has arrived. */
+function allCards() {
+  if (!state.archive.length) return state.board;
+  const have = new Set(state.board.map((c) => c.link));
+  return state.board.concat(state.archive.filter((c) => !have.has(c.link)));
+}
+
+/* What the board and the lower section show, and how many cards there are in
+   all. A card listed twice counts once, and the archive counts before it has
+   arrived. */
+function recordView() {
+  const all = allCards();
+  const merged = relistGroups(all);
+  const shown = collapseRelists(sortCards(all.filter(passesFilters)), merged);
+  let folded = 0;
+  merged.forEach((members) => { folded += members.length - 1; });
+  const pending = Math.max(0, state.archivedCount - state.archive.length);
+  return { shown, total: all.length - folded + pending, any: all.length > 0 };
 }
 
 /* every display filter in one place */
@@ -408,7 +660,8 @@ function underCeiling(card) {
 function passesFilters(card) {
   return inPriceRange(card) && inListingType(card) && inBookend(card) && inWindow(card)
     && inCardType(card) && inCondition(card) && inColourMatch(card)
-    && inPlayers(card) && inBrands(card) && underCeiling(card);
+    && inPlayers(card) && inBrands(card) && underCeiling(card)
+    && inAvailability(card) && inCaution(card) && inQuery(card);
 }
 
 /* ---- and it survives a reload ----
@@ -514,7 +767,10 @@ function persistSaved() {
 function toggleSaved(card) {
   const key = savedKey(card);
   if (state.saved[key]) delete state.saved[key];
-  else state.saved[key] = { ...card, savedAt: new Date().toISOString(), manual: null };
+  else {
+    const { _others, ...plain } = card;          // the relist riders are drawn, not saved
+    state.saved[key] = { ...plain, savedAt: new Date().toISOString(), manual: null };
+  }
   persistSaved();
   renderBoard();
   renderMatches();
@@ -988,6 +1244,7 @@ async function loadConfig() {
       state.config = await r.json();
       HOSTED = true;
       API.board = "results/board.json";
+      API.archive = "results/board-archive.json";
       API.matches = "results/new_matches.json";
       API.spreadsheet = "results/tennis_cards_verified.xlsx";
     } catch {
@@ -1354,6 +1611,7 @@ function filterSignature() {
   return JSON.stringify([
     state.price.min, state.price.max, state.listing, state.sort, state.bookend,
     state.window, state.cardtype, state.condition, state.colourmatch,
+    state.avail, state.caution, state.query,
     $("all-players") && $("all-players").checked, chosen("player"), chosen("brand"),
     $("max-print-run") && $("max-print-run").value,
     $("inclusive") && $("inclusive").checked,
@@ -1429,8 +1687,10 @@ function renderMatches() {
   const area = $("results-area");
   markNewlyFound();
   const fresh = sortCards(state.matches.filter(passesFilters));
-  const everything = sortCards(state.board.filter(passesFilters));
-  state.showingExamples = !state.matches.length && !state.board.length;
+  const record = recordView();
+  const everything = record.shown;
+  const total = record.total;
+  state.showingExamples = !state.matches.length && !record.any;
 
   const sig = filterSignature();
   if (state.filterSig !== null && sig !== state.filterSig) {
@@ -1452,9 +1712,9 @@ function renderMatches() {
     return;
   }
 
-  $("match-count").textContent = everything.length === state.board.length
-    ? `${state.board.length} found`
-    : `${everything.length} of ${state.board.length} match the filters`;
+  $("match-count").textContent = everything.length === total
+    ? `${total} found`
+    : `${everything.length} of ${total} match the filters`;
 
   if (fresh.length) {
     section(area, "fresh", "New this scan", `${fresh.length}`, fresh, "sec-fresh");
@@ -1475,14 +1735,17 @@ function renderMatches() {
       + "normal, and not the filters. Everything found so far is below."));
   }
 
-  const count = `${everything.length}${everything.length === state.board.length ? "" : ` of ${state.board.length}`}`;
+  const count = `${everything.length}${everything.length === total ? "" : ` of ${total}`}`;
   if (everything.length) {
     section(area, "board", "Everything found so far", count, everything, "sec-board");
   } else {
     area.append(sectionHead("Everything found so far", count));
-    area.append(noteLine("Nothing recorded matches the scan setup. Widen the players, sets, "
-      + "print-run ceiling, card type, graded or raw, price, listing type, bookend "
-      + "or listed-within choice."));
+    area.append(noteLine(state.query
+      ? `Nothing recorded matches \u201c${state.query}\u201d with these filters. Clear the search, `
+        + "or widen the availability, players, sets or the rest of the scan setup."
+      : "Nothing recorded matches the scan setup. Widen the availability, players, sets, "
+      + "print-run ceiling, card type, graded or raw, price, listing type, bookend, "
+      + "check-by-eye or listed-within choice."));
   }
 }
 
@@ -1496,6 +1759,31 @@ function initials(name) {
 function namedPlayer(card) {
   const p = (card.player || "").trim();
   return p.toLowerCase() === "unknown player" ? "" : p;
+}
+
+/* "Relisted": this card has been up before, and the card view says at what. */
+function relistTag(card) {
+  const n = card._others.length;
+  const tag = el("span", "relist-tag", "Relisted");
+  tag.title = `${n} other listing${n === 1 ? "" : "s"} of this card; open it for their prices`;
+  return tag;
+}
+
+const AVAIL_WORDS = { sale: "For sale", sold: "Sold", ended: "Ended" };
+
+function showOtherListings(match) {
+  const dd = $("holo-d-others");
+  const others = match._others || [];
+  dd.hidden = $("holo-dt-others").hidden = !others.length;
+  dd.innerHTML = "";
+  others.forEach((c) => {
+    const a = el("a", "holo-other",
+      [AVAIL_WORDS[availabilityOf(c)], c.price, listedLabel(c)].filter(Boolean).join(" \u00b7 "));
+    a.href = c.link;
+    a.target = "_blank";
+    a.rel = "noopener";
+    dd.append(a);
+  });
 }
 
 /* opts.soldFlag false: draw no SOLD pill on this card. The saved page draws
@@ -1551,7 +1839,12 @@ function buildCard(match, index, opts = {}) {
   const typeLine = el("div", "mc-type", [grading(match), CARD_TYPE_LABELS[cardType(match)], listingLine(match)].filter(Boolean).join(" \u00b7 "));
   if (match.colourMatch === "yes") typeLine.append(el("span", "cm-tag", "Colour match"));
   if (match.caution) { const t = el("span", "caution-tag", "Check by eye"); t.title = match.caution; typeLine.append(t); }
+  if (match._others && match._others.length) typeLine.append(relistTag(match));
   body.append(typeLine);
+  const ends = endTag(match, "mc-ends");
+  if (ends) body.append(ends);
+  const move = moveLine(match, "mc-move");
+  if (move) body.append(move);
 
   const foot = el("div", "mc-foot");
   foot.append(el("span", "mc-brand", brandLine(match)));
@@ -1643,6 +1936,8 @@ function buildLot(card, rank) {
   const price = el("div", "lot-price", amount);
   if (currency) price.append(el("small", null, currency));
   body.append(price);
+  const move = moveLine(card, "lot-move");
+  if (move) body.append(move);
   body.append(el("div", "lot-label", card._example ? "Example card" : (card.bookend || "Asking")));
   const when = listedLabel(card);
   const type = listingLine(card);
@@ -1653,6 +1948,9 @@ function buildLot(card, rank) {
     if (when) line.append(when);
     body.append(line);
   }
+  const ends = endTag(card, "lot-ends");
+  if (ends) body.append(ends);
+  if (card._others && card._others.length) body.append(relistTag(card));
   body.append(el("div", "lot-player" + (card.player ? "" : " is-unnamed"), card.player || "Player not named"));
   body.append(el("div", "lot-set", brandLine(card)));
   lot.append(body);
@@ -1664,13 +1962,14 @@ function buildLot(card, rank) {
 function renderBoard() {
   const railEl = $("rail");
   markNewlyFound();
-  const all = state.board.length ? state.board : EXAMPLES;
-  const cards = sortCards(all.filter(passesFilters));
-  const examples = !state.board.length;
+  const record = recordView();
+  const examples = !record.any;
+  const cards = examples ? sortCards(EXAMPLES.filter(passesFilters)) : record.shown;
+  const total = examples ? EXAMPLES.length : record.total;
 
   $("board-count").textContent = examples
     ? "example cards"
-    : cards.length === all.length ? `${all.length} on the board` : `${cards.length} of ${all.length} match the filters`;
+    : cards.length === total ? `${total} on the board` : `${cards.length} of ${total} match the filters`;
   railEl.innerHTML = "";
   cards.forEach((c, i) => {
     const lot = buildLot(c, i + 1);
@@ -1684,17 +1983,38 @@ async function loadBoard() {
   try {
     const data = await (await fetch(API.board)).json();
     if (Array.isArray(data.cards)) state.board = data.cards;
+    state.archivedCount = Number(data.archived) || 0;
   } catch { /* offline or preview: examples will show */ }
   renderBoard();
-  if (!state.matches.length) renderMatches();   // fall back to the board's cards
+  renderMatches();
+  loadArchive();                                // not awaited: the page is usable now
+}
+
+/* The sold and ended half of the board, published beside the rest so the
+   first download is the size of the market and not of the history. Missing
+   is fine -- before the first export that splits them, board.json holds
+   every card -- and so is unreachable: the counts say what is waiting. */
+async function loadArchive() {
+  if (!API.archive) return;
+  try {
+    const r = await fetch(API.archive);
+    if (!r.ok) return;
+    const data = await r.json();
+    if (Array.isArray(data.cards) && data.cards.length) {
+      state.archive = data.cards;
+      renderBoard();
+      renderMatches();
+    }
+  } catch { /* the for-sale half stands on its own */ }
 }
 
 /* a newly found card takes its place on the board immediately, newest first */
 function placeOnBoard(match) {
   const card = { ...match, priceValue: priceValue(match.price) };
+  // the whole board, never the newest 24 -- that slice used to empty the
+  // record down to two dozen cards the moment a local scan found one
   state.board = [...state.board.filter((c) => c.link !== card.link), card]
-    .sort((a, b) => listedKey(b) - listedKey(a))
-    .slice(0, 24);
+    .sort((a, b) => listedKey(b) - listedKey(a));
   renderBoard();
 }
 
@@ -2497,8 +2817,13 @@ function openHologram(match) {
   $("holo-d-set").textContent = match.set_name || "\u2014";
   $("holo-d-serial").textContent = match.serial;
   $("holo-d-bookend").textContent = match.bookend || "\u2014";
-  $("holo-d-price").textContent = match.price || "\u2014";
-  $("holo-d-listing").textContent = listingLine(match) || "\u2014";
+  const move = priceMove(match);
+  $("holo-d-price").textContent = (match.price || "\u2014")
+    + (move ? ` (${move.was} when found)` : "");
+  const end = auctionEnd(match);
+  $("holo-d-listing").textContent = (listingLine(match) || "\u2014")
+    + (end ? ` \u00b7 ${endWords(end).replace(/^Ends/, "ends").replace(/^Auction over/, "auction over")}` : "");
+  showOtherListings(match);
   $("holo-d-cardtype").textContent = CARD_TYPE_LABELS[cardType(match)];
   $("holo-d-grading").textContent = grading(match);
   $("holo-d-parallel").textContent = match.parallel ? `${cap(match.parallel)}` : "None named";
@@ -2740,6 +3065,7 @@ function initWakeChecks() {
   const wake = () => {
     if (document.visibilityState === "hidden") return;
     sweepNewFlags();            // an hour may have passed with our timers stopped
+    tickEnds();                 // and the countdowns with them
     if (HOSTED) {
       const watching = savedWatch();
       if (!watching) return;
@@ -2854,6 +3180,8 @@ async function stopScan() {
 document.addEventListener("DOMContentLoaded", () => {
   initSaved();
   initPageSize();
+  initSearch();
+  setInterval(tickEnds, 30000);
   loadConfig().then(loadSavedMatches).then(loadBoard).then(settleScroll).then(loadStatuses)
     .then(resumeLocalScan)
     // a startup step that fails must not take the meter, and the bypass

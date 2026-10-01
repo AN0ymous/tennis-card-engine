@@ -403,10 +403,8 @@ on a website.
    no filter setting can put an already-recorded card in a list of new ones.
    The empty state now says why nothing is new and that the filters are not
    the reason. Example cards show only when nothing has ever been found.
-   `BOARD_LIMIT` (500) is what the lower section can show; the board was
-   capped at 24 while the spreadsheet held 54, so most of the record never
-   reached the page. At roughly 780 bytes a card that ceiling is about 390KB
-   -- revisit if the spreadsheet approaches it.
+   The board was capped at 24 while the spreadsheet held 54, then at 500
+   (`BOARD_LIMIT`); since 1 Oct there is no cap at all -- see item 16.
 5. **The scan setup is the filter, everywhere, and it survives a reload.**
    Players, sets and the print-run ceiling (with "inclusive") go to the engine
    to decide what is recorded -- and until 17 Sep that was all they did:
@@ -584,6 +582,50 @@ on a website.
    you are on. It takes the hash **off** the URL with `history.pushState`
    rather than setting one, which fires no `hashchange` -- so the view is set
    by hand -- and leaves the back button returning you to the page you left.
+
+16. **The board is for buying** (1 Oct, the owner's list of eight).
+   **No ceiling.** `BOARD_LIMIT` is `None`: it was 500, the board stood at
+   477 and gained about 20 a day, and past it the oldest-listed cards would
+   have left the page without a word -- "500 found" for ever, and their
+   statuses no longer refreshed, since the export asks about the board's own
+   cards. The download is kept in hand by **two files**: the export writes the
+   cards still for sale to `board.json` (with `archived`, the count waiting
+   elsewhere, so the page's totals are whole at once) and the sold and ended
+   ones to `board-archive.json` (`split_board` / `is_for_sale`), which the
+   page fetches after first paint (`loadArchive`; `API.archive` is hosted
+   only, and missing is fine -- an old single `board.json` still works). Every
+   card is in exactly one of the two. `placeOnBoard` also cut the local board
+   to the newest 24 the moment a live scan found a card; it no longer does.
+   **Availability** (`avail`, default **For sale**) from `availabilityOf`:
+   the owner's mark, else the status refresh, else the clock -- an eBay
+   auction ends when it says it will, so one past its end is sold (with bids)
+   or ended. A card nobody has asked about is for sale; on the PC that is
+   most of them, since local statuses come only from the saved page.
+   **Auction countdowns and "Ending soon".** The end time comes from the
+   status refresh's `endDate`, and a match now records `endDate` from its
+   own detail call, which the export seeds into `status.json` with the price
+   and bids, so a new auction counts down from the moment it is found.
+   `tickEnds` updates every countdown each 30 s (and on waking) and redraws
+   only when one crosses its end; the last hour is red (`is-soon`).
+   **Price then and now** (`priceMove`) from `foundPrice`, hosted only like
+   the current price itself. **Search** (`#title-search`, in the Matches
+   panel, kept for the session): every word must appear in title, player,
+   set or parallel; a typed serial ("1/1", "01/10") is read as a pair, so
+   1/1 does not find 1/10. **Orders**: newest, ending soon, just found,
+   highest, lowest, rarest -- a "1/0" states no real run and sorts last, not
+   first. **Check by eye**: all / hide / only. **Relists**: one title and
+   serial listed more than once shows as one card -- the listing for sale,
+   else the newest -- with the others under "Other listings" in the card
+   view and a "Relisted" tag; **never when two of them are for sale**, since
+   that may be two sellers and folding one would hide a buyable card. Counts
+   are cards, so a folded relist counts once (470 cards from 477 listings on
+   1 Oct). The `_others` riders are never written into saved cards.
+   **Alerts**: `send_push` (ntfy, `NTFY_TOPIC` secret, one push per run,
+   tapping it opens the listing or the Matches panel) beside the existing
+   digest email; both dormant until their secrets are set, and neither can
+   fail a scan. `TheBoardIsForBuying` and `TheBoardPageFindsCardsToBuy` in
+   `test_engine.py` pin it. No new section or page, so the contents panel
+   is unchanged.
 
 ## Why a scan usually adds nothing, and why that is right
 

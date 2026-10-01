@@ -19,6 +19,7 @@ SETUP
        DIGEST_FROM_EMAIL=...            (optional, enables email alerts)
        DIGEST_FROM_APP_PASSWORD=...     (optional)
        DIGEST_TO_EMAIL=...              (optional, defaults to FROM address)
+       NTFY_TOPIC=...                   (optional, a push to your phone via the ntfy app)
 5. Run:  python tennis_card_engine.py
 
 SCHEDULING
@@ -1874,12 +1875,17 @@ def get_player(aspects, title="", known=PLAYERS, searched=None):
 
 
 def known_players():
-    """The roster plus every player already recorded in the published board."""
+    """The roster plus every player already recorded in the published board,
+    both halves of it."""
     names = list(PLAYERS)
     try:
-        with open(os.path.join(_BASE_DIR, "results", "board.json"), encoding="utf-8") as f:
-            board = json.load(f)
-        for card in board.get("cards", []):
+        cards = []
+        for file_name in ("board.json", "board-archive.json"):
+            path = os.path.join(_BASE_DIR, "results", file_name)
+            if os.path.exists(path):
+                with open(path, encoding="utf-8") as f:
+                    cards += json.load(f).get("cards", [])
+        for card in cards:
             for name in str(card.get("player") or "").split(","):
                 name = name.strip()
                 if name and name.lower() != "unknown player":
@@ -2671,6 +2677,63 @@ def send_digest_email(matches):
             "saved and published as usual.")
 
 
+# A push to a phone when a run finds something, through ntfy (ntfy.sh): a free
+# app, no account, and a topic name that acts as the password. Dormant until
+# NTFY_TOPIC is set -- a GitHub secret for the scheduled run, a line in .env
+# on the PC. A new 1/1 at a fair Buy It Now price may not last until the page
+# is next opened, which is what this is for. One push per run, never one per
+# card, and like the digest it can never fail a scan.
+PUSH_LINES = 5
+
+
+def site_url():
+    """The published site, for a push to open: SITE_URL when set, else the
+    GitHub Pages address of the repository the run belongs to."""
+    if os.environ.get("SITE_URL"):
+        return os.environ["SITE_URL"]
+    owner, _, repo = os.environ.get("GITHUB_REPOSITORY", "").partition("/")
+    return f"https://{owner.lower()}.github.io/{repo}/" if owner and repo else ""
+
+
+def push_payload(matches, topic, site=""):
+    """The one notification a run sends about its new finds: a line per card,
+    the first few of them, and a tap that opens the card itself when there is
+    only one, or the Matches panel when there are several."""
+    lines = []
+    for m in matches[:PUSH_LINES]:
+        lines.append(" \u00b7 ".join(x for x in (
+            m.get("player") or "Player not named", m.get("serial", ""),
+            m.get("price", ""), m.get("brand") or m.get("set_name", "")) if x))
+    if len(matches) > PUSH_LINES:
+        lines.append(f"and {len(matches) - PUSH_LINES} more")
+    click = (matches[0].get("link") if len(matches) == 1 else "") \
+        or (f"{site}#matches" if site else matches[0].get("link", ""))
+    payload = {
+        "topic": topic,
+        "title": f"{len(matches)} new bookend{'' if len(matches) == 1 else 's'}",
+        "message": "\n".join(lines),
+        "tags": ["tennis"],
+    }
+    if click:
+        payload["click"] = click
+    return payload
+
+
+def send_push(matches):
+    topic = os.environ.get("NTFY_TOPIC", "").strip()
+    if not matches or not topic:
+        return
+    server = os.environ.get("NTFY_SERVER", "https://ntfy.sh").rstrip("/")
+    try:
+        r = requests.post(server, json=push_payload(matches, topic, site_url()), timeout=15)
+        r.raise_for_status()
+        print(f"Push sent for {len(matches)} new card(s).")
+    except requests.RequestException as exc:
+        # after the scan has saved, as with the digest: never lose a run to it
+        say(f"the push alert could not be sent ({exc}). The scan's results were "
+            "saved and published as usual.")
+
+
 # ============================================================================
 # The board -- every card ever recorded, highest asking price first. Read from
 # the spreadsheet so it outlives any one run. Shared by the web server and by
@@ -2678,9 +2741,45 @@ def send_digest_email(matches):
 # ============================================================================
 
 # The page shows the whole record, filtered, not just the newest handful, so
-# the board carries every recorded card. At roughly 780 bytes a card that is
-# about 390KB at the ceiling; revisit if the spreadsheet ever approaches it.
-BOARD_LIMIT = 500
+# the board carries every recorded card -- with no ceiling at all (1 Oct). It
+# was 500, the board stood at 477 and gained about 20 a day, and past it the
+# oldest-listed cards would have left the page without a word: "500 found"
+# for ever, and their statuses no longer refreshed, since the export asks
+# about the board's own cards. The download is kept in hand instead by
+# `split_board`, which sends the cards still for sale first and the sold and
+# ended ones in a file of their own.
+BOARD_LIMIT = None
+
+
+def is_for_sale(card, statuses, now=None):
+    """Whether a board card can still be bought, as far as anything says.
+    Sold or ended on eBay's word is not; nor is an auction whose end time has
+    passed since the last reading, since an eBay auction ends when it says it
+    will. Everything else -- including a card nobody has asked about yet -- is,
+    because a card wrongly filed as gone is the one nobody looks at."""
+    entry = statuses.get(item_id_from_link(card.get("link", ""))) or {}
+    if entry.get("status") in ("sold", "ended"):
+        return False
+    end = entry.get("endDate") or card.get("endDate") or ""
+    if end and "auction" in str(card.get("listing", "")).lower():
+        try:
+            ends = datetime.fromisoformat(end.replace("Z", "+00:00"))
+        except ValueError:
+            return True
+        return ends > (now or datetime.now(timezone.utc))
+    return True
+
+
+def split_board(board, statuses, now=None):
+    """The board in two: cards still for sale, which the page draws first, and
+    the sold and ended ones, which it fetches a moment later. Sold cards only
+    ever accumulate, so this keeps the first download the size of the market
+    rather than the size of the history. Nothing is dropped: every card is in
+    exactly one of the two."""
+    for_sale, archive = [], []
+    for card in board:
+        (for_sale if is_for_sale(card, statuses, now) else archive).append(card)
+    return for_sale, archive
 
 
 # The set a recorded card belongs to, as the scan setup names it, decided from
@@ -2842,7 +2941,7 @@ def build_board(xlsx_path, matches_path=None, limit=BOARD_LIMIT):
     # newest listing first; rows from before the Listed column fall back to
     # when the scan found them (both are ISO-ish strings, so text order is time order)
     cards.sort(key=lambda c: (c["listed"] or "", c["found"] or ""), reverse=True)
-    return cards[:limit]
+    return cards if limit is None else cards[:limit]
 
 
 def public_config():
@@ -3023,6 +3122,9 @@ def judge_listing(item, detail, player=None, rules=None):
         "listed": detail.get("itemCreationDate") or item.get("itemCreationDate") or "",
         "listing": listing_label(detail if detail.get("buyingOptions") else item),
         "bids": detail.get("bidCount"),
+        # an auction's end, so the page can count it down from the moment it
+        # is found rather than from the next day's status refresh
+        "endDate": detail.get("itemEndDate") or "",
         "cardType": card_type,
         "grading": grading,
         # as_typed here and not at sport_named: the reject reason above quotes
@@ -3199,6 +3301,7 @@ def run_scan(players=None, brand_keywords=None, max_print_run=None,
             "listed": f["listed"],
             "listing": f["listing"],
             "bids": f["bids"],
+            "endDate": f.get("endDate", ""),
             "itemId": item_id,
             "cardType": f["cardType"],
             "grading": f["grading"],
@@ -3573,6 +3676,7 @@ def main():
         print("No new matches this run -- that's normal, keep it scheduled and it'll catch new listings as they post.")
 
     send_digest_email(new_match_records)
+    send_push(new_match_records)
 
 
 if __name__ == "__main__":

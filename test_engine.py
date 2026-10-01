@@ -19,10 +19,12 @@ import shutil
 import smtplib
 import tempfile
 import unittest
-from datetime import timedelta
+import inspect
+from datetime import datetime, timedelta, timezone
 import subprocess
 import sys
 import urllib.parse
+from unittest import mock
 from unittest.mock import patch
 
 import requests
@@ -1099,7 +1101,9 @@ class ThePanelAnswersBothQuestions(unittest.TestCase):
     def test_the_board_carries_the_whole_record(self):
         """The lower section is the whole spreadsheet, filtered, so the board
         must not stop at the newest handful."""
-        self.assertGreaterEqual(engine.BOARD_LIMIT, 500)
+        # no ceiling at all since 1 Oct: at 500 the oldest cards would have
+        # left the page without a word within a day or two
+        self.assertIsNone(engine.BOARD_LIMIT)
         xlsx = os.path.join(HERE, "results", engine.OUTPUT_XLSX)
         if os.path.exists(xlsx):
             board = engine.build_board(xlsx)
@@ -1132,7 +1136,7 @@ class ThePanelAnswersBothQuestions(unittest.TestCase):
                         or cell(r, "Serial #") in engine.date_pairs_in(title)
                         or engine.other_sport_in_title(title)):
                     left_off_by_rule += 1
-            dropped = min(len(recorded), engine.BOARD_LIMIT) - len(board)
+            dropped = len(recorded) - len(board)
             self.assertEqual(dropped, left_off_by_rule,
                              "the board drops cards no rule accounts for")
 
@@ -1143,8 +1147,12 @@ class ThePanelAnswersBothQuestions(unittest.TestCase):
 
     def test_the_lower_section_reads_the_whole_board(self):
         js = self.js()
-        self.assertIn("state.board.filter(passesFilters)", js)
+        # the whole record: the for-sale half and, once it arrives, the archive
+        self.assertIn("all.filter(passesFilters)", js)
         self.assertIn("state.matches.filter(passesFilters)", js)
+        whole = js.split("function allCards()")[1].split("\n}")[0]
+        self.assertIn("state.board", whole)
+        self.assertIn("state.archive", whole)
 
     def test_no_new_cards_is_no_longer_reported_as_a_dead_end(self):
         """The old wording read as a failed scan. It has to say why nothing is
@@ -1784,7 +1792,7 @@ class TheMatchesPanelIsPaged(unittest.TestCase):
         """The pill says how many match, not how many this page draws."""
         js = self.js()
         body = js.split("function renderMatches()")[1].split("\n}")[0]
-        self.assertIn("`${everything.length} of ${state.board.length} match the filters`", body)
+        self.assertIn("`${everything.length} of ${total} match the filters`", body)
 
 
 class TheSerialTagStepsAsideOnlyForAFlagThatIsDrawn(unittest.TestCase):
@@ -3369,9 +3377,9 @@ class EveryStatusCallHasToEarnItself(unittest.TestCase):
         with open(os.path.join(HERE, "export_static.py")) as f:
             export = f.read()
         self.assertIn("just_found", export)
-        self.assertIn('{"status": "active", "checkedAt": now_stamp}', export)
+        self.assertIn('{"status": "active", "checkedAt": now_stamp,', export)
         # and it is not allowed to overwrite a settled reading
-        seed = export.split("for item_id in just_found:")[1].split("ids = board_ids")[0]
+        seed = export.split("for item_id, found in just_found.items():")[1].split("ids = board_ids")[0]
         self.assertIn("engine.status_settled(seeded.get(item_id))", seed)
 
 
@@ -3472,12 +3480,15 @@ class TheExportNeverBlanksThePublishedBoard(unittest.TestCase):
     if: always(), so the blank board would be published and the site would go
     empty. The export keeps what is there instead, and says so loudly."""
 
-    def run_export(self, out, spreadsheet=True):
+    def run_export(self, out, spreadsheet=True, new_matches=None):
         env = dict(os.environ, EBAY_CLIENT_ID="", EBAY_CLIENT_SECRET="",
                    ANTHROPIC_API_KEY="", SCAN_BYPASS_BUDGET="")
         with tempfile.TemporaryDirectory() as work:
             for name in ("tennis_card_engine.py", "export_static.py"):
                 shutil.copy(os.path.join(HERE, name), work)
+            if new_matches is not None:
+                with open(os.path.join(work, engine.NEW_MATCHES_FILE), "w") as f:
+                    json.dump(new_matches, f)
             if spreadsheet:
                 xlsx = os.path.join(work, engine.OUTPUT_XLSX)
                 wb, ws = engine.load_or_create_sheet(xlsx)
@@ -3520,6 +3531,44 @@ class TheExportNeverBlanksThePublishedBoard(unittest.TestCase):
             [card] = self.board(out)
         self.assertEqual((card["price"], card["priceValue"], card["foundPrice"]),
                          ("1325.00 USD", 1325.0, "40.00 USD"))
+
+    def test_a_sold_card_goes_to_the_archive_and_nothing_is_lost(self):
+        """No ceiling on the board, so the sold and ended half travels in a
+        file of its own; board.json says how many are waiting there."""
+        with tempfile.TemporaryDirectory() as out:
+            with open(os.path.join(out, "status.json"), "w") as f:
+                json.dump({"statuses": {"v1|206510108410|0": {
+                    "status": "sold", "checkedAt": "2026-09-30T16:02:52Z",
+                    "endDate": "2026-09-29T10:00:00.000Z"}}}, f)
+            done = self.run_export(out)
+            self.assertEqual(done.returncode, 0, done.stderr)
+            with open(os.path.join(out, "board.json")) as f:
+                board = json.load(f)
+            with open(os.path.join(out, "board-archive.json")) as f:
+                archive = json.load(f)
+        self.assertEqual((board["cards"], board["archived"]), ([], 1))
+        self.assertEqual([c["serial"] for c in archive["cards"]], ["1/25"])
+
+    def test_a_card_for_sale_stays_in_the_first_file(self):
+        with tempfile.TemporaryDirectory() as out:
+            self.assertEqual(self.run_export(out).returncode, 0)
+            with open(os.path.join(out, "board.json")) as f:
+                board = json.load(f)
+            with open(os.path.join(out, "board-archive.json")) as f:
+                archive = json.load(f)
+        self.assertEqual((len(board["cards"]), board["archived"], archive["cards"]), (1, 0, []))
+
+    def test_a_new_auction_counts_down_from_the_moment_it_is_found(self):
+        """The run's own fetch knew when the auction ends; waiting for the next
+        day's refresh to say so would show no countdown on the newest cards."""
+        found = [{"link": "https://www.ebay.com/itm/206510108410", "price": "40.00 USD",
+                  "bids": 3, "endDate": "2099-01-01T10:00:00.000Z"}]
+        with tempfile.TemporaryDirectory() as out:
+            self.assertEqual(self.run_export(out, new_matches=found).returncode, 0)
+            with open(os.path.join(out, "status.json")) as f:
+                entry = json.load(f)["statuses"]["v1|206510108410|0"]
+        self.assertEqual((entry["status"], entry["endDate"], entry["bids"]),
+                         ("active", "2099-01-01T10:00:00.000Z", 3))
 
     def test_a_spreadsheet_with_cards_publishes_them_as_before(self):
         with tempfile.TemporaryDirectory() as out:
@@ -4054,6 +4103,170 @@ class TitleRecognitionBaseline(unittest.TestCase):
         self.assertNotIn("Unknown player", {c["player"] for c in board},
                          "the board still shows the old shrug")
 
+
+
+class TheBoardIsForBuying(unittest.TestCase):
+    """The site is for finding cards to buy. The board had a 500-card ceiling
+    it was a day from reaching; a fifth of it could no longer be bought and
+    sat among the rest; auctions said nothing of when they end; and a run's
+    finds waited for somebody to open the page. 1 Oct."""
+
+    LINK = "https://www.ebay.com/itm/206510108410"
+    ID = "v1|206510108410|0"
+    NOW = datetime(2026, 10, 1, 12, 0, tzinfo=timezone.utc)
+
+    def card(self, listing="Auction", **extra):
+        return dict({"link": self.LINK, "listing": listing, "serial": "1/25"}, **extra)
+
+    def test_sold_and_ended_are_not_for_sale(self):
+        for status in ("sold", "ended"):
+            with self.subTest(status=status):
+                self.assertFalse(engine.is_for_sale(self.card(), {self.ID: {"status": status}}, self.NOW))
+
+    def test_a_card_nobody_has_asked_about_is_for_sale(self):
+        """Wrongly filed as gone is the card nobody looks at."""
+        self.assertTrue(engine.is_for_sale(self.card(), {}, self.NOW))
+
+    def test_an_auction_past_its_end_is_over_before_any_reading_says_so(self):
+        statuses = {self.ID: {"status": "active", "endDate": "2026-10-01T11:59:00.000Z"}}
+        self.assertFalse(engine.is_for_sale(self.card(), statuses, self.NOW))
+        statuses[self.ID]["endDate"] = "2026-10-01T12:01:00.000Z"
+        self.assertTrue(engine.is_for_sale(self.card(), statuses, self.NOW))
+
+    def test_the_cards_own_end_counts_when_no_reading_has_one(self):
+        self.assertFalse(engine.is_for_sale(self.card(endDate="2026-09-30T00:00:00Z"), {}, self.NOW))
+
+    def test_only_an_auction_is_judged_by_the_clock(self):
+        """A fixed-price listing's end date is not a promise it ends then."""
+        statuses = {self.ID: {"status": "active", "endDate": "2026-09-01T00:00:00.000Z"}}
+        self.assertTrue(engine.is_for_sale(self.card("Buy It Now"), statuses, self.NOW))
+        statuses[self.ID]["endDate"] = "not a date"
+        self.assertTrue(engine.is_for_sale(self.card(), statuses, self.NOW))
+
+    def test_the_split_loses_nothing_and_keeps_the_order(self):
+        cards = [dict(self.card("Buy It Now"), link=f"https://www.ebay.com/itm/20651010841{i}")
+                 for i in range(6)]
+        statuses = {engine.item_id_from_link(cards[i]["link"]): {"status": s}
+                    for i, s in ((1, "sold"), (4, "ended"))}
+        for_sale, archive = engine.split_board(cards, statuses, self.NOW)
+        self.assertEqual(for_sale, [cards[0], cards[2], cards[3], cards[5]])
+        self.assertEqual(archive, [cards[1], cards[4]])
+
+    def test_the_board_has_no_ceiling_but_a_limit_still_works(self):
+        with tempfile.TemporaryDirectory() as folder:
+            xlsx = os.path.join(folder, "sheet.xlsx")
+            wb, ws = engine.load_or_create_sheet(xlsx)
+            for i in range(3):
+                engine.append_row(ws, "Coco Gauff", "Topps", "2025 Topps Chrome",
+                                  f"2025 Topps Chrome Coco Gauff Refractor {i + 1}/{i + 1}",
+                                  i + 1, i + 1, "40.00 USD", f"https://www.ebay.com/itm/20651010841{i}")
+            wb.save(xlsx)
+            self.assertEqual(len(engine.build_board(xlsx)), 3)
+            self.assertEqual(len(engine.build_board(xlsx, limit=2)), 2)
+
+    def test_a_match_records_when_its_auction_ends(self):
+        source = inspect.getsource(engine.judge_listing)
+        self.assertIn('"endDate": detail.get("itemEndDate")', source)
+        self.assertIn('"endDate": f.get("endDate", "")', inspect.getsource(engine.run_scan))
+
+    # ---- the push
+    MATCHES = [{"player": f"Player {i}", "serial": "1/1", "price": f"{i}.00 USD",
+                "brand": "Topps Chrome", "link": f"https://www.ebay.com/itm/{i}"} for i in range(7)]
+
+    def test_one_find_opens_the_listing_itself(self):
+        payload = engine.push_payload(self.MATCHES[:1], "topic", "https://site/")
+        self.assertEqual((payload["title"], payload["click"]),
+                         ("1 new bookend", "https://www.ebay.com/itm/0"))
+        self.assertEqual(payload["message"], "Player 0 \u00b7 1/1 \u00b7 0.00 USD \u00b7 Topps Chrome")
+
+    def test_several_finds_open_the_matches_panel_and_stay_short(self):
+        payload = engine.push_payload(self.MATCHES, "topic", "https://site/")
+        self.assertEqual((payload["title"], payload["click"]), ("7 new bookends", "https://site/#matches"))
+        lines = payload["message"].split("\n")
+        self.assertEqual((len(lines), lines[-1]), (engine.PUSH_LINES + 1, "and 2 more"))
+
+    def test_the_site_is_found_from_the_repository(self):
+        with mock.patch.dict(os.environ, {"GITHUB_REPOSITORY": "AN0ymous/tennis-card-engine",
+                                          "SITE_URL": ""}):
+            self.assertEqual(engine.site_url(), "https://an0ymous.github.io/tennis-card-engine/")
+        with mock.patch.dict(os.environ, {"SITE_URL": "https://example.org/"}):
+            self.assertEqual(engine.site_url(), "https://example.org/")
+
+    def test_no_topic_no_push(self):
+        with mock.patch.dict(os.environ, {"NTFY_TOPIC": ""}), \
+                mock.patch.object(engine.requests, "post") as post:
+            engine.send_push(self.MATCHES)
+        post.assert_not_called()
+
+    def test_a_push_that_fails_never_fails_the_scan(self):
+        with mock.patch.dict(os.environ, {"NTFY_TOPIC": "t"}), \
+                mock.patch.object(engine.requests, "post",
+                                  side_effect=engine.requests.ConnectionError("down")) as post, \
+                mock.patch.object(engine, "say") as said:
+            engine.send_push(self.MATCHES)
+        post.assert_called_once()
+        said.assert_called_once()
+
+    def test_the_scheduled_run_passes_the_topic(self):
+        with open(os.path.join(HERE, ".github", "workflows", "scan.yml")) as f:
+            self.assertIn("NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}", f.read())
+
+
+class TheBoardPageFindsCardsToBuy(unittest.TestCase):
+    """The page side of the same day's work, read from the source like the
+    other page tests; the behaviour itself is driven in a real browser before
+    each push."""
+
+    def js(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            return f.read()
+
+    def html(self):
+        with open(os.path.join(HERE, "web", "index.html")) as f:
+            return f.read()
+
+    def test_every_new_filter_is_applied_to_every_list(self):
+        body = self.js().split("function passesFilters(card)")[1].split("\n}")[0]
+        for name in ("inAvailability", "inCaution", "inQuery"):
+            with self.subTest(name=name):
+                self.assertIn(name, body)
+
+    def test_a_changed_new_filter_starts_again_at_page_one(self):
+        body = self.js().split("function filterSignature()")[1].split("\n}")[0]
+        for name in ("state.avail", "state.caution", "state.query"):
+            with self.subTest(name=name):
+                self.assertIn(name, body)
+
+    def test_the_board_opens_on_cards_for_sale(self):
+        js = self.js()
+        self.assertIn('key: "tce.avail", fallback: "sale"', js)
+        self.assertIn('data-value="sale">For sale</button>', self.html())
+
+    def test_every_order_offered_is_one_the_page_knows(self):
+        seg = self.html().split('id="sort-seg"')[1].split("</div>")[0]
+        offered = re.findall(r'data-value="([a-z_]+)"', seg)
+        notes = self.js().split("sort: {")[1].split("titles:")[0]
+        self.assertEqual(set(offered), {"newest", "ending", "found", "price_desc", "price_asc", "rarest"})
+        for value in offered:
+            with self.subTest(value=value):
+                self.assertIn(f"{value}:", notes)
+
+    def test_a_local_scan_no_longer_cuts_the_board_to_24(self):
+        body = self.js().split("function placeOnBoard(match)")[1].split("\n}")[0]
+        self.assertNotIn(".slice(0, 24)", body)
+
+    def test_the_archive_is_fetched_only_where_it_exists(self):
+        js = self.js()
+        self.assertIn("archive: null", js)
+        self.assertIn('API.archive = "results/board-archive.json"', js)
+
+    def test_relisted_cards_are_never_folded_while_two_are_for_sale(self):
+        body = self.js().split("function relistGroups(all)")[1].split("\n}")[0]
+        self.assertIn('filter((c) => availabilityOf(c) === "sale").length <= 1', body)
+
+    def test_the_relist_riders_are_never_saved(self):
+        body = self.js().split("function toggleSaved(card)")[1].split("\n}")[0]
+        self.assertIn("_others", body)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

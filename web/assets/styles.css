@@ -500,6 +500,11 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
 }
 .seg-btn + .seg-btn { border-left: 1px solid var(--line); }
 .seg-5 .seg-btn { padding-left: 2px; padding-right: 2px; font-size: 11.5px; letter-spacing: .02em; }
+/* six choices do not fit one row on a phone: three to a row, ruled like the rest */
+.seg-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.seg-grid .seg-btn + .seg-btn { border-left: 0; }
+.seg-grid .seg-btn:nth-child(n+4) { border-top: 1px solid var(--line); }
+.seg-grid .seg-btn:not(:nth-child(3n+1)) { border-left: 1px solid var(--line); }
 .seg-btn:hover { color: var(--ink); }
 .seg-btn.is-on { background: var(--navy); color: #FFFFFF; }
 .seg-btn:focus-visible { outline: 3px solid var(--gold-lit); outline-offset: -3px; }
@@ -517,6 +522,20 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
 .lot-photo .lot-rank + .lot-serial + .cm-tag + .caution-tag, .lot-photo .caution-tag { top: 44px; }
 .holo-dl .is-caution { color: var(--warn); }
 .mc-type { font-size: 11px; margin-top: 4px; }
+.relist-tag {
+  display: inline-block; padding: 2px 7px; border-radius: 999px; margin-left: 4px; cursor: help;
+  border: 1px solid var(--line-2); color: var(--muted); font: 700 10px/1.4 var(--ui);
+  letter-spacing: .08em; text-transform: uppercase;
+}
+.lot-body .relist-tag { align-self: flex-start; margin: 2px 0 0; }
+/* an auction's countdown, and red once it is inside its last hour */
+.mc-ends, .lot-ends { display: block; font-size: 11.5px; font-weight: 600; color: var(--ink-2); margin-top: 4px; }
+.mc-ends.is-soon, .lot-ends.is-soon { color: var(--crit); }
+/* the price then and now: up in green, down in the muted ink */
+.mc-move, .lot-move { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.mc-move.is-up, .lot-move.is-up { color: var(--good); }
+.holo-other { display: block; color: var(--gold); text-decoration: none; margin-bottom: 4px; }
+.holo-other:hover { text-decoration: underline; }
 
 /* saved cards: stars, the saved page, listing status */
 /* "How it works" in the top bar. The method and process reference used to sit
@@ -748,6 +767,15 @@ input[type="number"]:focus, input[type="search"]:focus { border-color: var(--gol
 }
 .pagesize select:hover { border-color: var(--gold-lit); }
 .pagesize select:focus-visible { border-color: var(--gold-lit); outline: none; }
+
+.searchbar { padding: 12px 20px 0; }
+.searchbar input {
+  width: 100%; box-sizing: border-box; font: 400 14px/1.3 var(--ui); color: var(--ink);
+  background: var(--surface); border: 1px solid var(--line-2); border-radius: var(--radius);
+  padding: 10px 12px; transition: border-color .3s var(--ease);
+}
+.searchbar input:hover { border-color: var(--gold-lit); }
+.searchbar input:focus-visible { border-color: var(--gold-lit); outline: none; }
 
 .pager {
   display: flex; align-items: center; justify-content: center; gap: 10px;

@@ -108,19 +108,24 @@ if engine.budget_bypassed():
 # nothing new.
 board_ids = [i for i in dict.fromkeys(engine.item_id_from_link(c.get("link", ""))
                                       for c in board) if i]
-just_found = set()
+just_found = {}
 if os.path.exists(matches):
     try:
         with open(matches) as f:
-            just_found = {i for i in (engine.item_id_from_link(m.get("link", ""))
-                                      for m in json.load(f) or []) if i}
+            just_found = {engine.item_id_from_link(m.get("link", "")): m
+                          for m in json.load(f) or [] if engine.item_id_from_link(m.get("link", ""))}
     except (json.JSONDecodeError, OSError, AttributeError, TypeError):
-        just_found = set()
+        just_found = {}
 seeded = dict(previous)
 now_stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-for item_id in just_found:
+for item_id, found in just_found.items():
     if not engine.status_settled(seeded.get(item_id)):
-        seeded[item_id] = {"status": "active", "checkedAt": now_stamp}
+        # what the run's own fetch said, so a new auction counts down from
+        # the moment it is found rather than from tomorrow's refresh
+        seeded[item_id] = {"status": "active", "checkedAt": now_stamp,
+                           **{k: v for k, v in (("endDate", found.get("endDate")),
+                                                ("price", found.get("price")),
+                                                ("bids", found.get("bids"))) if v}}
 ids = board_ids
 try:
     if ids:
@@ -145,13 +150,25 @@ with open(status_path, "w") as f:
 # the price eBay gives today, so a bid that has moved shows on the page and
 # sorts and filters where it now stands. Never when the board was kept rather
 # than rebuilt -- that board belongs to an earlier run.
+#
+# And it goes out in two halves: the cards still for sale in board.json, which
+# the page draws first, and the sold and ended ones in board-archive.json,
+# which it fetches a moment later. There is no ceiling on the board any more,
+# and sold cards only accumulate, so this keeps the first download the size
+# of the market rather than the size of the history. `archived` tells the page
+# how many are waiting, so its counts are whole before the second file lands.
+archive_path = os.path.join(out, "board-archive.json")
 if board and not board_kept:
     priced = engine.with_current_prices(board, statuses)
     moved = sum(1 for c in priced if "foundPrice" in c)
+    for_sale, archive = engine.split_board(priced, statuses)
     with open(board_path, "w") as f:
-        json.dump({"cards": priced}, f)
+        json.dump({"cards": for_sale, "archived": len(archive)}, f)
+    with open(archive_path, "w") as f:
+        json.dump({"cards": archive}, f)
     print(f"prices: {moved} of {len(priced)} board card(s) now stand at a different price "
           "from the one they were found at")
+    print(f"board: {len(for_sale)} card(s) for sale, {len(archive)} sold or ended")
 
 # How much of eBay's daily allowance this keyset has left, as eBay reports it.
 # Written after the scan, so it is the figure the run itself finished on.
