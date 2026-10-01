@@ -322,6 +322,21 @@ on a website.
   the title and 727 up to a call each, plus at most 475 date-shaped
   not-a-bookend pairs that may now need a fetch -- the first scan after it
   walks all seven sets in full and costs roughly 1,500 calls at worst.
+- **A title that hints at numbering is always fetched, whatever the cost.**
+  The owner's decision, 1 Oct. A title with a sign of numbering but no
+  readable serial ("Gold Refractor /50", "numbered", "#'d") costs one detail
+  call so the specifics can be read. It is the biggest line in the bill --
+  49% of all calls over 21-30 Sep, 12,036 calls all-time -- and has found
+  exactly one genuine card (the Jamie Murray Royalty relic, "/10" in the
+  title, 10/10 in the specifics). A plan to record those titles for a week
+  and then stop fetching the kinds that never pay was proposed and
+  **scratched**: sellers' titles are wrong often enough that judging a
+  listing by its title is judging it by the part that cannot be trusted, and
+  any rule choosing which titles are "worth a look" does exactly that. Do not
+  narrow, sample or skip this fetch to save calls. Savings belong elsewhere
+  -- eBay's batch lookup (`getItems`, refused to this keyset on 17 Sep, needs
+  the owner to apply) would cut the same calls about twenty-fold without
+  skipping a listing.
 - **Custom cards are rejected before the serial is read.** A card somebody
   made themselves carries a real maker in the Manufacturer field and is nearly
   always called a 1/1, because only one exists, so neither the allow-list nor
