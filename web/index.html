@@ -378,6 +378,8 @@
           </select>
         </label>
         <button type="button" class="linkbtn" id="download-btn" hidden>Download spreadsheet</button>
+        <button type="button" class="linkbtn" id="save-search-btn"
+                title="Keep these filters on your account and get an email when a new card fits them">Save this search</button>
       </div>
       <div class="searchbar">
         <label class="sr-only" for="title-search">Search the cards</label>
@@ -784,6 +786,15 @@ Arguments: tennis_card_engine.py</pre>
     <div class="account-form" id="acct-me" hidden>
       <p class="account-who" id="acct-who"></p>
       <p class="hint">Your starred cards are kept on this account and shown on any device you sign in to.</p>
+      <h3 class="account-sub">Saved searches</h3>
+      <p class="hint" id="acct-searches-note">None yet. Set the filters the way you want them and press
+        &ldquo;Save this search&rdquo; above the matches.</p>
+      <ul class="acct-searches" id="acct-searches"></ul>
+      <h3 class="account-sub">Emails</h3>
+      <label class="acct-switch"><input type="checkbox" id="acct-daily">
+        <span>The daily board: yesterday&rsquo;s new cards and what sold, every morning.</span></label>
+      <p class="hint">A saved search with alerts on emails you as soon as a scan finds a card that fits it.
+        Emails come from the address the owner set up; nothing is sent until then.</p>
       <div class="btn-row">
         <button type="button" class="btn btn-ghost" id="acct-signout">Sign out</button>
       </div>

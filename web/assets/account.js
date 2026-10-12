@@ -103,6 +103,7 @@ const Account = (() => {
   async function signOut() {
     const token = session && session.access_token;
     keep(null);
+    profile = null; searches = []; renderSearches(); renderProfile();
     if (saved) saved.set({});                   // the stars were the account's
     if (token) { try { await call("/auth/v1/logout", { method: "POST", token }); } catch { /* already out */ } }
   }
@@ -178,6 +179,96 @@ const Account = (() => {
     p.catch((e) => note(`Could not save to your account: ${e.message}`));
   }
 
+  /* ---- the profile: the email switches, and the address the mailer uses ---- */
+  let profile = null;
+  async function ensureProfile() {
+    if (!session || !session.user || !session.user.id || !session.user.email) return null;
+    const rows = await call(`/rest/v1/profiles?select=user_id,email,daily_email,alerts&user_id=eq.${session.user.id}`,
+      { token: session.access_token });
+    profile = (rows || [])[0] || null;
+    if (!profile || profile.email !== session.user.email) {
+      profile = { user_id: session.user.id, email: session.user.email,
+                  daily_email: profile ? profile.daily_email : false, alerts: profile ? profile.alerts : true };
+      await call("/rest/v1/profiles", { method: "POST", token: session.access_token,
+        headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: [profile] });
+    }
+    renderProfile();
+    return profile;
+  }
+  async function setDaily(on) {
+    if (!session) return;
+    await call(`/rest/v1/profiles?user_id=eq.${session.user.id}`, { method: "PATCH", token: session.access_token,
+      headers: { Prefer: "return=minimal" }, body: { daily_email: !!on } });
+    if (profile) profile.daily_email = !!on;
+  }
+  function renderProfile() {
+    const d = $a("acct-daily");
+    if (d) d.checked = !!(profile && profile.daily_email);
+  }
+
+  /* ---- saved searches ---- */
+  let filters = null;                  // {current, apply, describe} handed in by app.js
+  let searches = [];
+  async function loadSearches() {
+    if (!session) { searches = []; renderSearches(); return; }
+    searches = (await call("/rest/v1/saved_searches?select=id,name,filters,alerts,created_at&order=created_at.desc",
+      { token: session.access_token })) || [];
+    renderSearches();
+  }
+  async function saveSearch() {
+    if (!session) { open("signin"); note("Sign in to keep a search on your account.", true); return; }
+    if (!filters) return;
+    const name = window.prompt("Name this search", "");
+    if (!name || !name.trim()) return;
+    await call("/rest/v1/saved_searches", { method: "POST", token: session.access_token,
+      headers: { Prefer: "return=minimal" }, body: [{ name: name.trim(), filters: filters.current(), alerts: true }] });
+    await loadSearches();
+    open("me");
+    note(`Saved "${name.trim()}". A scan that finds a card fitting it will email you.`, true);
+  }
+  async function removeSearch(id) {
+    await call(`/rest/v1/saved_searches?id=eq.${encodeURIComponent(id)}`,
+      { method: "DELETE", token: session.access_token, headers: { Prefer: "return=minimal" } });
+    await loadSearches();
+  }
+  async function setSearchAlerts(id, on) {
+    await call(`/rest/v1/saved_searches?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", token: session.access_token,
+      headers: { Prefer: "return=minimal" }, body: { alerts: !!on } });
+    const s = searches.find((x) => x.id === id);
+    if (s) s.alerts = !!on;
+  }
+  function renderSearches() {
+    const list = $a("acct-searches");
+    if (!list) return;
+    list.replaceChildren();
+    $a("acct-searches-note").hidden = searches.length > 0;
+    searches.forEach((s) => {
+      const li = document.createElement("li");
+      const name = document.createElement("span"); name.className = "name"; name.textContent = s.name;
+      const acts = document.createElement("span"); acts.className = "acts";
+      const apply = document.createElement("a"); apply.href = "#"; apply.textContent = "Apply";
+      apply.addEventListener("click", (e) => { e.preventDefault(); if (filters) filters.apply(s.filters); close(); });
+      const alerts = document.createElement("label");
+      const box = document.createElement("input"); box.type = "checkbox"; box.checked = !!s.alerts;
+      box.addEventListener("change", () => setSearchAlerts(s.id, box.checked).catch((e) => note(e.message)));
+      alerts.append(box, document.createTextNode(" Email me"));
+      const del = document.createElement("a"); del.href = "#"; del.textContent = "Delete"; del.className = "danger";
+      del.addEventListener("click", (e) => { e.preventDefault(); removeSearch(s.id).catch((err) => note(err.message)); });
+      acts.append(apply, alerts, del);
+      const what = document.createElement("span"); what.className = "what";
+      what.textContent = filters ? filters.describe(s.filters || {}) : "";
+      li.append(name, acts, what);
+      list.append(li);
+    });
+  }
+
+  /* everything the account holds, read after a sign-in or a restore */
+  async function pullAll() {
+    await pullSaved();
+    try { await ensureProfile(); } catch (e) { note(`Could not read your settings: ${e.message}`); }
+    try { await loadSearches(); } catch (e) { note(`Could not read your saved searches: ${e.message}`); }
+  }
+
   /* ---- the panel ---- */
   const PANELS = ["signin", "signup", "forgot", "code", "newpass", "me"];
   function show(panel) {
@@ -250,7 +341,7 @@ const Account = (() => {
 
     $a("acct-signin").addEventListener("submit", (e) => { e.preventDefault(); run(e.target, async (f) => {
       await signIn(f.email, f.password);
-      await pullSaved();
+      await pullAll();
       close();
     }); });
 
@@ -259,7 +350,7 @@ const Account = (() => {
       if (f.password !== f.again) throw new Error("The two passwords do not match.");
       const result = await signUp(f.email, f.password);
       if (result === "confirm") { show("signin"); note(`Check ${f.email} for a confirmation link, then sign in.`, true); return; }
-      await pullSaved();
+      await pullAll();
       close();
     }); });
 
@@ -273,17 +364,18 @@ const Account = (() => {
     $a("acct-code").addEventListener("submit", (e) => { e.preventDefault(); run(e.target, async (f) => {
       checkPassword(f.password);
       await resetWithCode(f.email || pendingEmail, f.code, f.password);
-      await pullSaved();
+      await pullAll();
       close();
     }); });
 
     $a("acct-newpass").addEventListener("submit", (e) => { e.preventDefault(); run(e.target, async (f) => {
       checkPassword(f.password);
       await setPassword(f.password);
-      await pullSaved();
+      await pullAll();
       close();
     }); });
 
+    $a("acct-daily").addEventListener("change", (e) => setDaily(e.target.checked).catch((err) => note(err.message)));
     $a("acct-signout").addEventListener("click", () => { signOut(); close(); });
     $a("acct-delete").addEventListener("click", () => {
       if (!window.confirm("Delete your account and everything saved on it? This cannot be undone.")) return;
@@ -295,16 +387,24 @@ const Account = (() => {
      restores any session and merges the account's cards in. */
   async function init(savedHooks) {
     saved = savedHooks;
+    filters = savedHooks.filters || null;
     wire();
     const fromLink = takeRecoveryFromHash();
     if (!fromLink) await restore();
+    if (fromLink && session) {
+      // the link carries the session but not who it belongs to; ask
+      try {
+        const u = await call("/auth/v1/user", { token: session.access_token });
+        if (u && u.id) keep({ ...session, user: { id: u.id, email: u.email } });
+      } catch { /* the new-password screen still works; the profile waits */ }
+    }
     if (session) {
-      try { await pullSaved(); } catch (e) { note(`Could not read your saved cards: ${e.message}`); }
+      try { await pullAll(); } catch (e) { note(`Could not read your saved cards: ${e.message}`); }
     }
     if (fromLink) open("newpass");
   }
 
-  return { init, user, open, close, savedChanged, signIn, signUp, signOut, sendCode, resetWithCode,
+  return { init, user, open, close, savedChanged, saveSearch, signIn, signUp, signOut, sendCode, resetWithCode,
            onChange: (fn) => listeners.push(fn), _call: call };
 })();
 /* A const at the top of a classic script is not a property of window, and

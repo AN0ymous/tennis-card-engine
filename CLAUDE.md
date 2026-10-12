@@ -682,8 +682,40 @@ on a website.
   account on the live site is the owner's test.
 - **Privacy:** an account keeps the email address and what the person saves,
   nothing else; `#privacy` in the footer says so and the sign-up form links
-  to it. Stages 2-4 (saved searches, match emails, the daily board email)
-  use `saved_searches` and `profiles`, created by the same SQL.
+  to it.
+- **A saved search is the filter setup, captured and restored** (stage 2).
+  `currentFilters()` in `app.js` snapshots the search box, price, listing
+  type, the seven segments, players, sets, the ceiling and inclusive;
+  `applyFilters()` puts each back through its own setter (`setPrice`,
+  `setListing`, `setSeg`, the chips, `saveScanSetup`), so the page reacts as
+  if set by hand. "Save this search" above the matches names it (a prompt)
+  and writes `saved_searches`; the signed-in panel lists each with
+  `describeFilters()`, Apply, an "Email me" switch (`alerts`) and Delete.
+  Signed out, the button opens the panel with a note instead. The profile
+  row (`profiles`: email, `daily_email`, `alerts`) is upserted on every
+  sign-in, so the mailer knows the address without touching Supabase's auth
+  schema; a reset-link session asks `GET /auth/v1/user` who it belongs to
+  first, since the link carries no id.
+- **The emails are `notify.py`, run by the export, never by the engine**
+  (stages 3-4). The service key reads every account's searches and switches
+  (`SUPABASE_SERVICE_KEY`, passed to the export step only -- a test fails
+  if it reaches the engine step). `card_fits()` mirrors `passesFilters`
+  field for field, and `test_the_page_captures_what_the_matcher_reads`
+  fails if `currentFilters()` names a field the matcher does not read.
+  **A typed serial is a pair**: the page's `fold()` keeps punctuation, so
+  "1/1" cannot match 1/50 -- the first Python fold stripped it and did.
+  `send_alerts` runs after every scan: one mail per person, the new finds
+  grouped under each search they fit, `last_sent` stamped. `send_daily`
+  runs only when `GITHUB_EVENT_NAME` is `schedule` (or `DAILY_EMAIL=1`), so
+  a hand-started scan never sends the morning mail twice: the last day's
+  finds newest first, photo left and facts right (the Card Ladder shape the
+  owner asked for), then a recap -- found yesterday, for sale now, sold
+  yesterday and for how much, from `status.json`'s `endDate` -- and a
+  "View the board" button. **Sending:** Resend when `EMAIL_API_KEY` and
+  `EMAIL_FROM` are set, else the Gmail app password the digest uses, else a
+  line saying nothing was sent. Every entry point catches its own errors;
+  nothing here can fail a run, and without the key both say "not set".
+  `SITE_URL` (a repository variable) overrides the Pages address in links.
 
 ## Why a scan usually adds nothing, and why that is right
 
