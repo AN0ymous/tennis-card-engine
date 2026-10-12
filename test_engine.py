@@ -1890,6 +1890,93 @@ class TheSavedPageAsksTheRightSide(unittest.TestCase):
         self.assertNotIn(".json()", asks, "every read goes through readJson")
 
 
+class AccountsLiveOnSupabase(unittest.TestCase):
+    """An email and a password for this site, a code to the email for a
+    forgotten one, and saved cards that follow the person between devices.
+    Supabase holds the accounts; account.js talks to it with plain fetch
+    calls, and the page works unchanged for anyone who never signs in.
+    The flows themselves are driven in a browser against a stand-in server
+    outside the suite; these pin what must stay true in the files."""
+
+    def read(self, *parts):
+        with open(os.path.join(HERE, *parts)) as f:
+            return f.read()
+
+    def test_the_key_in_the_page_is_the_public_one(self):
+        """The anon key is designed to be in a page. The service key never is:
+        it bypasses row-level security, so it lives only in GitHub secrets."""
+        import base64
+        js = self.read("web", "assets", "account.js")
+        url = re.search(r'url: "https://([a-z]+)\.supabase\.co"', js).group(1)
+        key = re.search(r'anon: "([^"]+)"', js).group(1)
+        payload = key.split(".")[1]
+        claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+        self.assertEqual(claims["role"], "anon")
+        self.assertEqual(claims["ref"], url, "the key belongs to another project")
+        for path in (("web", "assets", "account.js"), ("web", "assets", "app.js"), ("web", "index.html"),
+                     ("supabase", "schema.sql"), (".github", "workflows", "scan.yml")):
+            self.assertNotIn("service_role", self.read(*path), f"{path} names the service key")
+
+    def test_every_table_is_guarded_by_row_level_security(self):
+        """A table without it is readable by anyone holding the public key."""
+        sql = re.sub(r"[ \t]+", " ", self.read("supabase", "schema.sql").lower())
+        tables = re.findall(r"create table if not exists public\.(\w+)", sql)
+        self.assertEqual(sorted(tables), ["profiles", "saved_listings", "saved_searches"])
+        for t in tables:
+            self.assertIn(f"alter table public.{t} enable row level security", sql)
+            policy = re.search(rf'create policy "[^"]+" on public\.{t}\s+for all using \(auth\.uid\(\) = user_id\)', sql)
+            self.assertTrue(policy, f"{t} has no own-rows policy")
+        self.assertIn("delete from auth.users where id = auth.uid()", sql,
+                      "delete_me must delete the caller and nobody else")
+        self.assertNotIn("delete_me(uuid", sql, "delete_me takes no id to delete")
+
+    def test_the_page_loads_the_account_script_first(self):
+        """It takes a reset link's session out of the hash before app.js
+        routes on the hash."""
+        html = self.read("web", "index.html")
+        self.assertLess(html.index('assets/account.js'), html.index('assets/app.js'))
+        for i in ("account-btn", "account", "acct-signin", "acct-signup", "acct-forgot",
+                  "acct-code", "acct-newpass", "acct-me", "acct-msg", "privacy"):
+            self.assertIn(f'id="{i}"', html, i)
+        self.assertNotIn("supabase-js", html, "no third-party script host")
+        self.assertNotIn("cdn.jsdelivr", html)
+
+    def test_the_forgotten_password_goes_through_a_code(self):
+        js = self.read("web", "assets", "account.js")
+        self.assertIn('"/auth/v1/recover"', js)
+        verify = js.split('"/auth/v1/verify"')[1].split("\n")[0] + js.split('"/auth/v1/verify"')[1].split("\n")[1]
+        self.assertIn('type: "recovery"', verify)
+        self.assertIn('"/auth/v1/user", { method: "PUT"', js)
+        self.assertIn("type=recovery", js, "the link form of reset is also taken")
+
+    def test_the_account_object_is_on_window(self):
+        """A const in a classic script is not a window property; app.js tests
+        for window.Account, and without this line nothing was ever wired --
+        found by driving the page in a browser, not by reading it."""
+        self.assertIn("window.Account = Account;", self.read("web", "assets", "account.js"))
+
+    def test_stars_and_marks_reach_the_account(self):
+        js = self.read("web", "assets", "app.js")
+        toggle = js.split("function toggleSaved(")[1].split("\n}")[0]
+        self.assertIn("Account.savedChanged(key, state.saved[key] || null)", toggle)
+        mark = js.split('const mark = el("button", "linkbtn"')[1].split("remove.type")[0]
+        self.assertIn("Account.savedChanged(savedKey(card), entry)", mark)
+        init = js.split("function initSaved()")[1].split("\n}\n")[0]
+        self.assertIn("Account.init({", init)
+        self.assertIn("if (window.Account)", init, "a page without account.js still works")
+
+    def test_signing_out_takes_the_accounts_stars_with_it(self):
+        js = self.read("web", "assets", "account.js")
+        out = js.split("async function signOut()")[1].split("\n  }")[0]
+        self.assertIn("saved.set({})", out)
+
+    def test_a_password_is_at_least_eight_characters(self):
+        js = self.read("web", "assets", "account.js")
+        self.assertIn("minPassword: 8", js)
+        html = self.read("web", "index.html")
+        self.assertEqual(html.count('minlength="8"'), 4, "every new-password box says so too")
+
+
 class TheContentsPanelKeepsUp(unittest.TestCase):
     """The panel behind the tennis ball is the map of the site, and a map
     goes stale silently: it still listed "Method and process" as a section of
