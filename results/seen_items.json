@@ -1642,12 +1642,12 @@
   },
   "v1|117323556245|417238447194": {
     "verdict": "filtered",
-    "rules": "15eed5bad7b581a5",
+    "rules": "fd7531dfcc351a73",
     "reason": "not a Iga Swiatek card"
   },
   "v1|117323556245|417238447199": {
     "verdict": "filtered",
-    "rules": "e49d77fa8728ff90",
+    "rules": "2416fd05381e9525",
     "reason": "not a Mirra Andreeva card"
   },
   "v1|117323556245|417238447216": {
@@ -1657,22 +1657,22 @@
   },
   "v1|117323556245|417238447222": {
     "verdict": "filtered",
-    "rules": "e49d77fa8728ff90",
+    "rules": "2416fd05381e9525",
     "reason": "not a Mirra Andreeva card"
   },
   "v1|117323556245|417238520904": {
     "verdict": "filtered",
-    "rules": "138787a8ea7c6cc8",
+    "rules": "31d0964db06b8526",
     "reason": "not a Pete Sampras card"
   },
   "v1|117323781807|417238563880": {
     "verdict": "filtered",
-    "rules": "15eed5bad7b581a5",
+    "rules": "fd7531dfcc351a73",
     "reason": "not a Iga Swiatek card"
   },
   "v1|117323781807|417238563885": {
     "verdict": "filtered",
-    "rules": "e49d77fa8728ff90",
+    "rules": "2416fd05381e9525",
     "reason": "not a Mirra Andreeva card"
   },
   "v1|117323781807|417238563900": {
@@ -1682,12 +1682,12 @@
   },
   "v1|117323781807|417238563932": {
     "verdict": "filtered",
-    "rules": "968608f1d8501932",
+    "rules": "f01bff063c059ab4",
     "reason": "not a Martina Hingis card"
   },
   "v1|117323781807|417238563941": {
     "verdict": "filtered",
-    "rules": "b060c910d692b1ea",
+    "rules": "b007a2d0e0712bf8",
     "reason": "not a Steffi Graf card"
   },
   "v1|117325976631|0": "reject",
@@ -5387,9 +5387,9 @@
     "judge": 3
   },
   "v1|117451465480|417294631132": {
-    "verdict": "filtered",
-    "rules": "f999b6987b60a533",
-    "reason": "not a Alexander Zverev card"
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
   },
   "v1|117451465480|417294631138": {
     "verdict": "reject",
@@ -5492,6 +5492,11 @@
     "judge": 3
   },
   "v1|117452406794|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|117452883676|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -7086,7 +7091,7 @@
   },
   "v1|127712292611|428873885284": {
     "verdict": "filtered",
-    "rules": "e49d77fa8728ff90",
+    "rules": "2416fd05381e9525",
     "reason": "not a Mirra Andreeva card"
   },
   "v1|127712292611|428873958697": {
@@ -7696,12 +7701,12 @@
   },
   "v1|127995164675|429174050825": {
     "verdict": "filtered",
-    "rules": "15eed5bad7b581a5",
+    "rules": "fd7531dfcc351a73",
     "reason": "not a Iga Swiatek card"
   },
   "v1|127995164675|429174050830": {
     "verdict": "filtered",
-    "rules": "e49d77fa8728ff90",
+    "rules": "2416fd05381e9525",
     "reason": "not a Mirra Andreeva card"
   },
   "v1|127995164675|429174050845": {
@@ -7711,27 +7716,27 @@
   },
   "v1|127995164675|429174050850": {
     "verdict": "filtered",
-    "rules": "e49d77fa8728ff90",
+    "rules": "2416fd05381e9525",
     "reason": "not a Mirra Andreeva card"
   },
   "v1|127995164675|429174050882": {
     "verdict": "filtered",
-    "rules": "968608f1d8501932",
+    "rules": "f01bff063c059ab4",
     "reason": "not a Martina Hingis card"
   },
   "v1|127995164675|429174050890": {
     "verdict": "filtered",
-    "rules": "b060c910d692b1ea",
+    "rules": "b007a2d0e0712bf8",
     "reason": "not a Steffi Graf card"
   },
   "v1|127995164675|429187108589": {
     "verdict": "filtered",
-    "rules": "5cd9ad6e05838abf",
+    "rules": "a2a72af1ecff9fa0",
     "reason": "not a Andre Agassi card"
   },
   "v1|127995164675|429187108590": {
     "verdict": "filtered",
-    "rules": "138787a8ea7c6cc8",
+    "rules": "31d0964db06b8526",
     "reason": "not a Pete Sampras card"
   },
   "v1|127995486541|0": "reject",
@@ -21705,12 +21710,22 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|128128994343|0": {
+    "verdict": "reject",
+    "reason": "83/150 is neither the first nor the last of its run",
+    "judge": 3
+  },
   "v1|128129064642|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
   "v1|128129157920|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|128129522281|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -22803,6 +22818,11 @@
   "v1|136927302558|0": "reject",
   "v1|136966989090|0": "reject",
   "v1|136967004914|0": "reject",
+  "v1|136968009828|0": {
+    "verdict": "reject",
+    "reason": "3/50 is neither the first nor the last of its run",
+    "judge": 3
+  },
   "v1|136977403365|0": "reject",
   "v1|136984333880|0": "reject",
   "v1|136986385443|0": "reject",
@@ -22870,7 +22890,7 @@
   },
   "v1|137033064567|435460251259": {
     "verdict": "filtered",
-    "rules": "a1a0629a4e057c53",
+    "rules": "dfb180748f182367",
     "reason": "not a Qinwen Zheng card"
   },
   "v1|137033336989|435460850504": {
@@ -32785,22 +32805,22 @@
   },
   "v1|147617675683|445863450665": {
     "verdict": "filtered",
-    "rules": "e49d77fa8728ff90",
+    "rules": "2416fd05381e9525",
     "reason": "not a Mirra Andreeva card"
   },
   "v1|147617675683|445863450671": {
     "verdict": "filtered",
-    "rules": "035ae892cb7e73e3",
+    "rules": "f0e97e7e9bd625c7",
     "reason": "not a Coco Gauff card"
   },
   "v1|147617675683|445863450690": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|147617675683|445863450694": {
     "verdict": "filtered",
-    "rules": "15eed5bad7b581a5",
+    "rules": "fd7531dfcc351a73",
     "reason": "not a Iga Swiatek card"
   },
   "v1|147617675683|445863450696": {
@@ -32808,14 +32828,19 @@
     "rules": "968608f1d8501932",
     "reason": "not a Martina Hingis card"
   },
+  "v1|147617675683|445863450697": {
+    "verdict": "filtered",
+    "rules": "f01bff063c059ab4",
+    "reason": "not a Martina Hingis card"
+  },
   "v1|147617675683|445863450698": {
     "verdict": "filtered",
-    "rules": "138787a8ea7c6cc8",
+    "rules": "31d0964db06b8526",
     "reason": "not a Pete Sampras card"
   },
   "v1|147617675683|445863450699": {
     "verdict": "filtered",
-    "rules": "bbc7d89f9812dd19",
+    "rules": "b8cb70ae9a8c389a",
     "reason": "not a Rafael Nadal card"
   },
   "v1|147617675683|445863450701": {
@@ -32823,9 +32848,14 @@
     "rules": "b060c910d692b1ea",
     "reason": "not a Steffi Graf card"
   },
+  "v1|147617675683|445863450702": {
+    "verdict": "filtered",
+    "rules": "b007a2d0e0712bf8",
+    "reason": "not a Steffi Graf card"
+  },
   "v1|147617675683|445864455314": {
     "verdict": "filtered",
-    "rules": "5cd9ad6e05838abf",
+    "rules": "a2a72af1ecff9fa0",
     "reason": "not a Andre Agassi card"
   },
   "v1|147617675683|445864455324": {
@@ -32835,12 +32865,12 @@
   },
   "v1|147617675683|445864542474": {
     "verdict": "filtered",
-    "rules": "a1a0629a4e057c53",
+    "rules": "dfb180748f182367",
     "reason": "not a Qinwen Zheng card"
   },
   "v1|147617675683|445864542479": {
     "verdict": "filtered",
-    "rules": "f999b6987b60a533",
+    "rules": "71e135fca10d1226",
     "reason": "not a Alexander Zverev card"
   },
   "v1|147617733562|0": {
@@ -33600,42 +33630,42 @@
   },
   "v1|147624818392|445869189314": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|147624818392|445869189323": {
     "verdict": "filtered",
-    "rules": "bbc7d89f9812dd19",
+    "rules": "b8cb70ae9a8c389a",
     "reason": "not a Rafael Nadal card"
   },
   "v1|147624818392|445870428986": {
     "verdict": "filtered",
-    "rules": "f999b6987b60a533",
+    "rules": "71e135fca10d1226",
     "reason": "not a Alexander Zverev card"
   },
   "v1|147624818392|445870428996": {
     "verdict": "filtered",
-    "rules": "035ae892cb7e73e3",
+    "rules": "f0e97e7e9bd625c7",
     "reason": "not a Coco Gauff card"
   },
   "v1|147624818392|445871337001": {
     "verdict": "filtered",
-    "rules": "e49d77fa8728ff90",
+    "rules": "2416fd05381e9525",
     "reason": "not a Mirra Andreeva card"
   },
   "v1|147624818392|445871337019": {
     "verdict": "filtered",
-    "rules": "e7b224593a9d897b",
+    "rules": "14ea99948959cd07",
     "reason": "not a Maria Sharapova card"
   },
   "v1|147624818392|445871337027": {
     "verdict": "filtered",
-    "rules": "e49d77fa8728ff90",
+    "rules": "2416fd05381e9525",
     "reason": "not a Mirra Andreeva card"
   },
   "v1|147624818392|445871337032": {
     "verdict": "filtered",
-    "rules": "138787a8ea7c6cc8",
+    "rules": "31d0964db06b8526",
     "reason": "not a Pete Sampras card"
   },
   "v1|147625350700|0": {
@@ -35195,12 +35225,12 @@
   },
   "v1|157015831752|458512178689": {
     "verdict": "filtered",
-    "rules": "b060c910d692b1ea",
+    "rules": "b007a2d0e0712bf8",
     "reason": "not a Steffi Graf card"
   },
   "v1|157015831752|458512178694": {
     "verdict": "filtered",
-    "rules": "138787a8ea7c6cc8",
+    "rules": "31d0964db06b8526",
     "reason": "not a Pete Sampras card"
   },
   "v1|157015875951|0": "reject",
@@ -35635,7 +35665,7 @@
   },
   "v1|157662902743|459143955802": {
     "verdict": "filtered",
-    "rules": "a1a0629a4e057c53",
+    "rules": "dfb180748f182367",
     "reason": "not a Qinwen Zheng card"
   },
   "v1|157662956557|459142778407": {
@@ -35686,12 +35716,12 @@
   "v1|157664481276|0": "reject",
   "v1|157665224508|459144148480": {
     "verdict": "filtered",
-    "rules": "a1a0629a4e057c53",
+    "rules": "dfb180748f182367",
     "reason": "not a Qinwen Zheng card"
   },
   "v1|157665224508|459144148556": {
     "verdict": "filtered",
-    "rules": "e49d77fa8728ff90",
+    "rules": "2416fd05381e9525",
     "reason": "not a Mirra Andreeva card"
   },
   "v1|157665224508|459144148586": {
@@ -35701,22 +35731,22 @@
   },
   "v1|157665224603|459144148819": {
     "verdict": "filtered",
-    "rules": "5cd9ad6e05838abf",
+    "rules": "a2a72af1ecff9fa0",
     "reason": "not a Andre Agassi card"
   },
   "v1|157665224603|459144148820": {
     "verdict": "filtered",
-    "rules": "b060c910d692b1ea",
+    "rules": "b007a2d0e0712bf8",
     "reason": "not a Steffi Graf card"
   },
   "v1|157665224603|459144148823": {
-    "verdict": "filtered",
-    "rules": "a1a0629a4e057c53",
-    "reason": "not a Qinwen Zheng card"
+    "verdict": "reject",
+    "reason": "eBay no longer serves this listing",
+    "judge": 3
   },
   "v1|157665224603|459144148825": {
     "verdict": "filtered",
-    "rules": "f999b6987b60a533",
+    "rules": "71e135fca10d1226",
     "reason": "not a Alexander Zverev card"
   },
   "v1|157669625655|0": {
@@ -36148,7 +36178,7 @@
   "v1|157884068768|0": "reject",
   "v1|157885228579|459256177299": {
     "verdict": "filtered",
-    "rules": "035ae892cb7e73e3",
+    "rules": "f0e97e7e9bd625c7",
     "reason": "not a Coco Gauff card"
   },
   "v1|157886812799|0": "reject",
@@ -36193,12 +36223,12 @@
   },
   "v1|157936726860|459280880785": {
     "verdict": "filtered",
-    "rules": "035ae892cb7e73e3",
+    "rules": "f0e97e7e9bd625c7",
     "reason": "not a Coco Gauff card"
   },
   "v1|157936726860|459280880797": {
     "verdict": "filtered",
-    "rules": "138787a8ea7c6cc8",
+    "rules": "31d0964db06b8526",
     "reason": "not a Pete Sampras card"
   },
   "v1|157938292812|0": {
@@ -51371,6 +51401,11 @@
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 3
   },
+  "v1|168770201331|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|168770227715|0": {
     "verdict": "reject",
     "reason": "title says WWE, not tennis",
@@ -51911,6 +51946,11 @@
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 3
   },
+  "v1|168774269582|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|168774413397|0": {
     "verdict": "reject",
     "reason": "listing says Soccer, not tennis",
@@ -52289,6 +52329,11 @@
   "v1|168778634350|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|168778718855|0": {
+    "verdict": "reject",
+    "reason": "21/25 is neither the first nor the last of its run",
     "judge": 3
   },
   "v1|168779151424|0": {
@@ -52775,6 +52820,11 @@
   "v1|168783756351|0": {
     "verdict": "reject",
     "reason": "title says WWE, not tennis",
+    "judge": 3
+  },
+  "v1|168783821333|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 3
   },
   "v1|168783836027|0": {
@@ -54027,6 +54077,11 @@
     "reason": "title says WWE, not tennis",
     "judge": 3
   },
+  "v1|168784179185|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|168784200892|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -55034,17 +55089,17 @@
   },
   "v1|178096627411|477578645183": {
     "verdict": "filtered",
-    "rules": "035ae892cb7e73e3",
+    "rules": "f0e97e7e9bd625c7",
     "reason": "not a Coco Gauff card"
   },
   "v1|178096627411|477578645185": {
     "verdict": "filtered",
-    "rules": "b060c910d692b1ea",
+    "rules": "b007a2d0e0712bf8",
     "reason": "not a Steffi Graf card"
   },
   "v1|178096627411|477578645188": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|178099186240|0": {
@@ -62270,8 +62325,8 @@
   },
   "v1|184811998939|0": {
     "verdict": "filtered",
-    "rules": "56d6e2fbc987e652",
-    "reason": "1/2000: print run not under the ceiling of 500"
+    "rules": "6db5006dc3b5201e",
+    "reason": "1/2000: print run not under the ceiling of 50"
   },
   "v1|184828738470|0": {
     "verdict": "reject",
@@ -64466,6 +64521,7 @@
     "judge": 2
   },
   "v1|188709502046|0": "reject",
+  "v1|188709642875|0": "match",
   "v1|188712035346|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -70159,7 +70215,7 @@
   },
   "v1|189035536491|0": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|189035603296|0": {
@@ -77037,7 +77093,7 @@
   },
   "v1|198688836817|0": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|198688895186|0": {
@@ -83094,6 +83150,11 @@
     "reason": "listing says Soccer, not tennis",
     "judge": 3
   },
+  "v1|206606124353|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|206606899158|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -83355,6 +83416,11 @@
     "judge": 3
   },
   "v1|206610610824|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|206610659598|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -83854,6 +83920,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|206612830501|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
   "v1|206613061303|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -83996,6 +84067,11 @@
     "judge": 3
   },
   "v1|206615545844|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|206615587350|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 3
@@ -84378,6 +84454,16 @@
     "judge": 3
   },
   "v1|206620332528|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|206620696817|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|206620712209|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -88585,6 +88671,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|227544939198|526727084644": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|227544939198|526727084646": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -90379,6 +90470,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|227553848561|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|227553872881|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -90583,6 +90679,11 @@
   "v1|227555397134|0": {
     "verdict": "reject",
     "reason": "6/10 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|227555604837|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 3
   },
   "v1|227555643905|0": {
@@ -90881,6 +90982,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|227558831521|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
   "v1|227558834132|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -90924,6 +91030,11 @@
   "v1|227558883291|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|227558901556|0": {
+    "verdict": "reject",
+    "reason": "8/25 is neither the first nor the last of its run",
     "judge": 3
   },
   "v1|227558926305|0": {
@@ -91322,6 +91433,26 @@
     "judge": 3
   },
   "v1|227563189572|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|227563253444|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|227563253618|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|227563253839|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|227563258835|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -115306,6 +115437,16 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|237086856587|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237086856620|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|237086868459|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -127758,6 +127899,11 @@
     "judge": 3
   },
   "v1|237094852164|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|237094852491|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -148722,6 +148868,16 @@
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 3
   },
+  "v1|237115242511|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|237115242874|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
   "v1|237115246747|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -152215,18 +152371,18 @@
   },
   "v1|256760138521|557210427857": {
     "verdict": "filtered",
-    "rules": "b060c910d692b1ea",
+    "rules": "b007a2d0e0712bf8",
     "reason": "not a Steffi Graf card"
   },
   "v1|256760138521|557210427862": {
     "verdict": "filtered",
-    "rules": "035ae892cb7e73e3",
+    "rules": "f0e97e7e9bd625c7",
     "reason": "not a Coco Gauff card"
   },
   "v1|256760138521|557217289237": {
-    "verdict": "filtered",
-    "rules": "5cd9ad6e05838abf",
-    "reason": "not a Andre Agassi card"
+    "verdict": "reject",
+    "reason": "eBay no longer serves this listing",
+    "judge": 3
   },
   "v1|256760167575|557210644181": {
     "verdict": "reject",
@@ -201141,6 +201297,11 @@
     "reason": "title says UFC, not tennis",
     "judge": 3
   },
+  "v1|257786784578|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|257786784694|0": {
     "verdict": "reject",
     "reason": "102/499 is neither the first nor the last of its run",
@@ -203019,6 +203180,11 @@
   "v1|257788159412|0": {
     "verdict": "reject",
     "reason": "75/250 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|257788169193|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 3
   },
   "v1|257788199177|0": {
@@ -205329,6 +205495,11 @@
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 3
   },
+  "v1|257791103887|0": {
+    "verdict": "reject",
+    "reason": "465/500 is neither the first nor the last of its run",
+    "judge": 3
+  },
   "v1|257791108080|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -206789,6 +206960,11 @@
   "v1|257793810354|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|257793852052|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
     "judge": 3
   },
   "v1|257793879951|0": {
@@ -211318,6 +211494,11 @@
     "reason": "listing says Soccer, not tennis",
     "judge": 3
   },
+  "v1|267808598935|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|267808676008|0": {
     "verdict": "reject",
     "reason": "4/10 is neither the first nor the last of its run",
@@ -211468,6 +211649,11 @@
   "v1|267811189466|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|267811199328|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 3
   },
   "v1|273146400080|0": {
@@ -220455,6 +220641,11 @@
     "judge": 2
   },
   "v1|287458935560|0": "reject",
+  "v1|287460871778|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|287461052445|0": {
     "verdict": "filtered",
     "rules": "8d55f3c3e1871d63",
@@ -220747,7 +220938,7 @@
   },
   "v1|287515644025|589420471007": {
     "verdict": "filtered",
-    "rules": "e49d77fa8728ff90",
+    "rules": "2416fd05381e9525",
     "reason": "not a Mirra Andreeva card"
   },
   "v1|287516087899|0": {
@@ -226204,6 +226395,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|287642450050|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|287642455563|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -227383,7 +227579,7 @@
   },
   "v1|298238663409|0": {
     "verdict": "filtered",
-    "rules": "e49d77fa8728ff90",
+    "rules": "2416fd05381e9525",
     "reason": "not a Mirra Andreeva card"
   },
   "v1|298238663543|0": {
@@ -228338,12 +228534,12 @@
   "v1|298602958892|0": "reject",
   "v1|298603039541|595390431206": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|298603091550|595390509344": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|298603219454|595390472556": {
@@ -228353,7 +228549,7 @@
   },
   "v1|298603323957|595390515067": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|298604336956|0": "reject",
@@ -228402,7 +228598,7 @@
   },
   "v1|298606319809|595392396246": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|298607085740|0": {
@@ -228445,7 +228641,7 @@
   },
   "v1|298611494139|595395441426": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|298612130358|0": "reject",
@@ -228465,28 +228661,28 @@
   },
   "v1|298614137403|595396678871": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|298614151156|595396675012": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|298614184122|595396714790": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|298615888594|0": "reject",
   "v1|298617255623|595397536259": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|298617414962|595397767362": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|298618939149|0": {
@@ -228526,7 +228722,7 @@
   },
   "v1|298622862810|595399737360": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|298627412027|0": {
@@ -235388,6 +235584,11 @@
     "judge": 3
   },
   "v1|298741609586|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|298741639392|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -244271,6 +244472,11 @@
     "reason": "962/999 is neither the first nor the last of its run",
     "judge": 3
   },
+  "v1|307217788874|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|307217903901|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -245162,6 +245368,11 @@
   "v1|307226180229|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|307226716317|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
     "judge": 3
   },
   "v1|313200685949|0": {
@@ -246719,6 +246930,11 @@
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 2
+  },
+  "v1|318492506111|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
   },
   "v1|318494023988|0": "reject",
   "v1|318509644958|0": {
@@ -258516,6 +258732,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|327395334739|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|327395411457|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -258629,6 +258850,11 @@
   "v1|327396944248|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|327397014851|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 3
   },
   "v1|327397071301|0": {
@@ -264067,8 +264293,8 @@
   "v1|336780241535|0": "reject",
   "v1|336780257701|0": {
     "verdict": "filtered",
-    "rules": "f561749498f741cf",
-    "reason": "1/1254: print run not under the ceiling of 500"
+    "rules": "2bdf91c91e4a907c",
+    "reason": "1/1254: print run not under the ceiling of 50"
   },
   "v1|336780301984|0": {
     "verdict": "reject",
@@ -278606,8 +278832,8 @@
   },
   "v1|336808941641|0": {
     "verdict": "filtered",
-    "rules": "f561749498f741cf",
-    "reason": "1/1256: print run not under the ceiling of 500"
+    "rules": "2bdf91c91e4a907c",
+    "reason": "1/1256: print run not under the ceiling of 50"
   },
   "v1|336808943748|0": {
     "verdict": "reject",
@@ -311466,6 +311692,16 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|336840565181|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|336840589387|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|353269329544|0": "reject",
   "v1|353479769182|0": {
     "verdict": "reject",
@@ -313546,6 +313782,11 @@
     "judge": 2
   },
   "v1|365835560073|0": "reject",
+  "v1|365836154777|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|365845009545|0": "reject",
   "v1|365849965052|0": {
     "verdict": "reject",
@@ -314239,7 +314480,7 @@
   },
   "v1|366565528934|0": {
     "verdict": "filtered",
-    "rules": "138787a8ea7c6cc8",
+    "rules": "31d0964db06b8526",
     "reason": "not a Pete Sampras card"
   },
   "v1|366565861528|0": {
@@ -319643,6 +319884,11 @@
     "reason": "listing says Soccer, not tennis",
     "judge": 3
   },
+  "v1|366723315493|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|366723644457|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -319906,6 +320152,11 @@
   "v1|366725029786|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|366725088209|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
     "judge": 3
   },
   "v1|366725128113|0": {
@@ -320418,6 +320669,16 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|366728111345|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|366728121279|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|372208715535|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -320795,6 +321056,11 @@
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 2
+  },
+  "v1|376240146348|644946325817": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
   },
   "v1|376240146348|644946325827": {
     "verdict": "reject",
@@ -329740,8 +330006,8 @@
   },
   "v1|377539113977|0": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
-    "reason": "1/2000: print run not under the ceiling of 500"
+    "rules": "5f2d12e27d13c215",
+    "reason": "1/2000: print run not under the ceiling of 50"
   },
   "v1|377539277992|0": {
     "verdict": "reject",
@@ -331340,6 +331606,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|377550790604|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|377551079226|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -332132,7 +332403,7 @@
   },
   "v1|377555254462|0": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|377555257757|0": {
@@ -333160,6 +333431,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|377558051479|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
   "v1|377558056808|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -333723,8 +333999,8 @@
   },
   "v1|377560547005|0": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
-    "reason": "1/2000: print run not under the ceiling of 500"
+    "rules": "5f2d12e27d13c215",
+    "reason": "1/2000: print run not under the ceiling of 50"
   },
   "v1|377560547037|0": {
     "verdict": "reject",
@@ -333743,8 +334019,8 @@
   },
   "v1|377560548793|0": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
-    "reason": "1/2000: print run not under the ceiling of 500"
+    "rules": "5f2d12e27d13c215",
+    "reason": "1/2000: print run not under the ceiling of 50"
   },
   "v1|377560549290|0": {
     "verdict": "reject",
@@ -334869,7 +335145,7 @@
   },
   "v1|389006116173|656230400639": {
     "verdict": "filtered",
-    "rules": "e49d77fa8728ff90",
+    "rules": "2416fd05381e9525",
     "reason": "not a Mirra Andreeva card"
   },
   "v1|389006116173|656230400679": {
@@ -334879,42 +335155,42 @@
   },
   "v1|389006116173|656230400689": {
     "verdict": "filtered",
-    "rules": "f999b6987b60a533",
+    "rules": "71e135fca10d1226",
     "reason": "not a Alexander Zverev card"
   },
   "v1|389006116173|656230400734": {
     "verdict": "filtered",
-    "rules": "a1a0629a4e057c53",
+    "rules": "dfb180748f182367",
     "reason": "not a Qinwen Zheng card"
   },
   "v1|389006116173|656230400767": {
     "verdict": "filtered",
-    "rules": "968608f1d8501932",
+    "rules": "f01bff063c059ab4",
     "reason": "not a Martina Hingis card"
   },
   "v1|389006116173|656230400768": {
     "verdict": "filtered",
-    "rules": "e7b224593a9d897b",
+    "rules": "14ea99948959cd07",
     "reason": "not a Maria Sharapova card"
   },
   "v1|389006116173|656230400783": {
     "verdict": "filtered",
-    "rules": "5cd9ad6e05838abf",
+    "rules": "a2a72af1ecff9fa0",
     "reason": "not a Andre Agassi card"
   },
   "v1|389006116173|656230400786": {
     "verdict": "filtered",
-    "rules": "b060c910d692b1ea",
+    "rules": "b007a2d0e0712bf8",
     "reason": "not a Steffi Graf card"
   },
   "v1|389006116173|656230400792": {
     "verdict": "filtered",
-    "rules": "035ae892cb7e73e3",
+    "rules": "f0e97e7e9bd625c7",
     "reason": "not a Coco Gauff card"
   },
   "v1|389006116173|656230400795": {
     "verdict": "filtered",
-    "rules": "138787a8ea7c6cc8",
+    "rules": "31d0964db06b8526",
     "reason": "not a Pete Sampras card"
   },
   "v1|389006170154|656230493226": {
@@ -334924,22 +335200,22 @@
   },
   "v1|389006170154|656230493296": {
     "verdict": "filtered",
-    "rules": "968608f1d8501932",
+    "rules": "f01bff063c059ab4",
     "reason": "not a Martina Hingis card"
   },
   "v1|389006170154|656230493307": {
     "verdict": "filtered",
-    "rules": "b060c910d692b1ea",
+    "rules": "b007a2d0e0712bf8",
     "reason": "not a Steffi Graf card"
   },
   "v1|389006170154|656404597402": {
     "verdict": "filtered",
-    "rules": "5cd9ad6e05838abf",
+    "rules": "a2a72af1ecff9fa0",
     "reason": "not a Andre Agassi card"
   },
   "v1|389006170154|656404597403": {
     "verdict": "filtered",
-    "rules": "138787a8ea7c6cc8",
+    "rules": "31d0964db06b8526",
     "reason": "not a Pete Sampras card"
   },
   "v1|389006366980|656231047353": {
@@ -334949,7 +335225,7 @@
   },
   "v1|389006366980|656231047395": {
     "verdict": "filtered",
-    "rules": "5cd9ad6e05838abf",
+    "rules": "a2a72af1ecff9fa0",
     "reason": "not a Andre Agassi card"
   },
   "v1|389031300166|0": {
@@ -337188,8 +337464,8 @@
   },
   "v1|398098901892|0": {
     "verdict": "filtered",
-    "rules": "f561749498f741cf",
-    "reason": "1/6784: print run not under the ceiling of 500"
+    "rules": "2bdf91c91e4a907c",
+    "reason": "1/6784: print run not under the ceiling of 50"
   },
   "v1|398099018046|0": {
     "verdict": "reject",
@@ -342463,6 +342739,11 @@
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 2
+  },
+  "v1|406907501278|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
   },
   "v1|406911216739|0": {
     "verdict": "reject",
@@ -350300,6 +350581,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|407278939767|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|407278939771|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -350379,6 +350665,11 @@
   "v1|407279370245|0": {
     "verdict": "reject",
     "reason": "44/75 is neither the first nor the last of its run",
+    "judge": 3
+  },
+  "v1|407279389268|0": {
+    "verdict": "reject",
+    "reason": "82/125 is neither the first nor the last of its run",
     "judge": 3
   },
   "v1|407279464657|0": {
@@ -357263,6 +357554,11 @@
     "reason": "title says UFC, not tennis",
     "judge": 3
   },
+  "v1|800774052095|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
   "v1|800775465593|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -359114,6 +359410,11 @@
     "reason": "title carries no sign of a serial number",
     "judge": 3
   },
+  "v1|800780664916|0": {
+    "verdict": "reject",
+    "reason": "blocked set: Netpro base",
+    "judge": 3
+  },
   "v1|800780667030|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -359260,6 +359561,11 @@
     "judge": 3
   },
   "v1|800783439500|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|800783440768|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
     "judge": 3
@@ -363210,7 +363516,7 @@
   },
   "v1|820199992049|0": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|820200048293|0": {
@@ -364514,6 +364820,11 @@
     "reason": "128/199 is neither the first nor the last of its run",
     "judge": 3
   },
+  "v1|820217381464|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
   "v1|820217385277|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
@@ -365102,6 +365413,11 @@
     "reason": "title says WWE, not tennis",
     "judge": 3
   },
+  "v1|840004146857|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|840004170755|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -365277,6 +365593,11 @@
     "reason": "title says UFC, not tennis",
     "judge": 3
   },
+  "v1|840010477102|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
   "v1|840010538862|0": {
     "verdict": "reject",
     "reason": "2/5 is neither the first nor the last of its run",
@@ -365308,6 +365629,11 @@
     "judge": 3
   },
   "v1|840011926541|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|840012134960|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
     "judge": 3
@@ -368530,6 +368856,11 @@
   "v1|860021244931|0": {
     "verdict": "reject",
     "reason": "listing says Soccer, not tennis",
+    "judge": 3
+  },
+  "v1|860021367406|0": {
+    "verdict": "reject",
+    "reason": "no serial number (N/M) in the title or specifics",
     "judge": 3
   },
   "v1|860021657236|0": {
@@ -373006,6 +373337,11 @@
     "reason": "title says UFC, not tennis",
     "judge": 3
   },
+  "v1|920024635315|0": {
+    "verdict": "reject",
+    "reason": "set/title doesn't confirm ['topps chrome', 'graphite', 'royalty', 'topps now']",
+    "judge": 3
+  },
   "v1|920024779550|0": {
     "verdict": "reject",
     "reason": "title carries no sign of a serial number",
@@ -373540,6 +373876,31 @@
   "v1|920031072575|0": {
     "verdict": "reject",
     "reason": "no serial number (N/M) in the title or specifics",
+    "judge": 3
+  },
+  "v1|920031250606|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|920031354908|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|920031354950|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|920031417829|0": {
+    "verdict": "reject",
+    "reason": "title carries no sign of a serial number",
+    "judge": 3
+  },
+  "v1|920031472291|0": {
+    "verdict": "reject",
+    "reason": "14/199 is neither the first nor the last of its run",
     "judge": 3
   },
   "v1|940000488362|0": {
@@ -376314,7 +376675,7 @@
   },
   "v1|960033409638|0": {
     "verdict": "filtered",
-    "rules": "d1052a1361b487f7",
+    "rules": "5f2d12e27d13c215",
     "reason": "not a Carlos Alcaraz card"
   },
   "v1|960033490677|0": {
