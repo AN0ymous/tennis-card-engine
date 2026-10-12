@@ -40,6 +40,8 @@
     <a class="saved-link" id="saved-link" href="#saved" aria-label="Saved cards">
       <span class="star-glyph" aria-hidden="true">&#9733;</span><span id="saved-count">0</span>
     </a>
+    <button type="button" class="bar-link account-link" id="account-btn"
+            title="Sign in or create an account">Sign in</button>
     <span class="pill" id="status-pill">Checking engine…</span>
   </div>
 </header>
@@ -591,6 +593,9 @@ Arguments: tennis_card_engine.py</pre>
         server; on the scheduled run they are GitHub secrets, used only by the scan itself.
       </p>
       <p>Listing data and prices come from eBay and are shown as returned. Always confirm the card on the listing page before buying.</p>
+      <p id="privacy">An account keeps your email address and the cards and searches you save, and nothing else.
+        They are used only to run your account and to send the emails you turn on. Delete the account
+        from the account panel at any time and everything saved on it goes with it.</p>
     </div>
   </footer>
 
@@ -730,6 +735,64 @@ Arguments: tennis_card_engine.py</pre>
   </div>
 </div>
 
+<div class="account-overlay" id="account" hidden role="dialog" aria-modal="true" aria-labelledby="acct-title">
+  <div class="account-card">
+    <button type="button" class="holo-close account-close" id="acct-close" aria-label="Close">&#10005;</button>
+    <p class="eyebrow">Your account</p>
+    <h2 class="account-title" id="acct-title">Tennis Card Engine</h2>
+    <p class="account-msg" id="acct-msg" hidden></p>
+
+    <form class="account-form" id="acct-signin" autocomplete="on">
+      <label>Email <input type="email" name="email" autocomplete="email" required></label>
+      <label>Password <input type="password" name="password" autocomplete="current-password" required></label>
+      <button type="submit" class="btn">Sign in</button>
+      <p class="hint"><a href="#" data-acct-go="forgot">Forgot your password?</a> &middot;
+        New here? <a href="#" data-acct-go="signup">Create an account</a></p>
+    </form>
+
+    <form class="account-form" id="acct-signup" autocomplete="on" hidden>
+      <label>Email <input type="email" name="email" autocomplete="email" required></label>
+      <label>Password <input type="password" name="password" autocomplete="new-password" minlength="8" required></label>
+      <label>Password again <input type="password" name="again" autocomplete="new-password" minlength="8" required></label>
+      <button type="submit" class="btn">Create account</button>
+      <p class="hint">A password for this site only, at least 8 characters. Your saved cards move to the
+        account and follow you to any device. <a href="#privacy">What we keep</a>.</p>
+      <p class="hint">Already have one? <a href="#" data-acct-go="signin">Sign in</a></p>
+    </form>
+
+    <form class="account-form" id="acct-forgot" hidden>
+      <label>Email <input type="email" name="email" autocomplete="email" required></label>
+      <button type="submit" class="btn">Send me a code</button>
+      <p class="hint">A six-digit code goes to that address. Enter it on the next screen with your new password.
+        <a href="#" data-acct-go="signin">Back</a></p>
+    </form>
+
+    <form class="account-form" id="acct-code" hidden>
+      <label>Email <input type="email" name="email" autocomplete="email" required></label>
+      <label>Code from the email <input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" required></label>
+      <label>New password <input type="password" name="password" autocomplete="new-password" minlength="8" required></label>
+      <button type="submit" class="btn">Set new password</button>
+      <p class="hint">No code? <a href="#" data-acct-go="forgot">Send another</a></p>
+    </form>
+
+    <form class="account-form" id="acct-newpass" hidden>
+      <p class="hint">You followed a reset link. Choose a new password.</p>
+      <label>New password <input type="password" name="password" autocomplete="new-password" minlength="8" required></label>
+      <button type="submit" class="btn">Set new password</button>
+    </form>
+
+    <div class="account-form" id="acct-me" hidden>
+      <p class="account-who" id="acct-who"></p>
+      <p class="hint">Your starred cards are kept on this account and shown on any device you sign in to.</p>
+      <div class="btn-row">
+        <button type="button" class="btn btn-ghost" id="acct-signout">Sign out</button>
+      </div>
+      <p class="hint"><a href="#" id="acct-delete" class="danger">Delete my account</a></p>
+    </div>
+  </div>
+</div>
+
+<script src="assets/account.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>

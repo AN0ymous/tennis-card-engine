@@ -627,6 +627,64 @@ on a website.
    `test_engine.py` pin it. No new section or page, so the contents panel
    is unchanged.
 
+## Accounts (stage 1, 12 Oct)
+
+- **Supabase holds the accounts; the page talks to it with plain fetch.**
+  `web/assets/account.js` is a self-contained client against Supabase's
+  documented auth and REST endpoints (`/auth/v1/signup`, `token`, `recover`,
+  `verify`, `user`, `logout`; `/rest/v1/saved_listings`; `rpc/delete_me`), so
+  the page loads nothing from a third-party script host and works the same
+  hosted or on the PC. The project URL and the **anon** key sit in the file:
+  that key is designed to be public, and every table is guarded by row-level
+  security (`supabase/schema.sql`, run once in the dashboard's SQL Editor),
+  so it reads and writes only the rows of whoever is signed in. The
+  **service_role key never appears in any file**; it is a GitHub secret
+  (`SUPABASE_SERVICE_KEY`) for the later email stages, and
+  `AccountsLiveOnSupabase` decodes the embedded key and fails if its role is
+  not `anon` or the key belongs to another project.
+- **Nothing is required.** A visitor who never signs in uses the site as
+  before, stars kept in this browser alone. `app.js` reaches the account
+  only through `window.Account`, guarded with `if (window.Account)`, so a
+  page without `account.js` still runs. **A `const` at the top of a classic
+  script is not a window property**: the first build wired nothing at all,
+  found by driving the page in Chromium, never by reading it. `window.Account
+  = Account;` is explicit and tested.
+- **Saved cards live on the account once there is one.** `saved_listings`
+  holds `entry` as exactly what the browser kept (card, `savedAt`, the
+  owner's sold/active mark), so the saved page draws it unchanged on any
+  device. On sign-in the account's rows are pulled and the browser's stars
+  merged in (local ones not on the account are pushed); every star and mark
+  after that goes to both (`Account.savedChanged`, fire and forget, a
+  failure shown in the panel). **Signing out empties this browser's stars**,
+  since they were the account's. Delete account is `delete_me()`, a
+  security-definer function that deletes `auth.uid()` and nobody else, with
+  the cascades taking the rows.
+- **Forgot password is a code, with the link form also taken.** `recover`
+  sends the email; `verify` with `type: "recovery"` and the code gives a
+  session; `PUT /auth/v1/user` sets the password. Supabase's default reset
+  email carries a link, not a code: the template must include `{{ .Token }}`
+  (Authentication -> Email Templates -> Reset Password). The link form lands
+  back on the site with the session in the hash, which `account.js` takes
+  **before** `app.js` routes on the hash (it is loaded first, and the test
+  pins the order), cleans the URL and opens the new-password screen.
+- **Supabase's built-in mailer is for testing only** (a few emails an hour).
+  Before strangers sign up, custom SMTP (Resend or Brevo) goes in under
+  Authentication -> SMTP Settings, or reset codes and confirmations will
+  stall. "Confirm email" is off for stage 1 so a new account can sign in at
+  once; the page handles both answers (`signUp` returns "confirm" when the
+  project asks for it).
+- **The sandbox cannot reach supabase.co**, so the flows are driven against
+  a stand-in server that answers as the real endpoints are documented
+  (`drive.py`/`stub.py`, kept outside the repo): sign up, short and
+  mismatched passwords, wrong password, star and unstar reaching the
+  account, reload, a second device, sign out, the code flow with a wrong
+  then right code, the link flow, and delete -- 30 checks. The first real
+  account on the live site is the owner's test.
+- **Privacy:** an account keeps the email address and what the person saves,
+  nothing else; `#privacy` in the footer says so and the sign-up form links
+  to it. Stages 2-4 (saved searches, match emails, the daily board email)
+  use `saved_searches` and `profiles`, created by the same SQL.
+
 ## Why a scan usually adds nothing, and why that is right
 
 `seen_items.json` held 5,635 judged listings on 17 Sep -- 5,577 permanent

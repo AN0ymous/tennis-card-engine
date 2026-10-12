@@ -776,6 +776,7 @@ function toggleSaved(card) {
   renderMatches();
   renderSaved();
   syncHoloStar();
+  if (window.Account) Account.savedChanged(key, state.saved[key] || null);   // kept on the account too
   if (state.saved[key] && !HOSTED) refreshStatuses([key]);
 }
 
@@ -1025,6 +1026,7 @@ function renderSaved() {
       const entry = state.saved[savedKey(card)];
       entry.manual = st.status === "sold" ? (st.manual ? null : "active") : "sold";
       persistSaved(); renderSaved();
+      if (window.Account) Account.savedChanged(savedKey(card), entry);
     });
     const remove = el("button", "linkbtn", "Remove");
     remove.type = "button";
@@ -1117,6 +1119,22 @@ function initSaved() {
   const route = () => showView(location.hash);
   window.addEventListener("hashchange", route);
   route();
+  /* The account, when there is one, holds the stars: account.js restores
+     the session and hands back the merged map, and from then on every star
+     and mark goes to it as well as to this browser. */
+  if (window.Account) {
+    Account.init({
+      get: () => state.saved,
+      set: (map) => {
+        state.saved = map || {};
+        persistSaved();
+        renderBoard();
+        renderMatches();
+        renderSaved();
+        syncHoloStar();
+      },
+    });
+  }
 }
 
 /* ------------------------------------------------------------ price range */

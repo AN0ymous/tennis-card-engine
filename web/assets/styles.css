@@ -1427,3 +1427,43 @@ footer.site .inline-code { background: rgba(255, 255, 255, .1); border-color: rg
 .is-hosted .contents-list li[data-local-only] { display: none; }
 .is-hosted label[for="write-outputs"], .is-hosted label[for="portraits"],
 .is-hosted label[for="write-outputs"] + .hint, .is-hosted label[for="portraits"] + .hint { display: none; }
+
+/* ---------- the account panel ----------
+   Sign in, sign up, the reset code, the signed-in view. One overlay, one
+   card, the forms shown one at a time (account.js). */
+.account-link { background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px;
+  cursor: pointer; font: inherit; font-size: 12.5px; color: var(--ink-2); max-width: 180px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-link:hover { border-color: var(--gold-lit); color: var(--ink); }
+.account-link.is-in { border-color: var(--gold-lit); color: var(--ink); }
+.account-overlay {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: color-mix(in srgb, var(--ground) 55%, transparent);
+  backdrop-filter: blur(8px);
+}
+.account-overlay[hidden] { display: none; }
+body.account-open { overflow: hidden; }
+.account-card {
+  position: relative; width: min(420px, 100%); max-height: calc(100vh - 32px); overflow: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--lift-2); padding: 26px 24px 22px;
+}
+.account-close { position: absolute; top: 12px; right: 12px; }
+.account-title { font-family: var(--display); font-size: 24px; margin: 4px 0 14px; }
+.account-msg { margin: 0 0 14px; padding: 10px 12px; border-radius: 3px; font-size: 13px; line-height: 1.5;
+  background: color-mix(in srgb, var(--warn) 12%, var(--surface)); color: var(--ink); border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line)); }
+.account-msg.is-ok { background: color-mix(in srgb, var(--good) 12%, var(--surface)); border-color: color-mix(in srgb, var(--good) 40%, var(--line)); }
+.account-msg[hidden] { display: none; }
+.account-form { display: flex; flex-direction: column; gap: 12px; }
+.account-form[hidden] { display: none; }
+.account-form label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted);
+  letter-spacing: .04em; text-transform: uppercase; }
+.account-form input {
+  font: inherit; font-size: 15px; color: var(--ink); background: var(--surface-2);
+  border: 1px solid var(--line); border-radius: 3px; padding: 10px 12px; min-width: 0;
+}
+.account-form input:focus { outline: 2px solid var(--gold-lit); outline-offset: 1px; border-color: var(--gold-lit); }
+.account-form .btn { margin-top: 4px; }
+.account-form .hint a { color: var(--ink); }
+.account-form .hint a.danger { color: #B4341F; }
+.account-who { font-family: var(--mono); font-size: 14px; margin: 0; word-break: break-all; }
