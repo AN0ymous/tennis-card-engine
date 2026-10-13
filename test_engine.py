@@ -1943,11 +1943,34 @@ class AccountsLiveOnSupabase(unittest.TestCase):
 
     def test_the_forgotten_password_goes_through_a_code(self):
         js = self.read("web", "assets", "account.js")
-        self.assertIn('"/auth/v1/recover"', js)
+        self.assertIn('"/auth/v1/recover" + backHere()', js)
         verify = js.split('"/auth/v1/verify"')[1].split("\n")[0] + js.split('"/auth/v1/verify"')[1].split("\n")[1]
         self.assertIn('type: "recovery"', verify)
         self.assertIn('"/auth/v1/user", { method: "PUT"', js)
         self.assertIn("type=recovery", js, "the link form of reset is also taken")
+
+    def test_an_email_link_comes_back_to_this_copy_of_the_site(self):
+        """Supabase builds its email links from the project's Site URL, which
+        is http://localhost:3000 on every new project -- the first
+        confirmation link went there and Safari on an iPad could not open
+        it. Sign-up and recover now say where to come back to: this page's
+        own address, hosted or on the PC, with no hash. A confirmation link
+        then lands with its session in the hash exactly as a reset link
+        does, and is taken the same way, signed in rather than sent to the
+        new-password screen."""
+        js = self.read("web", "assets", "account.js")
+        self.assertIn('"/auth/v1/signup" + backHere()', js)
+        self.assertIn('"/auth/v1/recover" + backHere()', js)
+        self.assertIn('"?redirect_to=" + encodeURIComponent(siteAddress())', js)
+        site = js.split("function siteAddress()")[1].split("\n  }")[0]
+        self.assertIn("location.origin + location.pathname", site)
+        self.assertNotIn("hash", site, "a hash in the return address would be routed as a page")
+        take = js.split("function takeSessionFromHash()")[1].split("\n  }")[0]
+        self.assertIn('type !== "recovery" && type !== "signup"', take)
+        init = js.split("async function init(")[1].split("\n  }")[0]
+        self.assertIn('fromLink === "recovery") open("newpass")', init)
+        self.assertIn('fromLink === "signup"', init)
+        self.assertNotIn("takeRecoveryFromHash", js)
 
     def test_the_account_object_is_on_window(self):
         """A const in a classic script is not a window property; app.js tests

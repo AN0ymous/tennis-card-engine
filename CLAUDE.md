@@ -667,6 +667,19 @@ on a website.
   back on the site with the session in the hash, which `account.js` takes
   **before** `app.js` routes on the hash (it is loaded first, and the test
   pins the order), cleans the URL and opens the new-password screen.
+- **An email link comes back to the copy of the site that asked** (13 Oct).
+  Supabase builds its confirmation and reset links from the project's Site
+  URL, which is `http://localhost:3000` on every new project: the owner's
+  first confirmation link went there and Safari on an iPad could not open
+  it. `signUp` and `sendCode` now append `?redirect_to=` with
+  `siteAddress()` (origin plus pathname, never the hash), so the link lands
+  on the hosted page or the PC's, whichever sent it. **The address must
+  also be on the project's Redirect URLs list** (Authentication -> URL
+  Configuration) or Supabase ignores it and falls back to the Site URL. A
+  confirmation link lands with its session in the hash like a reset link
+  does, with `type=signup`; `takeSessionFromHash` takes both and says which,
+  so a reset goes on to the new-password screen and a confirmation is
+  signed in with a note. Driven in Chromium against the stand-in: 45 checks.
 - **Supabase's built-in mailer is for testing only** (a few emails an hour).
   Before strangers sign up, custom SMTP (Resend or Brevo) goes in under
   Authentication -> SMTP Settings, or reset codes and confirmations will

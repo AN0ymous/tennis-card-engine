@@ -89,9 +89,19 @@ const Account = (() => {
 
   const user = () => (session ? session.user : null);
 
+  /* Where an email link should bring the person back: this copy of the
+     site, hosted or on the PC, with no hash or query. Supabase otherwise
+     uses its Site URL setting, which is http://localhost:3000 on every new
+     project -- the first confirmation link went exactly there. The address
+     must also be on the project's redirect list, or Supabase ignores it. */
+  function siteAddress() {
+    return location.origin + location.pathname;
+  }
+  const backHere = () => "?redirect_to=" + encodeURIComponent(siteAddress());
+
   /* ---- sign up, sign in, out ---- */
   async function signUp(email, password) {
-    const data = await call("/auth/v1/signup", { method: "POST", body: { email, password } });
+    const data = await call("/auth/v1/signup" + backHere(), { method: "POST", body: { email, password } });
     if (data && data.access_token) { keep(data); return "signed-in"; }
     return "confirm";                           // the project asks new accounts to confirm by email
   }
@@ -110,7 +120,7 @@ const Account = (() => {
 
   /* ---- forgot password: a code to the email, then a new password ---- */
   async function sendCode(email) {
-    await call("/auth/v1/recover", { method: "POST", body: { email } });
+    await call("/auth/v1/recover" + backHere(), { method: "POST", body: { email } });
     pendingEmail = email;
   }
 
@@ -122,16 +132,20 @@ const Account = (() => {
     keep(data);
   }
 
-  /* A reset link (the other form Supabase can send) lands back here with the
-     session in the hash. Take it before app.js reads the hash for routing. */
-  function takeRecoveryFromHash() {
+  /* An email link lands back here with the session in the hash: a reset
+     link carries type=recovery, a confirmation link type=signup. Take either
+     before app.js reads the hash for routing, and say which it was: a reset
+     goes on to the new-password screen, a confirmation is simply signed in. */
+  function takeSessionFromHash() {
     const h = location.hash || "";
-    if (!h.includes("access_token=") || !h.includes("type=recovery")) return false;
+    if (!h.includes("access_token=")) return "";
     const p = new URLSearchParams(h.slice(1));
+    const type = p.get("type") || "";
+    if (type !== "recovery" && type !== "signup") return "";
     keep({ access_token: p.get("access_token"), refresh_token: p.get("refresh_token") || "",
            expires_in: Number(p.get("expires_in") || 3600), user: {} });
     history.replaceState("", document.title, location.pathname + location.search);
-    return true;
+    return type;
   }
 
   async function setPassword(password) {
@@ -389,7 +403,7 @@ const Account = (() => {
     saved = savedHooks;
     filters = savedHooks.filters || null;
     wire();
-    const fromLink = takeRecoveryFromHash();
+    const fromLink = takeSessionFromHash();
     if (!fromLink) await restore();
     if (fromLink && session) {
       // the link carries the session but not who it belongs to; ask
@@ -401,7 +415,8 @@ const Account = (() => {
     if (session) {
       try { await pullAll(); } catch (e) { note(`Could not read your saved cards: ${e.message}`); }
     }
-    if (fromLink) open("newpass");
+    if (fromLink === "recovery") open("newpass");
+    else if (fromLink === "signup") { open("me"); note("Your email is confirmed and you are signed in.", true); }
   }
 
   return { init, user, open, close, savedChanged, saveSearch, signIn, signUp, signOut, sendCode, resetWithCode,
