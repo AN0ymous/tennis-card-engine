@@ -372,7 +372,7 @@ const Account = (() => {
       await sendCode(f.email);
       $a("acct-code").querySelector("input[name=email]").value = f.email;
       show("code");
-      note(`A code is on its way to ${f.email}. It is good for an hour.`, true);
+      note(`A reset email is on its way to ${f.email}. Open its link, or enter its code here. It is good for an hour.`, true);
     }); });
 
     $a("acct-code").addEventListener("submit", (e) => { e.preventDefault(); run(e.target, async (f) => {

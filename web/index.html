@@ -764,8 +764,9 @@ Arguments: tennis_card_engine.py</pre>
 
     <form class="account-form" id="acct-forgot" hidden>
       <label>Email <input type="email" name="email" autocomplete="email" required></label>
-      <button type="submit" class="btn">Send me a code</button>
-      <p class="hint">A six-digit code goes to that address. Enter it on the next screen with your new password.
+      <button type="submit" class="btn">Send me a reset email</button>
+      <p class="hint">A reset email goes to that address. Open its link to choose a new password here, or if the
+        email carries a six-digit code, enter it on the next screen.
         <a href="#" data-acct-go="signin">Back</a></p>
     </form>
 
@@ -774,7 +775,8 @@ Arguments: tennis_card_engine.py</pre>
       <label>Code from the email <input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" required></label>
       <label>New password <input type="password" name="password" autocomplete="new-password" minlength="8" required></label>
       <button type="submit" class="btn">Set new password</button>
-      <p class="hint">No code? <a href="#" data-acct-go="forgot">Send another</a></p>
+      <p class="hint">The email has a link instead of a code? Open the link; it brings you back here signed in.
+        No email? <a href="#" data-acct-go="forgot">Send another</a></p>
     </form>
 
     <form class="account-form" id="acct-newpass" hidden>

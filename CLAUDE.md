@@ -663,7 +663,10 @@ on a website.
   sends the email; `verify` with `type: "recovery"` and the code gives a
   session; `PUT /auth/v1/user` sets the password. Supabase's default reset
   email carries a link, not a code: the template must include `{{ .Token }}`
-  (Authentication -> Email Templates -> Reset Password). The link form lands
+  (Authentication -> Emails -> Reset password). **Since 13 Oct the dashboard
+  lets a template be edited only once custom SMTP is set**, so until Resend
+  goes in the reset email is the default link, and the forgot-password
+  screens say "link or code" rather than promising a code. The link form lands
   back on the site with the session in the hash, which `account.js` takes
   **before** `app.js` routes on the hash (it is loaded first, and the test
   pins the order), cleans the URL and opens the new-password screen.
