@@ -742,6 +742,74 @@ function wireScanSetup() {
   $("max-print-run").addEventListener("input", scanSetupChanged);
 }
 
+/* ------------------------------------------------------------ saved searches */
+/* A saved search is the whole filter setup as it stands -- the search box,
+   price, listing type, the segments, players, sets and the ceiling -- named
+   by the person and kept on their account (account.js). Applying one puts
+   every control back through its own setter, so the page reacts exactly as
+   if the person had set it by hand. The Python side (notify.py) reads the
+   same object to decide which new finds to email about, so the fields and
+   their meanings must stay in step with passesFilters. */
+const SEARCH_SEGS = ["bookend", "window", "cardtype", "condition", "colourmatch", "avail", "caution"];
+
+function currentFilters() {
+  return {
+    query: state.query,
+    price: { min: state.price.min, max: state.price.max },
+    listing: state.listing,
+    bookend: state.bookend, window: state.window, cardtype: state.cardtype,
+    condition: state.condition, colourmatch: state.colourmatch,
+    avail: state.avail, caution: state.caution,
+    allPlayers: $("all-players").checked,
+    players: selected("player"),
+    brands: selected("brand"),
+    ceiling: $("max-print-run").value,
+    inclusive: $("inclusive").checked,
+  };
+}
+
+function tickChips(group, names) {
+  const wanted = new Set((names || []).map((n) => n.toLowerCase()));
+  chipsOf(group).forEach((b) => { b.checked = wanted.has(b.value.toLowerCase()); });
+}
+
+function applyFilters(f) {
+  if (!f || typeof f !== "object") return;
+  if (f.price) setPrice(f.price.min || 0, f.price.max == null ? null : f.price.max);
+  if (f.listing) setListing(f.listing);
+  SEARCH_SEGS.forEach((n) => { if (f[n] != null && SEGS[n]) setSeg(n, f[n]); });
+  if (Array.isArray(f.players)) tickChips("player", f.players);
+  if (Array.isArray(f.brands)) tickChips("brand", f.brands);
+  if (typeof f.allPlayers === "boolean") $("all-players").checked = f.allPlayers;
+  if (f.ceiling && Number(f.ceiling) > 0) $("max-print-run").value = f.ceiling;
+  if (typeof f.inclusive === "boolean") $("inclusive").checked = f.inclusive;
+  syncPlayerChips();
+  saveScanSetup();
+  const box = $("title-search");
+  box.value = f.query || "";
+  state.query = box.value.trim();
+  try { sessionStorage.setItem(QUERY_KEY, state.query); } catch { /* ignore */ }
+  renderMatches();
+  renderBoard();
+}
+
+/* a line that says what a saved search narrows to, for the list in the panel */
+function describeFilters(f) {
+  const parts = [];
+  if (f.query) parts.push(`"${f.query}"`);
+  if (!f.allPlayers && f.players && f.players.length) parts.push(f.players.join(", "));
+  if (f.brands && f.brands.length && f.brands.length < 7) parts.push(f.brands.join(", "));
+  if (f.bookend && f.bookend !== "all") parts.push({ first: "#1 only", last: "last only" }[f.bookend] || f.bookend);
+  if (f.cardtype && f.cardtype !== "all") parts.push(CARD_TYPE_LABELS[f.cardtype] || f.cardtype);
+  if (f.condition && f.condition !== "all") parts.push(f.condition);
+  if (f.listing && f.listing !== "all") parts.push(LISTING_WORDS[f.listing] || f.listing);
+  if (f.price && (f.price.min || f.price.max != null)) {
+    parts.push(f.price.max == null ? `${money(f.price.min)} and up` : `${money(f.price.min || 0)} to ${money(f.price.max)}`);
+  }
+  if (f.ceiling && Number(f.ceiling) && Number(f.ceiling) !== 500) parts.push(`runs under ${f.ceiling}`);
+  return parts.join(" \u00b7 ") || "Every card";
+}
+
 /* ------------------------------------------------------------ saved cards */
 /* Stars live in this browser. Status (active / sold / ended) comes from the
    local server's live check, or from results/status.json on the hosted site. */
@@ -1133,7 +1201,9 @@ function initSaved() {
         renderSaved();
         syncHoloStar();
       },
+      filters: { current: currentFilters, apply: applyFilters, describe: describeFilters },
     });
+    $("save-search-btn").addEventListener("click", () => Account.saveSearch());
   }
 }
 

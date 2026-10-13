@@ -190,3 +190,35 @@ if os.path.exists(usage):
 
 wrote = "kept the board already published" if board_kept else f"exported {len(board)} board card(s)"
 print(f"{wrote}, {len(statuses)} listing status(es) and config to {out}/")
+
+# The emails to people with accounts, last, once everything is published: a
+# mail to anyone whose saved search a new find fits, after every run; and the
+# daily board after the scheduled run only (or when DAILY_EMAIL=1 forces it),
+# so a hand-started scan never sends the morning email twice. Both read the
+# accounts with the service key and are silent no-ops without it; neither can
+# fail the run.
+try:
+    import notify
+    site = engine.site_url()
+    try:
+        with open(matches) as f:
+            just_found_cards = json.load(f) or []
+    except (OSError, json.JSONDecodeError):
+        just_found_cards = []
+    notify.send_alerts(just_found_cards, site)
+    if os.environ.get("GITHUB_EVENT_NAME") == "schedule" or os.environ.get("DAILY_EMAIL") == "1":
+        try:
+            with open(archive_path) as f:
+                archive_cards = json.load(f).get("cards", [])
+        except (OSError, json.JSONDecodeError, AttributeError):
+            archive_cards = []
+        try:
+            with open(board_path) as f:
+                for_sale_cards = json.load(f).get("cards", [])
+        except (OSError, json.JSONDecodeError, AttributeError):
+            for_sale_cards = []
+        notify.send_daily(for_sale_cards, archive_cards, statuses, site)
+except ImportError:
+    print("emails: notify.py not beside the export; none sent")
+except Exception as exc:                                  # noqa: BLE001 -- never fail the run
+    print(f"emails: skipped ({exc})")

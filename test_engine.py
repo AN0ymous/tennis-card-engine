@@ -1977,6 +1977,181 @@ class AccountsLiveOnSupabase(unittest.TestCase):
         self.assertEqual(html.count('minlength="8"'), 4, "every new-password box says so too")
 
 
+class EmailsToAccounts(unittest.TestCase):
+    """notify.py: a mail when a scan finds a card that fits a saved search,
+    and the daily board every morning. The matcher mirrors passesFilters in
+    app.js field for field; the sends go through a fake here."""
+
+    CARD = {"player": "Carlos Alcaraz", "brand": "Topps Chrome", "manufacturer": "Topps",
+            "set_name": "2025 Topps Chrome", "title": "2025 Topps Chrome Tennis Carlos Alcaraz Gold Refractor 1/50",
+            "serial": "1/50", "bookend": "001 of 50", "price": "120.00 USD", "listing": "Buy It Now",
+            "cardType": "base", "grading": "Raw", "colourMatch": "unknown", "caution": "",
+            "link": "https://www.ebay.com/itm/206510108410", "image": "https://i.ebayimg.com/x.jpg",
+            "listed": "2026-10-12T03:00:00.000Z", "found": "2026-10-12 05:12 UTC"}
+
+    def fits(self, **filters):
+        import notify
+        from datetime import datetime, timezone
+        return notify.card_fits(filters, self.CARD, now=datetime(2026, 10, 12, 6, tzinfo=timezone.utc))
+
+    def test_an_empty_search_fits_every_card(self):
+        self.assertTrue(self.fits())
+
+    def test_each_filter_narrows_the_way_the_page_does(self):
+        self.assertTrue(self.fits(query="alcaraz gold"))
+        self.assertFalse(self.fits(query="sinner"))
+        self.assertTrue(self.fits(query="1/50"))
+        self.assertFalse(self.fits(query="1/1"), "a typed serial is a pair, not a prefix")
+        self.assertTrue(self.fits(price={"min": 100, "max": 200}))
+        self.assertFalse(self.fits(price={"min": 0, "max": 50}))
+        self.assertTrue(self.fits(price={"min": 100, "max": None}))
+        self.assertTrue(self.fits(listing="buy_now"))
+        self.assertFalse(self.fits(listing="auction"))
+        self.assertTrue(self.fits(bookend="first"))
+        self.assertFalse(self.fits(bookend="last"))
+        self.assertTrue(self.fits(window="1"))
+        self.assertFalse(self.fits(window="7") is False, "listed three hours ago is within a week")
+        self.assertTrue(self.fits(cardtype="base"))
+        self.assertFalse(self.fits(cardtype="auto"))
+        self.assertTrue(self.fits(condition="raw"))
+        self.assertFalse(self.fits(condition="graded"))
+        self.assertFalse(self.fits(colourmatch="yes"))
+        self.assertTrue(self.fits(allPlayers=False, players=["Carlos Alcaraz"]))
+        self.assertTrue(self.fits(allPlayers=False, players=["ALCARAZ"]), "one whole name within the other")
+        self.assertFalse(self.fits(allPlayers=False, players=["Jannik Sinner"]))
+        self.assertTrue(self.fits(allPlayers=True, players=["Jannik Sinner"]), "every player ticked wins")
+        self.assertTrue(self.fits(brands=["Topps Chrome", "NetPro"]))
+        self.assertFalse(self.fits(brands=["NetPro"]))
+        self.assertTrue(self.fits(ceiling="100"))
+        self.assertFalse(self.fits(ceiling="50"))
+        self.assertTrue(self.fits(ceiling="50", inclusive=True))
+        self.assertTrue(self.fits(caution="hide"))
+        self.assertFalse(self.fits(caution="only"))
+
+    def test_a_search_for_sold_cards_never_fits_a_new_find(self):
+        self.assertFalse(self.fits(avail="sold"))
+        self.assertFalse(self.fits(avail="ended"))
+        self.assertTrue(self.fits(avail="sale"))
+        self.assertTrue(self.fits(avail="all"))
+
+    def test_a_one_of_one_is_both_bookends(self):
+        import notify
+        one = dict(self.CARD, serial="1/1", bookend="True 1/1 (both bookends)")
+        self.assertTrue(notify.card_fits({"bookend": "last"}, one))
+        self.assertTrue(notify.card_fits({"bookend": "first"}, one))
+
+    def fake_world(self, people, searches):
+        """A Supabase that answers from dicts and a sender that records."""
+        import notify
+        sent = []
+        def rows(path, method="GET", body=None):
+            if path.startswith("profiles"):
+                return people
+            if path.startswith("saved_searches?select"):
+                return [s for s in searches if s.get("alerts", True)]
+            if method == "PATCH":
+                sent.append(("patch", path, body))
+                return []
+            raise AssertionError(path)
+        return sent, rows
+
+    def test_a_find_that_fits_is_emailed_once_per_person(self):
+        import notify
+        people = [{"user_id": "u1", "email": "a@example.com", "daily_email": False, "alerts": True},
+                  {"user_id": "u2", "email": "b@example.com", "daily_email": False, "alerts": True},
+                  {"user_id": "u3", "email": "c@example.com", "daily_email": False, "alerts": False}]
+        searches = [{"id": "s1", "user_id": "u1", "name": "Alcaraz", "filters": {"query": "alcaraz"}, "alerts": True},
+                    {"id": "s2", "user_id": "u1", "name": "Firsts", "filters": {"bookend": "first"}, "alerts": True},
+                    {"id": "s3", "user_id": "u2", "name": "Sinner", "filters": {"query": "sinner"}, "alerts": True},
+                    {"id": "s4", "user_id": "u3", "name": "Everything", "filters": {}, "alerts": True}]
+        sent, rows = self.fake_world(people, searches)
+        mails = []
+        with patch.object(notify, "supabase", return_value=("https://x.supabase.co", "k")), \
+             patch.object(notify, "rows", rows), \
+             patch.object(notify, "send_email", lambda to, subject, body: mails.append((to, subject, body)) or f"sent to {to}"):
+            lines = notify.send_alerts([self.CARD], "https://site/")
+        self.assertEqual([m[0] for m in mails], ["a@example.com"], "one mail, to the one whose searches fit; alerts off is respected")
+        to, subject, body = mails[0]
+        self.assertIn("fit your saved searches", subject)
+        self.assertIn("Alcaraz", body)
+        self.assertIn("Firsts", body)
+        self.assertEqual(body.count("View on eBay"), 2, "the card appears under each search it fits")
+        self.assertIn("https://www.ebay.com/itm/206510108410", body)
+        self.assertIn("https://site/", body)
+        self.assertEqual(sorted(p[1] for p in sent), ["saved_searches?id=eq.s1", "saved_searches?id=eq.s2"], "last_sent recorded")
+        self.assertTrue(any("1 email(s)" in l for l in lines), lines)
+
+    def test_without_the_service_key_nothing_is_read_and_the_log_says_so(self):
+        import notify
+        with patch.dict(os.environ, {"SUPABASE_URL": "", "SUPABASE_SERVICE_KEY": ""}):
+            lines = notify.send_alerts([self.CARD], "https://site/")
+            self.assertTrue(any("not set" in l for l in lines), lines)
+            lines = notify.send_daily([self.CARD], [], {}, "https://site/")
+            self.assertTrue(any("not set" in l for l in lines), lines)
+
+    def test_no_sender_configured_is_said_not_raised(self):
+        import notify
+        with patch.dict(os.environ, {"EMAIL_API_KEY": "", "EMAIL_FROM": "", "DIGEST_FROM_EMAIL": "", "DIGEST_FROM_APP_PASSWORD": ""}):
+            self.assertIn("no email sender configured", notify.send_email("x@example.com", "s", "<p>b</p>"))
+
+    def test_the_daily_board_counts_the_last_day(self):
+        import notify
+        from datetime import datetime, timezone
+        now = datetime(2026, 10, 12, 10, tzinfo=timezone.utc)
+        today = dict(self.CARD, found="2026-10-12 05:12 UTC", link="https://www.ebay.com/itm/100000000001")
+        old = dict(self.CARD, found="2026-10-01 05:12 UTC", link="https://www.ebay.com/itm/100000000002")
+        sold = dict(self.CARD, found="2026-10-11 20:00 UTC", link="https://www.ebay.com/itm/100000000003")
+        statuses = {"v1|100000000003|0": {"status": "sold", "endDate": "2026-10-11T22:00:00.000Z", "price": "300.00 USD"},
+                    "v1|100000000002|0": {"status": "sold", "endDate": "2026-10-02T22:00:00.000Z", "price": "999.00 USD"}}
+        found = notify.found_since([today, old], [sold], 24, now)
+        self.assertEqual([c["link"][-1] for c in found], ["1", "3"], "newest first, both halves of the board")
+        stats = notify.daily_stats([today, old], [sold, old], statuses, 24, now)
+        self.assertEqual((stats["found"], stats["for_sale"], stats["sold"], stats["sold_value"]), (2, 2, 1, 300.0))
+        subject, body = notify.daily_email(found, stats, "https://site/")
+        self.assertEqual(subject, "2 new cards on the board")
+        self.assertIn("Daily board recap", body)
+        self.assertIn("$300", body)
+        self.assertIn("VIEW THE BOARD", body)
+        people = [{"user_id": "u1", "email": "a@example.com", "daily_email": True, "alerts": True},
+                  {"user_id": "u2", "email": "b@example.com", "daily_email": False, "alerts": True}]
+        sent, rows = self.fake_world(people, [])
+        mails = []
+        with patch.object(notify, "supabase", return_value=("https://x.supabase.co", "k")), \
+             patch.object(notify, "rows", rows), \
+             patch.object(notify, "send_email", lambda to, s, b: mails.append(to) or "sent"):
+            notify.send_daily([today], [sold], statuses, "https://site/", now)
+        self.assertEqual(mails, ["a@example.com"], "only those who turned it on")
+
+    def test_the_export_sends_the_daily_board_only_on_the_scheduled_run(self):
+        with open(os.path.join(HERE, "export_static.py")) as f:
+            src = f.read()
+        self.assertIn('os.environ.get("GITHUB_EVENT_NAME") == "schedule"', src)
+        self.assertIn("notify.send_alerts(", src)
+        self.assertIn("notify.send_daily(", src)
+        with open(os.path.join(HERE, ".github", "workflows", "scan.yml")) as f:
+            yml = f.read()
+        export = yml.split("Export what the hosted site reads")[1].split("run: python export_static.py")[0]
+        for name in ("SUPABASE_URL", "SUPABASE_SERVICE_KEY", "EMAIL_API_KEY", "EMAIL_FROM"):
+            self.assertIn(f"{name}: ${{{{ secrets.{name} }}}}", export, name)
+        engine_step = yml.split("Run the engine")[1].split("run: python tennis_card_engine.py")[0]
+        self.assertNotIn("SUPABASE_SERVICE_KEY", engine_step, "the service key goes only where it is used")
+
+    def test_the_page_captures_what_the_matcher_reads(self):
+        """currentFilters() in app.js and card_fits() here must name the same
+        fields, or a saved search would mean one thing on the page and
+        another in the mail."""
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            js = f.read()
+        block = js.split("function currentFilters()")[1].split("\n}")[0]
+        page_fields = set(re.findall(r"^\s+(\w+):", block, re.M))
+        with open(os.path.join(HERE, "notify.py")) as f:
+            py = f.read()
+        body = py.split("# ---------------------------------------------------------------- the matcher")[1] \
+                 .split("# ---------------------------------------------------------------- Supabase")[0]
+        for field in page_fields:
+            self.assertIn(f'"{field}"', body, f"card_fits ignores {field}")
+
+
 class TheContentsPanelKeepsUp(unittest.TestCase):
     """The panel behind the tennis ball is the map of the site, and a map
     goes stale silently: it still listed "Method and process" as a section of
@@ -3571,7 +3746,7 @@ class TheExportNeverBlanksThePublishedBoard(unittest.TestCase):
         env = dict(os.environ, EBAY_CLIENT_ID="", EBAY_CLIENT_SECRET="",
                    ANTHROPIC_API_KEY="", SCAN_BYPASS_BUDGET="")
         with tempfile.TemporaryDirectory() as work:
-            for name in ("tennis_card_engine.py", "export_static.py"):
+            for name in ("tennis_card_engine.py", "export_static.py", "notify.py"):
                 shutil.copy(os.path.join(HERE, name), work)
             if new_matches is not None:
                 with open(os.path.join(work, engine.NEW_MATCHES_FILE), "w") as f:
