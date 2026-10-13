@@ -685,7 +685,13 @@ on a website.
   Authentication -> SMTP Settings, or reset codes and confirmations will
   stall. "Confirm email" is off for stage 1 so a new account can sign in at
   once; the page handles both answers (`signUp` returns "confirm" when the
-  project asks for it).
+  project asks for it). **The agreed order (13 Oct):** Site URL, Redirect
+  URLs and `{{ .Token }}` in the reset template now; Confirm email stays
+  off while the users are the owner and people they know; when Resend goes
+  in for the alert emails it goes into Supabase's SMTP Settings too, and
+  Confirm email is turned on at that point, since a daily email should go
+  only to an address that has been proved. The page already handles the
+  confirmation link, so nothing in the code changes when it is turned on.
 - **The sandbox cannot reach supabase.co**, so the flows are driven against
   a stand-in server that answers as the real endpoints are documented
   (`drive.py`/`stub.py`, kept outside the repo): sign up, short and
