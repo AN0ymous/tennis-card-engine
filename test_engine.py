@@ -671,7 +671,8 @@ class QuotaControls(unittest.TestCase):
     def test_the_bypass_toggle_sits_beside_the_meter_and_reaches_both_paths(self):
         with open(os.path.join(HERE, "web", "index.html")) as f:
             html = f.read()
-        box = html[html.index('id="allowance"'):html.index('</aside>')]
+        # since Version 24 (10 Nov) the meter sits on the Scan page, above the activity log
+        box = html[html.index('id="allowance"'):html.index('id="activity"')]
         self.assertIn('id="bypass-budget"', box, "the toggle is not beside the eBay calls meter")
         self.assertIn('id="bypass-note"', box)
         with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
@@ -2175,12 +2176,11 @@ class EmailsToAccounts(unittest.TestCase):
             self.assertIn(f'"{field}"', body, f"card_fits ignores {field}")
 
 
-class TheContentsPanelKeepsUp(unittest.TestCase):
-    """The panel behind the tennis ball is the map of the site, and a map
-    goes stale silently: it still listed "Method and process" as a section of
-    this page after that became a page of its own, and it offered the activity
-    log on the hosted site, where there is no activity log. These tests fail
-    when the site grows a page or loses a section and the panel is not told."""
+class TheNavigationKeepsUp(unittest.TestCase):
+    """The contents panel was the map of the site until Version 24 (10 Nov),
+    which replaced it with three tabs -- Feed, Scan, Saved -- and an Account
+    button. A map still goes stale silently, so: every way in leads to a page
+    the router knows, and every page the router knows has a way in."""
 
     def js(self):
         with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
@@ -2190,86 +2190,96 @@ class TheContentsPanelKeepsUp(unittest.TestCase):
         with open(os.path.join(HERE, "web", "index.html")) as f:
             return f.read()
 
-    def entries(self):
-        """(href, title) for each entry in the panel."""
-        block = self.html().split('<ol class="contents-list">')[1].split("</ol>")[0]
-        return re.findall(r'<a href="(#[a-z-]+)">.*?<span class="c-t">([^<]+)</span>',
-                          block, re.S)
-
     def routes(self):
-        """The hashes app.js routes to a page of their own."""
         block = self.js().split("const VIEWS = {")[1].split("};")[0]
         return re.findall(r'"(#[a-z-]+)":', block)
 
-    def test_every_entry_leads_somewhere_that_exists(self):
-        """A hash is either an element on the page or a routed page. Anything
-        else is a link to nowhere, which is what the panel is for."""
-        html = self.html()
-        ids = set(re.findall(r'\sid="([a-z-]+)"', html))
-        routed = set(self.routes())
-        for href, title in self.entries():
-            with self.subTest(entry=title):
-                self.assertTrue(href[1:] in ids or href in routed, f"{title} -> {href}")
+    def header(self):
+        return self.html().split("<header")[1].split("</header>")[0]
 
-    def test_every_page_of_its_own_is_listed(self):
-        """Add a page and forget the panel and this fails, which is the whole
-        reason the reference entry was wrong for a day."""
-        listed = {href for href, _ in self.entries()}
+    def test_the_contents_panel_is_gone(self):
+        self.assertNotIn('class="contents-list"', self.html())
+        self.assertNotIn("initContents", self.js())
+        self.assertNotIn("contents-foot", self.js())
+
+    def test_every_page_has_a_way_in_from_the_top_bar(self):
+        header = self.header()
+        ways = set(re.findall(r'href="(#[a-z-]+)"', header)) | set(re.findall(r'data-page="(#[a-z-]+)"', header))
         for route in self.routes():
-            self.assertIn(route, listed, f"{route} is a page but the contents omit it")
+            with self.subTest(route=route):
+                self.assertIn(route, ways, f"{route} is a page with no way in")
 
-    def test_the_names_match_what_the_page_calls_them(self):
-        html = self.html()
-        titles = {href: title.strip() for href, title in self.entries()}
-        self.assertEqual(titles["#method"], html.split('id="method-link"')[1]
-                         .split(">")[1].split("<")[0].strip())
-        self.assertIn("Saved cards", titles["#saved"])
+    def test_every_way_in_leads_to_a_page(self):
+        header = self.header()
+        routed = set(self.routes())
+        for href in re.findall(r'href="(#[a-z-]+)"', header) + re.findall(r'data-page="(#[a-z-]+)"', header):
+            with self.subTest(href=href):
+                self.assertIn(href, routed)
 
-    def test_the_sections_are_sorted_from_the_pages(self):
-        block = self.html().split('<ol class="contents-list">')[1].split("</ol>")[0]
-        self.assertEqual(re.findall(r'<li class="contents-group"><span>([^<]+)</span>', block),
-                         ["On this page", "Other pages"])
+    def test_the_tabs_are_feed_scan_saved(self):
+        tabs = re.findall(r'data-tab="([a-z]+)"', self.header())
+        self.assertEqual(tabs, ["feed", "scan", "saved"])
+        self.assertIn('id="account-btn"', self.header())
 
     def test_the_activity_log_is_not_offered_where_there_is_none(self):
-        """The hosted page has no activity log -- GitHub sends no per-listing
-        events -- and the same rule that hides the panel hides its entry."""
-        block = self.html().split('<ol class="contents-list">')[1].split("</ol>")[0]
-        activity = [line for line in block.splitlines() if "#activity" in line]
-        self.assertTrue(activity and "data-local-only" in activity[0], activity)
         with open(os.path.join(HERE, "web", "assets", "styles.css")) as f:
-            css = f.read()
-        self.assertIn(".is-hosted .contents-list li[data-local-only] { display: none; }", css)
+            self.assertIn(".is-hosted #activity", f.read())
 
-    def test_the_numbers_count_themselves(self):
-        """An entry that does not apply must not leave 04 missing between 03
-        and 05, so the numbers are a counter rather than typed in."""
-        with open(os.path.join(HERE, "web", "assets", "styles.css")) as f:
-            css = f.read()
-        self.assertIn("counter-increment: toc", css)
-        block = self.html().split('<ol class="contents-list">')[1].split("</ol>")[0]
-        self.assertNotIn('class="c-n">0', block, "a typed-in number goes stale")
 
-    def test_no_entry_is_marked_as_where_you_are(self):
-        """The panel used to light the section the reader was looking at. On a
-        page of its own that section is the only thing on screen, so "How it
-        works" stayed lit for good. The marking is gone, not patched."""
-        self.assertNotIn("is-here", self.js())
-        with open(os.path.join(HERE, "web", "assets", "styles.css")) as f:
-            self.assertNotIn("is-here", f.read())
+class TheSiteIsBehindALogin(unittest.TestCase):
+    """Version 24 (10 Nov): nobody uses the site without signing in. The
+    page starts gated, account.js refuses to close the login panel while
+    it is, and only a preview copy (the artifact) may offer a way past."""
 
-    def test_the_page_behind_the_panel_shows_through(self):
-        """It was an opaque wall of colour, which made the panel read as a
-        different page rather than a layer over this one."""
-        with open(os.path.join(HERE, "web", "assets", "styles.css")) as f:
-            veil = f.read().split(".contents-veil {")[1].split("}")[0]
-        self.assertIn("transparent", veil, "the veil must let the page through")
-        self.assertIn("backdrop-filter", veil)
+    def read(self, *parts):
+        with open(os.path.join(HERE, *parts)) as f:
+            return f.read()
 
-    def test_the_footer_says_where_it_really_runs(self):
-        """"Runs on your machine" is false on the hosted page."""
-        body = self.js().split("async function loadConfig()")[1].split("\n}\n")[0]
-        self.assertIn('$("contents-foot").textContent = HOSTED', body)
+    def test_the_live_page_requires_a_login(self):
+        html = self.read("web", "index.html")
+        self.assertIn('<meta name="tce-login" content="required">', html)
+        self.assertNotIn('content="preview"', html, "the preview switch must never reach the real page")
 
+    def test_the_page_starts_gated_before_first_paint(self):
+        head = self.read("web", "index.html").split("</head>")[0]
+        self.assertIn('d.classList.add("is-gated")', head)
+        self.assertIn('localStorage.getItem("tce.session")', head)
+
+    def test_the_login_panel_cannot_be_dismissed_while_gated(self):
+        body = self.read("web", "assets", "account.js").split("function close()")[1].split("\n  }")[0]
+        self.assertIn('classList.contains("is-gated")', body)
+        css = self.read("web", "assets", "styles.css")
+        self.assertIn(".is-gated .topbar, .is-gated main { visibility: hidden; }", css)
+
+    def test_the_skip_button_only_exists_in_preview_mode(self):
+        js = self.read("web", "assets", "app.js")
+        body = js.split("function gate()")[1].split("\n}")[0]
+        self.assertIn('loginMode() === "preview"', body)
+        self.assertIn('$("login-preview").hidden = !preview', body)
+
+
+class TheManufacturerFilterAgreesWithTheEmails(unittest.TestCase):
+    """Version 24 added a Manufacturer filter. A saved search carries it, so
+    notify.py must narrow the alert emails exactly as the page narrows the
+    feed: "Ace Authentic, Inc" is Ace Authentic on both sides."""
+
+    def test_the_company_word_is_folded_away(self):
+        import notify
+        self.assertEqual(notify.maker_key("Ace Authentic, Inc"), "ace authentic")
+        self.assertEqual(notify.maker_key("TOPPS"), "topps")
+
+    def test_a_saved_search_narrows_by_maker(self):
+        import notify
+        card = {"manufacturer": "Ace Authentic, Inc", "price": "10.00 USD", "serial": "1/25", "title": "x"}
+        self.assertTrue(notify.card_fits({"makers": ["Ace Authentic"]}, card))
+        self.assertFalse(notify.card_fits({"makers": ["Topps"]}, card))
+        self.assertTrue(notify.card_fits({"makers": []}, card))
+
+    def test_the_page_reads_it_in_its_filters(self):
+        with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
+            js = f.read()
+        self.assertIn("inMakers(card)", js.split("function passesFilters(card)")[1].split("\n}")[0])
+        self.assertIn("makers: [...state.makers]", js.split("function currentFilters()")[1].split("\n}")[0])
 
 class TheTitleIsTheWayHome(unittest.TestCase):
     """Two pages and a long main one, and nothing said how to get back."""
@@ -2301,10 +2311,13 @@ class TheTitleIsTheWayHome(unittest.TestCase):
         self.assertIn('$("home-btn").addEventListener("click", goHome)', self.js())
 
 
-class TheReferenceIsAPageOfItsOwn(unittest.TestCase):
-    """Six parts of prose sat under every card on the main page -- nobody
-    scrolled to it and everybody scrolled past it. It is a page now, reached
-    from a button in the top bar, on the same routing as the saved cards."""
+class TheHowItWorksPageIsGone(unittest.TestCase):
+    """The method and process reference was a page of its own from 1 Oct,
+    reached from a "How it works" button in the top bar. The owner removed it
+    on 9 Nov, with the feed layout: no tab, no entry under More, no page.
+    These pin that it is gone and that nothing still reaches for it -- the
+    script used to write the allow-list and the eBay figures into it on every
+    load, and would fail on a missing element if that code were left behind."""
 
     def js(self):
         with open(os.path.join(HERE, "web", "assets", "app.js")) as f:
@@ -2318,44 +2331,34 @@ class TheReferenceIsAPageOfItsOwn(unittest.TestCase):
         with open(os.path.join(HERE, "web", "assets", "styles.css")) as f:
             return f.read()
 
-    def test_the_button_is_in_the_top_bar(self):
-        header = self.html().split("<header")[1].split("</header>")[0]
-        self.assertIn('id="method-link"', header)
-        self.assertIn('href="#method"', header)
-
-    def test_the_reference_starts_put_away(self):
+    def test_no_page_no_button_no_entry(self):
         html = self.html()
-        opening = html.split('id="method"')[1].split(">")[0]
-        self.assertIn("hidden", opening, "it would show on the main page otherwise")
+        self.assertNotIn('id="method"', html)
+        self.assertNotIn('id="method-link"', html)
+        self.assertNotIn('href="#method"', html)
+        self.assertNotIn("How it works", html)
 
-    def test_the_hidden_attribute_is_not_beaten_by_the_display_rule(self):
-        """.reference sets display: flex, which overrides the browser's own
-        rule for [hidden] -- without saying so here the page never goes away,
-        which is exactly what happened the first time."""
-        css = self.css()
-        self.assertIn("#method[hidden] { display: none; }", css)
-        self.assertIn(".is-method-view main > :not(#method) { display: none; }", css)
+    def test_the_router_no_longer_knows_it(self):
+        js = self.js()
+        self.assertNotIn('"#method":', js)
+        self.assertNotIn('$("method-link")', js)
+        self.assertNotIn("is-method-view", js)
+        self.assertNotIn("is-method-view", self.css())
 
-    def test_one_router_so_two_pages_cannot_both_be_open(self):
+    def test_nothing_writes_into_the_removed_page(self):
+        js = self.js()
+        for gone in ("ref-category", "ref-marketplace", "ref-per-query",
+                     "allowlist-body", "blocklist-note"):
+            with self.subTest(element=gone):
+                self.assertNotIn(gone, js)
+
+    def test_one_router_still_drives_the_saved_page(self):
         js = self.js()
         self.assertIn('"#saved":', js)
-        self.assertIn('"#method":', js)
         body = js.split("function showView(hash)")[1].split("\n}")[0]
         self.assertIn("Object.values(VIEWS).forEach", body)
         self.assertIn("document.body.classList.toggle(view.cls, on)", body)
         self.assertIn("$(view.id).hidden = !on", body)
-
-    def test_a_link_to_a_part_of_the_reference_still_works(self):
-        """#limits and the rest were places on this page. They are places on
-        another page now, and a link to one has to open it."""
-        body = self.js().split("function partOfAView(hash)")[1].split("\n}")[0]
-        self.assertIn("$(v.id).contains(target)", body)
-        ids = re.findall(r'class="ref-block" id="([a-z]+)"', self.html())
-        self.assertEqual(len(ids), 6, ids)
-
-    def test_the_contents_panel_still_reaches_it(self):
-        contents = self.html().split('<ol class="contents-list">')[1].split("</ol>")[0]
-        self.assertIn('href="#method"', contents)
 
     def test_a_page_hash_is_not_treated_as_an_anchor_to_scroll_to(self):
         body = self.js().split("function settleScroll()")[1].split("\n}\n")[0]

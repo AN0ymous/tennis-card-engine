@@ -65,6 +65,7 @@ function settleScroll() {
 
 const state = {
   config: null,
+  makers: [],                // Version 24's manufacturer filter; empty is every maker
   matches: [],
   board: [],
   archive: [],               // the board's sold and ended cards, fetched after the rest
@@ -402,6 +403,11 @@ function sortCards(list) {
     const run = (c) => { const r = printRunOf(c); return r == null || r < 1 ? Infinity : r; };
     sorted.sort((a, b) => (run(a) - run(b)) || newest(a, b));
   } else sorted.sort(newest);
+  // A card that can no longer be bought is information, not a lead: it keeps
+  // its place in the order chosen but goes after every card still for sale.
+  // Array.prototype.sort is stable, so the order above survives inside each.
+  const gone = (c) => (availabilityOf(c) === "sale" ? 0 : 1);
+  sorted.sort((a, b) => gone(a) - gone(b));
   return sorted;
 }
 
@@ -660,7 +666,7 @@ function underCeiling(card) {
 function passesFilters(card) {
   return inPriceRange(card) && inListingType(card) && inBookend(card) && inWindow(card)
     && inCardType(card) && inCondition(card) && inColourMatch(card)
-    && inPlayers(card) && inBrands(card) && underCeiling(card)
+    && inPlayers(card) && inMakers(card) && inBrands(card) && underCeiling(card)
     && inAvailability(card) && inCaution(card) && inQuery(card);
 }
 
@@ -763,6 +769,7 @@ function currentFilters() {
     allPlayers: $("all-players").checked,
     players: selected("player"),
     brands: selected("brand"),
+    makers: [...state.makers],
     ceiling: $("max-print-run").value,
     inclusive: $("inclusive").checked,
   };
@@ -783,6 +790,7 @@ function applyFilters(f) {
   if (typeof f.allPlayers === "boolean") $("all-players").checked = f.allPlayers;
   if (f.ceiling && Number(f.ceiling) > 0) $("max-print-run").value = f.ceiling;
   if (typeof f.inclusive === "boolean") $("inclusive").checked = f.inclusive;
+  setMakers(Array.isArray(f.makers) ? f.makers : []);
   syncPlayerChips();
   saveScanSetup();
   const box = $("title-search");
@@ -798,6 +806,7 @@ function describeFilters(f) {
   const parts = [];
   if (f.query) parts.push(`"${f.query}"`);
   if (!f.allPlayers && f.players && f.players.length) parts.push(f.players.join(", "));
+  if (f.makers && f.makers.length) parts.push(f.makers.join(", "));
   if (f.brands && f.brands.length && f.brands.length < 7) parts.push(f.brands.join(", "));
   if (f.bookend && f.bookend !== "all") parts.push({ first: "#1 only", last: "last only" }[f.bookend] || f.bookend);
   if (f.cardtype && f.cardtype !== "all") parts.push(CARD_TYPE_LABELS[f.cardtype] || f.cardtype);
@@ -911,6 +920,29 @@ function isNewCard(card) {
 
 function isSoldCard(card) {
   return statusOf(card).status === "sold";
+}
+
+/* Trust, on every tile: Verified (a tick, lime) when the card passed every
+   rule with nothing left over, Check by eye (an eye, amber) when the judge
+   kept it with a caution. Icon and word both, so colour is never the only
+   signal. The caution itself rides in the title, as it always has. */
+const TRUST_ICONS = {
+  verified: '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  check: '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="2.1" fill="currentColor"/></svg>',
+};
+
+function trustTag(card) {
+  const check = !!card.caution;
+  const tag = el("span", "trust-tag " + (check ? "is-check" : "is-verified"));
+  tag.innerHTML = check ? TRUST_ICONS.check : TRUST_ICONS.verified;
+  tag.append(document.createTextNode(check ? "Check by eye" : "Verified"));
+  tag.title = check ? card.caution : "Passed every rule, with nothing left to check by eye";
+  return tag;
+}
+
+/* Gold is kept for a 1/1 alone, so it still means something when it shows. */
+function isOneOfOne(card) {
+  return printRunOf(card) === 1;
 }
 
 function flagTag(className, words, title) {
@@ -1106,19 +1138,17 @@ function renderSaved() {
   area.append(grid);
 }
 
-/* ---- the two pages that are not the main one ----
-   Saved cards, and the method and process reference. Both used to be sections
-   of one very long page; both are now routed off the hash, one router so they
-   can never both be showing. #method was an anchor you scrolled to -- every
-   link to it still works, it just opens the page now. */
+/* ---- the page that is not the main one ----
+   Saved cards, routed off the hash. There used to be a second, the "How it
+   works" reference at #method; the owner removed it on 9 Nov. The router
+   stays a table so another page can be added the same way. */
 const VIEWS = {
   "#saved":  { id: "saved-page", cls: "is-saved-view" },
-  "#method": { id: "method", cls: "is-method-view" },
+  "#scan-page": { id: "scan-page", cls: "is-scan-view" },
+  "#account-page": { id: "account-page", cls: "is-account-view" },
 };
 
-/* A link to a part of the reference -- #limits, #allowlist -- used to be a
-   link to a place on this page. It still works: it opens the page that part
-   now lives on and goes to it. */
+/* A link to a place inside a routed page opens that page and goes to it. */
 function partOfAView(hash) {
   const target = hash.length > 1 && document.getElementById(hash.slice(1));
   if (!target) return null;
@@ -1134,7 +1164,6 @@ function showView(hash) {
     document.body.classList.toggle(view.cls, on);
     $(view.id).hidden = !on;
   });
-  $("method-link").classList.toggle("is-on", wanted === VIEWS["#method"]);
   if (deep) deep.target.scrollIntoView({ block: "start" });
   else if (wanted) window.scrollTo({ top: 0 });
   if (wanted === VIEWS["#saved"]) {
@@ -1394,53 +1423,18 @@ async function loadConfig() {
 
   $("max-print-run").value = c.maxPrintRun;
   $("inclusive").checked = !!c.printRunInclusive;
+  state.addressDefaults = currentFilters();   // the address writes only what differs
   restoreScanSetup();                    // what this device last scanned with, if anything
-  $("ref-category").textContent = c.categoryId;
-  $("ref-marketplace").textContent = c.marketplace;
-  $("ref-per-query").textContent = (c.maxResultsPerBrand || c.resultsPerQuery).toLocaleString();
   $("download-btn").hidden = !c.spreadsheetExists;
 
-  const body = $("allowlist-body");
-  body.innerHTML = "";
-  (c.allowedManufacturers || []).forEach((row) => {
-    const tr = el("tr");
-    tr.append(el("td", null, row.manufacturer));
-    tr.append(el("td", "mono", row.requiresSetKeyword
-      ? row.requiresSetKeyword.join(" or ") : "—"));
-    body.append(tr);
-  });
-
-  const blocked = [
-    ...(c.checkedAutographs || []).map((m) =>
-      `${m}: on-card autographs and numbering on a circle sticker rejected` +
-      (c.colourMatch ? " (checked on the photos)." : " (from the listing text; photos are checked once ANTHROPIC_API_KEY is set, and until then such cards carry a check-by-eye note).")),
-    ...(c.blockedSets || []).map((b) =>
-      `${b.manufacturer} sets skipped: ${b.skip.join(", ")}` +
-      (b.unless.length ? ` (kept when marked ${b.unless.join(", ")})` : "") + "."),
-    (c.blockedManufacturers || []).length
-      ? `Manufacturer strings rejected on sight: ${c.blockedManufacturers.join(", ")}.`
-      : "",
-    (c.blockedSellers || []).length
-      ? `Sellers rejected on sight: ${c.blockedSellers.join(", ")}.`
-      : "",
-    (c.customWords || []).length
-      ? "Cards somebody made themselves are rejected before the serial is even read, "
-        + "so a custom card called a 1/1 never counts. A listing is taken as custom when "
-        + `its title or set says any of: ${c.customWords.join(", ")}.`
-      : "",
-  ].filter(Boolean).join(" ");
-  $("blocklist-note").textContent = blocked;
+  // The allow-list, the block-list and the eBay reference figures used to be
+  // written into the "How it works" page here; that page was removed on 9 Nov.
   const setup = $("colourmatch-setup");
   setup.hidden = !!c.colourMatch;
   setup.textContent = c.colourMatch ? "" : (HOSTED
     ? "Outfit colours are read from photos by Claude once an ANTHROPIC_API_KEY secret is added to the repo; until then no card can be marked a colour match."
     : "Outfit colours are read from photos by Claude once ANTHROPIC_API_KEY is in .env (and pip install anthropic); until then no card can be marked a colour match.");
   if (HOSTED) enterHostedMode(c);
-  // The contents panel says where this page runs, and that is not the same
-  // sentence in both places: hosted, the scan runs on GitHub, not here.
-  $("contents-foot").textContent = HOSTED
-    ? "Scans run on GitHub on a schedule. Your eBay keys stay in the repository's secrets and never reach the browser."
-    : "Runs on your machine. Your eBay keys stay in .env and never reach the browser.";
 }
 
 function syncPlayerChips() {
@@ -1786,6 +1780,7 @@ function renderMatches() {
     state.page.board = 1;
   }
   state.filterSig = sig;
+  syncAddress();
 
   area.innerHTML = "";
 
@@ -1831,9 +1826,8 @@ function renderMatches() {
     area.append(noteLine(state.query
       ? `Nothing recorded matches \u201c${state.query}\u201d with these filters. Clear the search, `
         + "or widen the availability, players, sets or the rest of the scan setup."
-      : "Nothing recorded matches the scan setup. Widen the availability, players, sets, "
-      + "print-run ceiling, card type, graded or raw, price, listing type, bookend, "
-      + "check-by-eye or listed-within choice."));
+      : "No finds match these filters. Open Filters and widen the player, manufacturer, "
+      + "set, serial type, format or price, or turn off New only."));
   }
 }
 
@@ -1879,7 +1873,9 @@ function showOtherListings(match) {
    not the same as hiding one -- see the flag decision below. */
 function buildCard(match, index, opts = {}) {
   match = { ...match, player: namedPlayer(match) };
-  const card = el("button", "matchcard" + (match._example ? " is-example" : ""));
+  const card = el("button", "matchcard" + (match._example ? " is-example" : "")
+    + (isOneOfOne(match) ? " is-one" : "")
+    + (availabilityOf(match) === "sale" ? "" : " is-gone"));
   card.type = "button";
   card.dataset.index = index;
   card.style.animationDelay = `${Math.min(index, 8) * 45}ms`;
@@ -1926,7 +1922,6 @@ function buildCard(match, index, opts = {}) {
   body.append(el("div", "mc-title", match.title));
   const typeLine = el("div", "mc-type", [grading(match), CARD_TYPE_LABELS[cardType(match)], listingLine(match)].filter(Boolean).join(" \u00b7 "));
   if (match.colourMatch === "yes") typeLine.append(el("span", "cm-tag", "Colour match"));
-  if (match.caution) { const t = el("span", "caution-tag", "Check by eye"); t.title = match.caution; typeLine.append(t); }
   if (match._others && match._others.length) typeLine.append(relistTag(match));
   body.append(typeLine);
   const ends = endTag(match, "mc-ends");
@@ -1938,6 +1933,7 @@ function buildCard(match, index, opts = {}) {
   foot.append(el("span", "mc-brand", brandLine(match)));
   foot.append(el("span", "mc-price", match.price || "\u2014"));
   body.append(foot);
+  body.append(metaLine(match));           // "$13 \u00b7 Buy It Now" or "$1 \u00b7 Ends in 2d 10h"
   card.append(body);
 
   card.addEventListener("click", () => openHologram(match));
@@ -1995,7 +1991,9 @@ function listedLabel(card) {
 
 function buildLot(card, rank) {
   card = { ...card, player: namedPlayer(card) };
-  const lot = el("button", "lot" + (card._example ? " is-example" : ""));
+  const lot = el("button", "lot" + (card._example ? " is-example" : "")
+    + (isOneOfOne(card) ? " is-one" : "")
+    + (availabilityOf(card) === "sale" ? "" : " is-gone"));
   lot.type = "button";
   lot.setAttribute("aria-label", `${rank}. ${card.player || "Card"}, ${card.price}. Open card.`);
 
@@ -2013,7 +2011,6 @@ function buildLot(card, rank) {
   photo.append(el("span", "lot-rank", String(rank).padStart(2, "0")));
   photo.append(el("span", "lot-serial", card.serial));
   if (card.colourMatch === "yes") photo.append(el("span", "cm-tag", "Colour match"));
-  if (card.caution) { const t = el("span", "caution-tag", "Check by eye"); t.title = card.caution; photo.append(t); }
   photo.append(starFor(card));
   const flag = flagFor(card);
   if (flag) photo.append(flag);
@@ -2040,6 +2037,9 @@ function buildLot(card, rank) {
   if (ends) body.append(ends);
   if (card._others && card._others.length) body.append(relistTag(card));
   body.append(el("div", "lot-player" + (card.player ? "" : " is-unnamed"), card.player || "Player not named"));
+  const trust = el("div", "lot-trust");
+  trust.append(trustTag(card));
+  body.append(trust);
   body.append(el("div", "lot-set", brandLine(card)));
   lot.append(body);
 
@@ -2627,55 +2627,6 @@ async function readRunProgress(c) {
   }
 }
 
-/* ------------------------------------------------------------- contents */
-
-function initContents() {
-  const btn = $("contents-btn");
-  const panel = $("contents");
-  const veil = $("contents-veil");
-  const links = [...panel.querySelectorAll(".contents-list a")];
-  let opener = null;
-  let closeTimer = null;
-
-  function open() {
-    clearTimeout(closeTimer);
-    opener = document.activeElement;
-    panel.classList.remove("is-closing");
-    panel.hidden = false;
-    veil.hidden = false;
-    btn.setAttribute("aria-expanded", "true");
-    document.body.style.overflow = "hidden";
-    $("contents-close").focus();
-  }
-
-  function close(restoreFocus) {
-    if (panel.hidden) return;
-    btn.setAttribute("aria-expanded", "false");
-    panel.classList.add("is-closing");
-    veil.hidden = true;
-    document.body.style.overflow = "";
-    const settle = () => {
-      if (panel.classList.contains("is-closing")) {   // not reopened meanwhile
-        panel.hidden = true;
-        panel.classList.remove("is-closing");
-      }
-    };
-    panel.addEventListener("animationend", settle, { once: true });
-    clearTimeout(closeTimer);
-    closeTimer = setTimeout(settle, 420);             // in case animations are off
-    if (restoreFocus !== false && opener) opener.focus();
-  }
-
-  btn.addEventListener("click", () => (panel.hidden ? open() : close()));
-  $("contents-close").addEventListener("click", () => close());
-  veil.addEventListener("click", () => close());
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !panel.hidden) close();
-  });
-  // jumping to a section closes the index and leaves focus at the destination
-  links.forEach((a) => a.addEventListener("click", () => close(false)));
-}
-
 /* -------------------------------------------------------------- hologram */
 
 let lastFocused = null;
@@ -3154,6 +3105,7 @@ function initWakeChecks() {
     if (document.visibilityState === "hidden") return;
     sweepNewFlags();            // an hour may have passed with our timers stopped
     tickEnds();                 // and the countdowns with them
+    renderFreshness();          // and the data's age
     if (HOSTED) {
       const watching = savedWatch();
       if (!watching) return;
@@ -3265,12 +3217,752 @@ async function stopScan() {
 
 /* ------------------------------------------------------------------ wire */
 
+/* ---- theme: dark by default, light or the device's own choice ----
+   The head script sets data-theme before first paint; this only wires the
+   three buttons in the contents panel and remembers the choice per device. */
+const THEME_KEY = "tce.theme";
+const THEMES = ["dark", "light", "system"];
+
+function setTheme(name) {
+  const theme = THEMES.includes(name) ? name : "dark";
+  document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem(THEME_KEY, theme); } catch { /* private mode */ }
+  document.querySelectorAll("[data-theme-pick]").forEach((b) => {
+    b.setAttribute("aria-pressed", b.dataset.themePick === theme ? "true" : "false");
+  });
+}
+
+function initTheme() {
+  document.querySelectorAll("[data-theme-pick]").forEach((b) => {
+    b.addEventListener("click", () => setTheme(b.dataset.themePick));
+  });
+  setTheme(document.documentElement.dataset.theme);
+}
+
+/* ---- freshness: when the data is from, and a banner when it is late ----
+   The scheduled scan is daily, and GitHub's scheduler can start it hours
+   late, so a day and two hours (26 h) is the point past which the page says
+   plainly that what it shows is old. lastRun is written by export_static.py
+   as "YYYY-MM-DD HH:MM UTC". */
+const STALE_AFTER_MS = 26 * 60 * 60 * 1000;
+
+function lastRunDate(text) {
+  const m = String(text || "").match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}) UTC$/);
+  return m ? new Date(Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5])) : null;
+}
+
+function hoursWords(ms) {
+  const h = Math.floor(ms / 3600000);
+  if (h < 1) return "under an hour";
+  if (h < 48) return `${h} hour${h === 1 ? "" : "s"}`;
+  return `${Math.floor(h / 24)} days`;
+}
+
+function renderFreshness() {
+  const c = state.config || {};
+  const at = lastRunDate(c.lastRun);
+  const asof = $("asof");
+  const banner = $("stale-banner");
+  if (!at) { asof.hidden = true; banner.hidden = true; return; }
+  const age = Date.now() - at.getTime();
+  const local = at.toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  asof.textContent = `Updated ${hoursWords(age)} ago`;
+  asof.title = `Data as of ${local}`;
+  asof.hidden = false;
+  banner.hidden = age <= STALE_AFTER_MS;
+  renderScanStats();
+  if (!banner.hidden) {
+    $("stale-text").textContent = `The last scan finished ${hoursWords(age)} ago, later than the daily `
+      + "schedule allows. Prices, statuses and new finds may be out of date until the next scan lands.";
+  }
+}
+
+/* ---- the filters live in the address too ----
+   So a filtered view can be bookmarked or sent. Only what differs from the
+   page's own defaults is written, so an untouched page keeps a bare address.
+   The baseline is taken in loadConfig, after the defaults go in and before
+   this device's remembered setup does. */
+const ADDRESS_LISTS = ["players", "brands", "makers"];
+
+function filtersToQuery(f, base) {
+  const q = new URLSearchParams();
+  const differs = (k) => JSON.stringify(f[k]) !== JSON.stringify(base[k]);
+  if (f.query) q.set("q", f.query);
+  if (f.price.min) q.set("min", f.price.min);
+  if (f.price.max != null) q.set("max", f.price.max);
+  if (f.listing !== base.listing) q.set("listing", f.listing);
+  SEARCH_SEGS.forEach((n) => { if (differs(n)) q.set(n, f[n]); });
+  if (differs("allPlayers")) q.set("all", f.allPlayers ? "1" : "0");
+  ADDRESS_LISTS.forEach((k) => { if (differs(k)) q.set(k, f[k].join(",")); });
+  if (differs("ceiling")) q.set("ceiling", f.ceiling);
+  if (differs("inclusive")) q.set("inclusive", f.inclusive ? "1" : "0");
+  return q.toString();
+}
+
+function queryToFilters(search) {
+  const q = new URLSearchParams(search);
+  if (![...q.keys()].length) return null;
+  const f = {};
+  if (q.has("q")) f.query = q.get("q");
+  if (q.has("min") || q.has("max")) {
+    f.price = { min: Number(q.get("min")) || 0, max: q.has("max") ? Number(q.get("max")) : null };
+  }
+  if (q.has("listing")) f.listing = q.get("listing");
+  SEARCH_SEGS.forEach((n) => { if (q.has(n)) f[n] = q.get(n); });
+  if (q.has("all")) f.allPlayers = q.get("all") === "1";
+  ADDRESS_LISTS.forEach((k) => { if (q.has(k)) f[k] = q.get(k).split(",").filter(Boolean); });
+  if (q.has("ceiling")) f.ceiling = q.get("ceiling");
+  if (q.has("inclusive")) f.inclusive = q.get("inclusive") === "1";
+  return f;
+}
+
+function syncAddress() {
+  if (!state.addressBase) return;              // not until the address has been read
+  const query = filtersToQuery(currentFilters(), state.addressBase);
+  const next = location.pathname + (query ? `?${query}` : "") + location.hash;
+  if (next !== location.pathname + location.search + location.hash) {
+    history.replaceState(history.state, "", next);
+  }
+}
+
+function applyAddress() {
+  const base = state.addressDefaults;
+  if (!base) return;                           // loadConfig stopped early: no controls to fill
+  const f = queryToFilters(location.search);
+  if (f) applyFilters({ ...base, ...f, price: f.price || base.price });
+  state.addressBase = base;
+  syncAddress();
+}
+
+/* ==========================================================================
+   Version 24 (10 Nov): the page as the mock-up draws it
+   Three tabs (Feed, Scan, Saved) and an Account page, a feed of tall tiles,
+   one Filters sheet, and a login page in front of the lot. Layout and
+   wiring only: every filter here drives the state the page already had, so
+   scans, saved searches, the alert emails and the address keep working.
+   ========================================================================== */
+
+const VIEW_KEY = "tce.view";
+const DENSITY_KEY = "tce.density";
+const MAKERS_KEY = "tce.makers";
+
+/* ---- the filter sheet ---- */
+function openSheet(fieldId) {
+  document.body.classList.add("sheet-open");
+  $("sheet-veil").hidden = false;
+  const sheet = document.querySelector("#scan .controls");
+  const target = fieldId ? $(fieldId) : null;
+  requestAnimationFrame(() => {
+    const body = sheet.querySelector(".panel-body");
+    body.scrollTop = target ? target.offsetTop - body.offsetTop - 8 : 0;
+    $("sheet-close").focus({ preventScroll: true });
+  });
+}
+
+function closeSheet() {
+  if (!document.body.classList.contains("sheet-open")) return;
+  document.body.classList.remove("sheet-open");
+  $("sheet-veil").hidden = true;
+  closePickLists();
+}
+
+/* ---- manufacturer: a filter of its own ----
+   The cards already carry their maker. "Ace Authentic, Inc" is Ace
+   Authentic; makerKey folds the company word away, and notify.py's
+   maker_key does the same so an alert email agrees with the page. Empty is
+   every maker. A picked name matches exactly; a typed one as part of it. */
+function makerKey(name) {
+  return fold(name).trim().replace(/,?\s*\b(inc|llc|ltd|co|company|corp)\.?\s*$/, "").replace(/\s+/g, " ").trim();
+}
+
+function inMakers(card) {
+  if (!state.makers.length) return true;
+  const have = makerKey(card.manufacturer);
+  return state.makers.some((m) => have.includes(makerKey(m)));
+}
+
+function setMakers(list) {
+  const seen = new Set();
+  state.makers = (list || []).map((m) => String(m).trim()).filter((m) => {
+    const k = makerKey(m);
+    if (!k || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  try { localStorage.setItem(MAKERS_KEY, JSON.stringify(state.makers)); } catch { /* private mode */ }
+  renderPicks();
+  renderMatches();
+  renderBoard();
+}
+
+/* ---- the three pickers: Player, Manufacturer, Set ----
+   Each is an "All" tickbox, a search bar that drops down the five names with
+   the most listings (narrowing as you type, accents ignored), and the picks
+   as chips. Player and Set drive the chips the scan setup always had, so a
+   scan started from the Scan page searches what the feed shows. */
+const PICKERS = {
+  player: {
+    all: "all-players",
+    names: (c) => [namedPlayer(c)],
+    picks: () => ($("all-players").checked ? [] : selected("player")),
+    add(name) {
+      const wasAll = $("all-players").checked;
+      let chip = findChip("player", name);
+      if (!chip) { chip = buildChip($("players-chips"), name, "player", false, true); remember("player", name); }
+      if (wasAll) chipsOf("player").forEach((b) => { b.checked = false; });
+      chip.checked = true;
+      $("all-players").checked = false;
+      syncPlayerChips();
+    },
+    remove(name) {
+      const chip = findChip("player", name);
+      if (chip) chip.checked = false;
+      if (!selected("player").length) $("all-players").checked = true;
+      syncPlayerChips();
+    },
+    setAll(on) {
+      $("all-players").checked = on;
+      if (on) chipsOf("player").forEach((b) => { b.checked = false; });
+      syncPlayerChips();
+    },
+  },
+  maker: {
+    all: "all-makers",
+    names: (c) => [c.manufacturer],
+    picks: () => state.makers,
+    add(name) { setMakers([...state.makers, name]); },
+    remove(name) { setMakers(state.makers.filter((m) => makerKey(m) !== makerKey(name))); },
+    setAll(on) { if (on) setMakers([]); },
+  },
+  set: {
+    all: "all-sets",
+    names: (c) => [c.brand],
+    picks: () => chosen("brand") || [],
+    add(name) {
+      const wasAll = !chosen("brand");
+      let chip = findChip("brand", name);
+      if (!chip) { chip = buildChip($("brands-chips"), name, "brand", false, true); remember("brand", name); }
+      if (wasAll) chipsOf("brand").forEach((b) => { b.checked = false; });
+      chip.checked = true;
+    },
+    remove(name) {
+      const chip = findChip("brand", name);
+      if (chip) chip.checked = false;
+      // a scan needs at least one set, so taking the last pick away is "all"
+      if (!selected("brand").length) chipsOf("brand").forEach((b) => { b.checked = true; });
+    },
+    setAll(on) { if (on) chipsOf("brand").forEach((b) => { b.checked = true; }); },
+  },
+};
+
+/* names on record for a picker, most listings first, one spelling each */
+function pickNames(kind) {
+  const counts = new Map();
+  const key = kind === "maker" ? makerKey : (n) => fold(n).trim();
+  allCards().forEach((c) => PICKERS[kind].names(c).forEach((n) => {
+    n = String(n || "").trim();
+    if (!n) return;
+    const k = key(n);
+    const e = counts.get(k) || { name: n, n: 0, spell: new Map() };
+    e.n += 1;
+    e.spell.set(n, (e.spell.get(n) || 0) + 1);
+    counts.set(k, e);
+  }));
+  return [...counts.values()].map((e) => ({
+    name: [...e.spell.entries()].sort((a, b) => b[1] - a[1])[0][0], n: e.n,
+  })).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
+}
+
+function closePickLists(except) {
+  document.querySelectorAll(".pick-list").forEach((ul) => {
+    if (ul === except) return;
+    ul.hidden = true;
+    const input = ul.parentElement.querySelector(".pick-input");
+    if (input) input.setAttribute("aria-expanded", "false");
+  });
+}
+
+function pickerChanged(kind) {
+  if (kind !== "maker") scanSetupChanged();
+  renderPicks();
+}
+
+function addPick(kind, name) {
+  name = String(name || "").replace(/\s+/g, " ").trim();
+  if (!name) return;
+  PICKERS[kind].add(name);
+  const input = $(`pick-${kind}`);
+  input.value = "";
+  closePickLists();
+  pickerChanged(kind);
+}
+
+function showPickList(kind) {
+  const input = $(`pick-${kind}`);
+  const ul = $(`pick-${kind}-list`);
+  const typed = fold(input.value).trim();
+  const taken = new Set(PICKERS[kind].picks().map((n) => fold(n)));
+  const all = pickNames(kind).filter((e) => !taken.has(fold(e.name)));
+  const hits = (typed ? all.filter((e) => fold(e.name).includes(typed)) : all).slice(0, 5);
+  ul.innerHTML = "";
+  hits.forEach((e, i) => {
+    const li = el("li", "pick-opt" + (i === 0 ? " is-active" : ""));
+    li.setAttribute("role", "option");
+    li.dataset.name = e.name;
+    li.append(el("span", "pick-name", e.name), el("span", "pick-n", String(e.n)));
+    ul.append(li);
+  });
+  const exact = hits.some((e) => fold(e.name) === typed);
+  if (typed && !exact) {
+    const li = el("li", "pick-opt pick-add" + (hits.length ? "" : " is-active"));
+    li.setAttribute("role", "option");
+    li.dataset.name = input.value.trim();
+    li.append(el("span", "pick-name", `Add “${input.value.trim()}”`));
+    ul.append(li);
+  }
+  closePickLists(ul);
+  ul.hidden = !ul.children.length;
+  input.setAttribute("aria-expanded", ul.hidden ? "false" : "true");
+}
+
+function renderPicks() {
+  Object.keys(PICKERS).forEach((kind) => {
+    const box = $(`picks-${kind}`);
+    if (!box) return;
+    const picks = PICKERS[kind].picks();
+    $(PICKERS[kind].all).checked = !picks.length;
+    box.innerHTML = "";
+    picks.forEach((name) => {
+      const chip = el("span", "pick-chip", name);
+      const x = el("button", "pick-x", "×");
+      x.type = "button";
+      x.setAttribute("aria-label", `Remove ${name}`);
+      x.addEventListener("click", () => { PICKERS[kind].remove(name); pickerChanged(kind); });
+      chip.append(x);
+      box.append(chip);
+    });
+  });
+  renderFilterCount();
+}
+
+function wirePicker(kind) {
+  const input = $(`pick-${kind}`);
+  const ul = $(`pick-${kind}-list`);
+  input.addEventListener("focus", () => showPickList(kind));
+  input.addEventListener("input", () => showPickList(kind));
+  input.addEventListener("keydown", (e) => {
+    const opts = [...ul.querySelectorAll(".pick-opt")];
+    const at = opts.findIndex((o) => o.classList.contains("is-active"));
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (ul.hidden) { showPickList(kind); return; }
+      const next = opts.length ? (at + (e.key === "ArrowDown" ? 1 : -1) + opts.length) % opts.length : -1;
+      opts.forEach((o, i) => o.classList.toggle("is-active", i === next));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      // the highlighted name, else an exact match, else what was typed
+      const typed = input.value.trim();
+      const exact = opts.find((o) => fold(o.dataset.name) === fold(typed) && !o.classList.contains("pick-add"));
+      const pick = (!ul.hidden && opts[at]) ? opts[at].dataset.name : (exact ? exact.dataset.name : typed);
+      addPick(kind, pick);
+    } else if (e.key === "Escape") {
+      e.stopPropagation();
+      closePickLists();
+    }
+  });
+  ul.addEventListener("mousedown", (e) => e.preventDefault());   // keep focus in the bar
+  ul.addEventListener("click", (e) => {
+    const li = e.target.closest(".pick-opt");
+    if (li) addPick(kind, li.dataset.name);
+  });
+  $(PICKERS[kind].all).addEventListener("change", (e) => {
+    if (!e.target.checked && !PICKERS[kind].picks().length) { e.target.checked = true; return; }
+    PICKERS[kind].setAll(e.target.checked);
+    pickerChanged(kind);
+  });
+}
+
+/* ---- serial type, format, new only, clear ---- */
+function wireSheetExtras() {
+  // a serial type tapped twice goes back to every serial
+  document.querySelectorAll("#bookend-seg .seg-btn").forEach((b) => {
+    b.addEventListener("click", (e) => {
+      if (b.dataset.value !== "all" && state.bookend === b.dataset.value && b.dataset.wasOn === "1") {
+        e.stopImmediatePropagation();
+        setSeg("bookend", "all");
+      }
+    }, true);
+    b.addEventListener("pointerdown", () => { b.dataset.wasOn = state.bookend === b.dataset.value ? "1" : "0"; });
+    b.addEventListener("keydown", () => { b.dataset.wasOn = state.bookend === b.dataset.value ? "1" : "0"; });
+  });
+  // New only is "listed in the last 24 hours", the Listed within filter
+  $("new-only").addEventListener("change", (e) => setSeg("window", e.target.checked ? "1" : "any"));
+  $("sheet-clear").addEventListener("click", clearFilters);
+}
+
+function clearFilters() {
+  setPrice(0, null);
+  setListing("all");
+  setSeg("bookend", "all");
+  setSeg("window", "any");
+  PICKERS.player.setAll(true);
+  PICKERS.set.setAll(true);
+  state.makers = [];
+  setMakers([]);
+  scanSetupChanged();
+  renderPicks();
+}
+
+/* the filters the sheet can set, counted for the chip on the feed */
+function activeFilterCount() {
+  let n = 0;
+  Object.keys(PICKERS).forEach((k) => { if (PICKERS[k].picks().length) n += 1; });
+  if (state.bookend !== "all") n += 1;
+  if (state.listing !== "all") n += 1;
+  if (state.price.min || state.price.max != null) n += 1;
+  if (state.window !== "any") n += 1;
+  return n;
+}
+
+function renderFilterCount() {
+  const n = activeFilterCount();
+  const badge = $("filters-count");
+  badge.hidden = !n;
+  badge.textContent = String(n);
+  $("filters-btn").setAttribute("aria-label", n ? `Filters, ${n} on` : "Filters");
+  $("new-only").checked = state.window === "1";
+}
+
+/* Version 24 shows none of the scan setup's other filters (card type, graded
+   or raw, colour match, check by eye, for sale or sold, the print-run
+   ceiling, the title search), so nothing out of sight may narrow the feed:
+   they go back to their defaults on every load. Sold and ended cards are
+   shown, dimmed, after everything for sale (sortCards). */
+function resetDroppedFilters() {
+  ["cardtype", "condition", "colourmatch", "caution"].forEach((n) => { if (state[n] !== "all") setSeg(n, "all"); });
+  if (state.avail !== "all") setSeg("avail", "all");
+  const c = state.config || {};
+  if (c.maxPrintRun) $("max-print-run").value = c.maxPrintRun;
+  $("inclusive").checked = !!c.printRunInclusive;
+  state.query = "";
+  $("title-search").value = "";
+  try { sessionStorage.removeItem(QUERY_KEY); } catch { /* ignore */ }
+  let makers = [];
+  try { makers = JSON.parse(localStorage.getItem(MAKERS_KEY) || "[]"); } catch { /* ignore */ }
+  state.makers = Array.isArray(makers) ? makers : [];
+  if (state.addressDefaults) {
+    Object.assign(state.addressDefaults, { cardtype: "all", condition: "all", colourmatch: "all",
+      caution: "all", avail: "all", query: "", makers: [],
+      ceiling: $("max-print-run").value, inclusive: $("inclusive").checked });
+  }
+  saveScanSetup();
+  renderPicks();
+  renderMatches();
+  renderBoard();
+}
+
+/* ---- the tile's last line: "$13 · Buy It Now", "$1 · Ends in 2d 10h" ---- */
+const PRICE_SIGNS = { USD: "$", CAD: "C$", AUD: "A$", GBP: "£", EUR: "€" };
+
+function shortPrice(card) {
+  const v = priceValue(card.price);
+  if (!v) return card.price || "—";
+  const cur = (String(card.price).match(/[A-Z]{3}/) || ["USD"])[0];
+  const whole = Math.abs(v - Math.round(v)) < 0.005;
+  const n = v.toLocaleString("en-US", { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 });
+  return PRICE_SIGNS[cur] ? `${PRICE_SIGNS[cur]}${n}` : `${n} ${cur}`;
+}
+
+function endsShort(end) {
+  const ms = end.getTime() - Date.now();
+  if (ms <= 0) return "Auction over";
+  const m = Math.max(1, Math.round(ms / 60000));
+  const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mm = m % 60;
+  if (d) return `Ends in ${d}d ${h}h`;
+  if (h) return `Ends in ${h}h ${mm}m`;
+  return `Ends in ${mm}m`;
+}
+
+function metaLine(card) {
+  const line = el("div", "mc-meta");
+  line.append(el("span", "mc-meta-price", shortPrice(card)));
+  const gone = availabilityOf(card);
+  const end = auctionEnd(card);
+  let what = null;
+  if (gone === "sold") what = el("span", "mc-meta-what", "Sold");
+  else if (gone === "ended") what = el("span", "mc-meta-what", "Ended");
+  else if (end) {
+    what = el("span", "mc-meta-what mc-meta-ends", endsShort(end));
+    what.dataset.endsShort = end.toISOString();
+  } else if (card.listing) what = el("span", "mc-meta-what", /auction/i.test(card.listing) ? "Auction" : "Buy It Now");
+  if (what) line.append(el("span", "mc-meta-dot", "·"), what);
+  if (card.caution) {
+    const eye = el("span", "mc-check", "Check by eye");
+    eye.title = card.caution;
+    line.append(eye);
+  }
+  return line;
+}
+
+function tickShortEnds() {
+  document.querySelectorAll("[data-ends-short]").forEach((n) => {
+    n.textContent = endsShort(new Date(n.dataset.endsShort));
+  });
+}
+
+/* ---- "30 finds" over the feed, and the sheet's "Show 30 finds" ---- */
+function renderFeedCount() {
+  const n = recordView().shown.length;
+  const words = `${n.toLocaleString()} find${n === 1 ? "" : "s"}`;
+  $("feed-title").textContent = words;
+  $("sheet-count").textContent = `Show ${words}`;
+  renderFilterCount();
+}
+
+/* ---- the detail view: the year, and the player's other finds ---- */
+function yearOf(card) {
+  const m = String(card.set_name || card.title || "").match(/\b(19[5-9]\d|20[0-4]\d)\b/);
+  return m ? m[1] : "";
+}
+
+function fillDetailExtras(match) {
+  $("holo-d-year").textContent = yearOf(match) || "—";
+  const name = namedPlayer(match);
+  const box = $("holo-more");
+  const row = $("holo-more-row");
+  row.innerHTML = "";
+  const others = !name ? [] : allCards().filter((c) => c.link !== match.link && samePlayer(name, c.player || ""))
+    .sort((a, b) => (availabilityOf(a) === "sale" ? 0 : 1) - (availabilityOf(b) === "sale" ? 0 : 1)
+      || listedKey(b) - listedKey(a)).slice(0, 12);
+  box.hidden = !others.length;
+  if (!others.length) return;
+  $("holo-more-title").textContent = `Other finds for ${name}`;
+  others.forEach((c) => {
+    const b = el("button", "more-card");
+    b.type = "button";
+    const ph = el("span", "more-photo");
+    if (c.image) {
+      const img = el("img");
+      img.src = c.image; img.alt = ""; img.loading = "lazy";
+      img.addEventListener("error", () => img.remove());
+      ph.append(img);
+    }
+    ph.append(el("span", "more-serial", c.serial));
+    b.append(ph, el("span", "more-price", shortPrice(c)));
+    b.setAttribute("aria-label", `${name}, ${c.serial}, ${shortPrice(c)}`);
+    b.addEventListener("click", () => openHologram({ ...c }));
+    row.append(b);
+  });
+}
+
+/* ---- Saved: the line under the heading, and the dot on the tab ---- */
+function renderSavedSummary() {
+  const all = Object.values(state.saved);
+  const sold = all.filter((c) => statusOf(c).status === "sold").length;
+  const signedIn = !!(window.Account && Account.user());
+  const where = signedIn ? "on your account" : "on this device";
+  $("saved-summary").textContent = all.length
+    ? `${all.length} card${all.length === 1 ? "" : "s"} ${where}`
+      + (sold ? ` · ${sold} sold since you saved` : "")
+    : "Nothing saved yet. Tap the heart on any card.";
+  $("saved-where").textContent = signedIn
+    ? "Saved cards live on your account and follow you to any device you sign in to."
+    : "Saved cards live in this browser.";
+  $("saved-dot").hidden = !sold;
+}
+
+/* ---- the Scan page's figures ---- */
+const SCHEDULE_UTC = { h: 9, m: 30 };             // scan.yml's cron, 30 9 * * *
+
+function nextScanAt(now = new Date()) {
+  const t = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), SCHEDULE_UTC.h, SCHEDULE_UTC.m));
+  if (t <= now) t.setUTCDate(t.getUTCDate() + 1);
+  return t;
+}
+
+function agoShort(ms) {
+  const m = Math.max(0, Math.round(ms / 60000));
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  return h < 48 ? `${h}h` : `${Math.floor(h / 24)}d`;
+}
+
+function renderScanStats() {
+  const c = state.config || {};
+  const at = lastRunDate(c.lastRun);
+  $("scan-last").textContent = at ? `${agoShort(Date.now() - at.getTime())} ago` : (HOSTED ? "—" : "On this PC");
+  const next = nextScanAt();
+  $("scan-next").textContent = `in ${agoShort(next.getTime() - Date.now())}`;
+  $("scan-next-note").textContent = `Daily at ${next.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} your time`;
+  $("scan-total").textContent = recordView().total.toLocaleString();
+}
+
+/* ---- Account page, theme, density, default view ---- */
+function setDensity(name) {
+  const d = name === "compact" ? "compact" : "comfortable";
+  document.documentElement.dataset.density = d;
+  try { localStorage.setItem(DENSITY_KEY, d); } catch { /* private mode */ }
+  document.querySelectorAll("[data-density-pick]").forEach((b) =>
+    b.setAttribute("aria-pressed", b.dataset.densityPick === d ? "true" : "false"));
+}
+
+function setView(view) {
+  const v = view === "list" ? "list" : "grid";
+  document.body.classList.toggle("is-list-view", v === "list");
+  document.querySelectorAll(".viewtoggle [data-view]").forEach((b) =>
+    b.setAttribute("aria-pressed", b.dataset.view === v ? "true" : "false"));
+  document.querySelectorAll("[data-default-view]").forEach((b) =>
+    b.setAttribute("aria-pressed", b.dataset.defaultView === v ? "true" : "false"));
+  try { localStorage.setItem(VIEW_KEY, v); } catch { /* private mode */ }
+}
+
+function renderAccountPage() {
+  const signedIn = !!(window.Account && Account.user());
+  $("acct-out-panel").hidden = signedIn;
+  $("acct-in-panel").hidden = !signedIn;
+  $("acct-me").hidden = !signedIn;
+  renderSavedSummary();
+}
+
+/* ---- the login page ----
+   Nobody uses the site without signing in. The page starts gated (the head
+   script adds is-gated unless a session is stored, so a signed-in reload
+   never flashes the login screen), and every sign-in or sign-out comes back
+   through Account.onChange. A preview copy that cannot reach Supabase sets
+   <meta name="tce-login" content="preview">, which adds a skip button. This
+   is a front door, not a lock: results/ is public in the repository. */
+const PREVIEW_SKIP_KEY = "tce.previewSkip";
+
+function loginMode() {
+  const m = document.querySelector('meta[name="tce-login"]');
+  return m ? m.content : "required";
+}
+
+function storedSession() {
+  try { return !!JSON.parse(localStorage.getItem("tce.session") || "null"); } catch { return false; }
+}
+
+function gate() {
+  const root = document.documentElement;
+  if (!window.Account || loginMode() === "off") { root.classList.remove("is-gated"); return; }
+  let skipped = false;
+  try { skipped = sessionStorage.getItem(PREVIEW_SKIP_KEY) === "1"; } catch { /* ignore */ }
+  const preview = loginMode() === "preview";
+  const waiting = !Account.user() && storedSession();      // a stored session is still being checked
+  const gated = !Account.user() && !waiting && !(preview && skipped);
+  root.classList.toggle("is-gated", gated);
+  $("login-preview").hidden = !preview;
+  if (gated && $("account").hidden) Account.open("signin");
+  if (!gated && !$("account").hidden && Account.user()) Account.close();
+  renderAccountPage();
+}
+
+function initLogin() {
+  if (window.Account) Account.onChange(() => gate());
+  $("login-skip").addEventListener("click", () => {
+    try { sessionStorage.setItem(PREVIEW_SKIP_KEY, "1"); } catch { /* ignore */ }
+    document.documentElement.classList.remove("is-gated");
+    if (window.Account) {
+      $("account").hidden = true;                      // close() refuses while gated
+      document.body.classList.remove("account-open");
+    }
+    renderAccountPage();
+  });
+  $("acct-open-login").addEventListener("click", () => { if (window.Account) Account.open("signin"); });
+  gate();
+}
+
+/* ---- tabs ---- */
+function markTab() {
+  const b = document.body.classList;
+  const view = b.contains("is-saved-view") ? "saved" : b.contains("is-scan-view") ? "scan"
+    : b.contains("is-account-view") ? "account" : "feed";
+  document.querySelectorAll(".tabs [data-tab]").forEach((t) => {
+    const on = t.dataset.tab === view;
+    t.classList.toggle("is-on", on);
+    if (on) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current");
+  });
+  $("account-btn").classList.toggle("is-on", view === "account");
+  if (view === "scan") renderScanStats();
+  if (view === "account" || view === "saved") renderAccountPage();
+}
+
+function initVersion24() {
+  // the sheet
+  document.querySelectorAll("[data-sheet-to]").forEach((b) =>
+    b.addEventListener("click", () => openSheet(b.dataset.sheetTo)));
+  $("sheet-close").addEventListener("click", closeSheet);
+  $("sheet-veil").addEventListener("click", closeSheet);
+  $("sheet-done").addEventListener("click", () => {
+    closeSheet();
+    $("matches").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSheet(); });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest || !e.target.closest(".pick-box")) closePickLists();
+  });
+  Object.keys(PICKERS).forEach(wirePicker);
+  wireSheetExtras();
+
+  // tabs
+  $("feed-tab").addEventListener("click", () => { closeSheet(); goHome(); });
+  new MutationObserver(markTab).observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  markTab();
+
+  // sort: the box and the Order field are one control drawn twice
+  const sortBox = $("feed-sort");
+  const seg = $("sort-seg");
+  const syncSort = () => {
+    const on = seg.querySelector(".seg-btn.is-on");
+    if (on) sortBox.value = on.dataset.value;
+  };
+  sortBox.addEventListener("change", () => {
+    const btn = seg.querySelector(`.seg-btn[data-value="${sortBox.value}"]`);
+    if (btn) btn.click();
+  });
+  new MutationObserver(syncSort).observe(seg, { attributes: true, subtree: true, attributeFilter: ["class"] });
+  syncSort();
+
+  // view, density, theme
+  document.querySelectorAll(".viewtoggle [data-view]").forEach((b) =>
+    b.addEventListener("click", () => setView(b.dataset.view)));
+  document.querySelectorAll("[data-default-view]").forEach((b) =>
+    b.addEventListener("click", () => setView(b.dataset.defaultView)));
+  let view = "grid";
+  try { view = localStorage.getItem(VIEW_KEY) || "grid"; } catch { /* private mode */ }
+  setView(view);
+  document.querySelectorAll("[data-density-pick]").forEach((b) =>
+    b.addEventListener("click", () => setDensity(b.dataset.densityPick)));
+  setDensity(document.documentElement.dataset.density);
+
+  // counts that follow the lists: the feed heading, the saved line and dot
+  new MutationObserver(() => { renderFeedCount(); renderSavedSummary(); })
+    .observe($("match-count"), { childList: true, characterData: true, subtree: true });
+  new MutationObserver(renderSavedSummary)
+    .observe($("saved-count"), { childList: true, characterData: true, subtree: true });
+  new MutationObserver(renderSavedSummary)
+    .observe($("saved-area"), { childList: true });
+  setInterval(tickShortEnds, 30000);
+
+  // the detail view gains the year and the player's other finds
+  const open = openHologram;
+  openHologram = function (match) {             // eslint-disable-line no-func-assign
+    open(match);
+    fillDetailExtras(match);
+  };
+
+  initLogin();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
+  initVersion24();
   initSaved();
   initPageSize();
   initSearch();
   setInterval(tickEnds, 30000);
-  loadConfig().then(loadSavedMatches).then(loadBoard).then(settleScroll).then(loadStatuses)
+  setInterval(renderFreshness, 60000);
+  loadConfig().then(resetDroppedFilters).then(applyAddress).then(renderFreshness).then(loadSavedMatches).then(loadBoard).then(settleScroll).then(loadStatuses)
     .then(resumeLocalScan)
     // a startup step that fails must not take the meter, and the bypass
     // toggle that lives in it, down with it
@@ -3313,5 +4005,4 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   initRotor();
-  initContents();
 });

@@ -514,7 +514,7 @@ on a website.
    which is why it reloaded; otherwise the top. The marker is spent by the
    load it was written for, so the next reload goes to the top again.
 
-11. **"How it works" is a page, not the bottom of the main one.** The method
+11. **(Removed 9 Nov -- see item 17.) "How it works" is a page, not the bottom of the main one.** The method
    and process reference -- six parts of prose, about a third of the page's
    height -- sat under every card on the board, where nobody scrolled to it
    and everybody scrolled past it. It is now a page of its own, reached from
@@ -626,6 +626,79 @@ on a website.
    fail a scan. `TheBoardIsForBuying` and `TheBoardPageFindsCardsToBuy` in
    `test_engine.py` pin it. No new section or page, so the contents panel
    is unchanged.
+
+17. **The feed redesign, first slice** (9 Nov, from the "TCE Feed Mock-up
+   Handover"). Ported the decisions that fit the current page; the five-tab
+   navigation, Hunts and Status are not done. **Dark by default**: the
+   mock-up's tokens sit on `:root` (lime `#C5E04A` the only brand colour,
+   `--rare` gold `#F2B544` for a 1/1 alone), light values under
+   `data-theme="light"` and `"system"`; the choice is three buttons in the
+   contents panel, kept as `tce.theme` and applied by a head script before
+   first paint. **The serial is the biggest thing on a tile**: 34px Barlow
+   Condensed bottom-left over the photo, so it no longer shares a corner
+   with the star and nothing steps aside for a flag (`has-flag` still marks
+   a drawn flag). **Trust on every tile** (`trustTag`): Verified, a tick in
+   lime, or Check by eye, an eye in amber, icon and word both, the caution in
+   its title. **A 1/1 has a gold rim and a gold serial** (`isOneOfOne`).
+   **Sold and ended cards are dimmed (`is-gone`), the SOLD pill is grey, and
+   `sortCards` puts them after every card for sale** whatever the order.
+   **Freshness**: "Data as of ..." under the top bar from `config.lastRun`,
+   and an amber banner in the header once it is over 26 hours old
+   (`STALE_AFTER_MS`). **The filters are written into the address**
+   (`filtersToQuery` / `queryToFilters`): only what differs from the
+   page's defaults, read on load by `applyAddress` after `loadConfig`, so a
+   filtered view can be bookmarked or sent. **"How it works" is gone**
+   (the owner's call, 9 Nov): no tab, no entry in the contents panel, no
+   page. The `#method` section, its `VIEWS` route, its CSS and the code in
+   `loadConfig` that wrote the allow-list, block-list and eBay figures into
+   it were all removed; `TheHowItWorksPageIsGone` fails if any comes back.
+   The top bar is Feed, Saved, Hunts, Status and More.
+
+18. **Version 24 (10 Nov): the page as the owner's mock-up draws it, behind
+   a login.** Supersedes the look of item 17 (the tokens, tiles and tabs);
+   its behaviour -- sold to the end, filters in the address, the late-scan
+   banner -- stays. **Look:** pure black, surfaces `#141418`/`#1D1D23`,
+   borders `#26262C`, text `#C8C8CC`/`#F4F4F6`; lime `#C5E04A` is the only
+   accent and amber `#F2B544` the only warning (Check by eye, the Saved dot).
+   Archivo everywhere, player names in Cormorant Garamond on tiles and rows.
+   **Top bar:** TCE, then Feed / Scan / Saved (lime text and a 1px lime
+   underline on the open one) and an Account button. The contents panel,
+   the hero, the masthead, the board rail and the footer are gone
+   (`TheNavigationKeepsUp`); `VIEWS` routes `#saved`, `#scan-page`,
+   `#account-page`. **Feed:** "N finds", a lime Filters chip with a count,
+   the sort box (it presses the hidden Order field) and grid/list. Tiles are
+   unboxed 4:5 photos: New or Sold top left, the heart (the old star, drawn
+   with a CSS mask) top right, the serial pill bottom left, a 1/1 lime with a
+   faint glow; under it the name and `metaLine` ("$13 · Buy It Now", "Ends in
+   2d 10h", amber "Check by eye"). "New this scan" is not drawn; the record
+   is. **Filters sheet** (the scan setup's aside, now a drawer): Player,
+   Manufacturer and Set pickers (`PICKERS`: an All tickbox, five suggestions
+   by listing count, accent-blind, Add "..." for anything else, picks as
+   chips), Serial type, Format, Maximum price, New only (= Listed within 24
+   hours), Clear and "Show N finds". **Manufacturer is a new filter**
+   (`state.makers`, `inMakers`, `makerKey`), carried in saved searches and the
+   address, and mirrored by `notify.maker_key` so alert emails agree
+   (`TheManufacturerFilterAgreesWithTheEmails`). **Dropped by the owner:**
+   card type, graded/raw, colour match, check by eye, for sale/sold, the
+   print-run ceiling and the title search. Their controls stay in the page,
+   hidden, because the scan and saved searches read them, and
+   `resetDroppedFilters` puts them back to their defaults on every load so
+   nothing out of sight narrows the feed; sold and ended cards therefore
+   show, dimmed, after everything for sale. The spreadsheet download is gone
+   from the page. **Scan page:** last scan, next scan (09:30 UTC), finds on
+   record, the Run button, progress, the eBay calls meter, the activity log
+   locally, and four known limits. **Saved page:** list rows with "N cards
+   on this device · K sold since you saved". **Account page:** the sign-in
+   panel, or the signed-in account (saved searches, emails, sign out,
+   delete), then Theme, Density and Default view. No rules section, at the
+   owner's word. **Login:** the site is gated (`gate()`, the head script's
+   `is-gated`); account.js refuses to close the login panel while gated
+   (`TheSiteIsBehindALogin`). `<meta name="tce-login" content="required">`
+   on the real page; only the artifact preview copy sets `preview`, which
+   adds "Continue without signing in". **A front door, not a lock:**
+   `results/` is public in the repository and on Pages, so anyone who knows
+   the file names can read the data; making it private means moving it off
+   GitHub Pages.
 
 ## Accounts (stage 1, 12 Oct)
 

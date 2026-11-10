@@ -308,6 +308,9 @@ const Account = (() => {
   function close() {
     const o = $a("account");
     if (!o) return;
+    // The login page: while the site is waiting for a sign-in (app.js puts
+    // is-gated on the page) there is nothing behind the panel to go back to.
+    if (!session && document.documentElement.classList.contains("is-gated")) return;
     o.hidden = true;
     document.body.classList.remove("account-open");
   }
@@ -315,9 +318,11 @@ const Account = (() => {
   function render() {
     const b = $a("account-btn");
     if (b) {
-      b.textContent = session ? (session.user.email || "Account") : "Sign in";
+      // A button that leads to an Account page keeps its own label and icon;
+      // the old one doubled as the address and the way in.
+      if (!b.dataset.page) b.textContent = session ? (session.user.email || "Account") : "Sign in";
       b.classList.toggle("is-in", !!session);
-      b.title = session ? "Your account" : "Sign in or create an account";
+      b.title = session ? `Your account: ${session.user.email || ""}` : "Sign in or create an account";
     }
     const who = $a("acct-who");
     if (who) who.textContent = session ? session.user.email || "" : "";
@@ -345,7 +350,10 @@ const Account = (() => {
   function wire() {
     const btn = $a("account-btn");
     if (!btn) return;
-    btn.addEventListener("click", () => open());
+    btn.addEventListener("click", () => {
+      if (btn.dataset.page) location.hash = btn.dataset.page;   // the Account page
+      else open();
+    });
     $a("acct-close").addEventListener("click", close);
     $a("account").addEventListener("click", (e) => { if (e.target === $a("account")) close(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$a("account").hidden) close(); });

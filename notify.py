@@ -117,6 +117,15 @@ def in_query(f, card):
     return True
 
 
+def maker_key(name):
+    """A manufacturer as the page compares it: case, accents and a trailing
+    company word folded away, so "Ace Authentic, Inc" is Ace Authentic.
+    Mirrors makerKey() in app.js."""
+    s = unicodedata.normalize("NFKD", str(name or "")).encode("ascii", "ignore").decode().lower()
+    s = re.sub(r",?\s*\b(inc|llc|ltd|co|company|corp)\.?\s*$", "", s.strip())
+    return re.sub(r"\s+", " ", s).strip()
+
+
 def card_fits(filters, card, now=None):
     """Whether the page would show this card under these filters."""
     f = filters or {}
@@ -155,6 +164,9 @@ def card_fits(filters, card, now=None):
     if not f.get("allPlayers", True) and f.get("players"):
         if not any(same_player(n, card.get("player", "")) for n in f["players"]):
             return False
+    makers = f.get("makers") or []
+    if makers and not any(maker_key(m) in maker_key(card.get("manufacturer", "")) for m in makers):
+        return False
     brands = f.get("brands") or []
     if brands and card.get("brand") and not any(b.lower() == card["brand"].lower() for b in brands):
         return False
